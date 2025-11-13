@@ -1,0 +1,1530 @@
+websocket: 1.0.0
+info:
+  title: Texas Poker Platform WebSocket Events
+  description: |
+    WebSocket event specification for real-time poker gameplay and lobby updates.
+
+    ## Connection
+    - Base URL: wss://api.pokerplatform.example.com/ws
+    - Authentication: JWT token in connection handshake
+    - Transport: Socket.IO v4.x protocol
+    - Reconnection: Automatic with exponential backoff (max 30s)
+
+    ## Namespaces
+    - `/game` - Real-time gameplay events (FR-042 to FR-049)
+    - `/lobby` - Room list updates (real-time room discovery)
+
+    ## Event Flow
+    1. Client connects with JWT in auth handshake
+    2. Client joins specific namespace and room
+    3. Server broadcasts events to room participants
+    4. Client acknowledges critical events
+    5. Server handles disconnections gracefully
+
+    ## Reliability
+    - Event acknowledgements for critical actions
+    - State restoration on reconnection
+    - Heartbeat/ping-pong every 30 seconds
+    - 60-second disconnect timeout with auto-fold
+
+    ## Error Handling
+    - All errors use consistent format matching REST API
+    - Invalid events return error acknowledgement
+    - Connection errors trigger reconnection logic
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@pokerplatform.example.com
+
+servers:
+  - url: wss://api.pokerplatform.example.com/ws
+    description: Production WebSocket server
+  - url: wss://staging-api.pokerplatform.example.com/ws
+    description: Staging WebSocket server
+  - url: ws://localhost:3000/ws
+    description: Local development server
+
+# ==================== Connection & Authentication ====================
+connection:
+  protocol: socket.io
+  version: 4.x
+  transports:
+    - websocket
+    - polling
+  authentication:
+    type: jwt
+    location: handshake
+    parameterName: token
+    description: |
+      JWT token passed in connection handshake query parameter.
+      Example: io('wss://api.pokerplatform.example.com/ws', { query: { token: 'eyJhbG...' } })
+
+  reconnection:
+    enabled: true
+    strategy: exponential-backoff
+    initialDelay: 1000
+    maxDelay: 30000
+    maxAttempts: 10
+    description: |
+      Client should implement reconnection with exponential backoff.
+      On reconnection, client rejoins rooms and requests state restoration.
+
+  heartbeat:
+    interval: 30000
+    timeout: 60000
+    description: |
+      Server sends ping every 30 seconds. Client must respond with pong.
+      Connection closed if no pong received within 60 seconds.
+
+# ==================== Namespaces ====================
+namespaces:
+  /game:
+    description: |
+      Real-time gameplay events for active poker hands. Players join their
+      room's game namespace to receive live updates on cards dealt, player
+      actions, pot changes, and hand completion.
+
+      Mapped Requirements: FR-042 to FR-049
+
+    rooms:
+      description: |
+        Each room ID represents a separate game room. Players automatically
+        join room when seated at table and leave when they exit.
+        Room format: `game:${roomId}`
+
+    # ==================== Client to Server Events ====================
+    clientEvents:
+      game:join:
+        description: |
+          Join game room to start receiving real-time updates. Sent when
+          player is seated at table. Returns current game state.
+        payload:
+          type: object
+          required:
+            - roomId
+          properties:
+            roomId:
+              type: string
+              format: uuid
+              description: Room UUID to join
+              example: 110e8400-e29b-41d4-a716-446655440010
+        acknowledgement:
+          required: true
+          timeout: 5000
+          success:
+            type: object
+            required:
+              - status
+              - gameState
+            properties:
+              status:
+                type: string
+                enum: [joined]
+                example: joined
+              gameState:
+                $ref: '#/components/schemas/GameState'
+          error:
+            $ref: '#/components/schemas/ErrorResponse'
+        example:
+          payload:
+            roomId: 110e8400-e29b-41d4-a716-446655440010
+          acknowledgementSuccess:
+            status: joined
+            gameState:
+              handId: bb0e8400-e29b-41d4-a716-446655440015
+              roomId: 110e8400-e29b-41d4-a716-446655440010
+              handNumber: 5
+              phase: flop
+              dealerPosition: 2
+              potAmount: 45.00
+              communityCards: ['Ah', 'Kd', '5c']
+              players:
+                - userId: 550e8400-e29b-41d4-a716-446655440000
+                  position: 0
+                  chipStack: 95.00
+                  currentBet: 10.00
+                  status: active
+                  hasActed: true
+                - userId: 660e8400-e29b-41d4-a716-446655440001
+                  position: 2
+                  chipStack: 120.00
+                  currentBet: 10.00
+                  status: active
+                  hasActed: false
+              currentTurn: 2
+              actionTimerEndsAt: 2025-01-16T15:30:30Z
+              startedAt: 2025-01-16T15:28:00Z
+
+      game:action:
+        description: |
+          Submit player action during their turn. Server validates action
+          legality and broadcasts result to all players.
+
+          Mapped Requirements: FR-031, FR-032, FR-033
+        payload:
+          type: object
+          required:
+            - roomId
+            - action
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            action:
+              type: string
+              enum: [fold, check, call, bet, raise, all_in]
+            amount:
+              type: number
+              format: decimal
+              minimum: 0
+              nullable: true
+              description: Required for bet and raise actions
+        acknowledgement:
+          required: true
+          timeout: 3000
+          success:
+            type: object
+            required:
+              - status
+              - actionId
+              - newChipStack
+            properties:
+              status:
+                type: string
+                enum: [accepted]
+              actionId:
+                type: string
+                format: uuid
+              newChipStack:
+                type: number
+                format: decimal
+          error:
+            $ref: '#/components/schemas/ErrorResponse'
+        example:
+          payload:
+            roomId: 110e8400-e29b-41d4-a716-446655440010
+            action: raise
+            amount: 20.00
+          acknowledgementSuccess:
+            status: accepted
+            actionId: aa0e8400-e29b-41d4-a716-446655440020
+            newChipStack: 75.00
+
+      game:leave:
+        description: |
+          Leave game room and stop receiving updates. Sent when player
+          exits table or disconnects.
+        payload:
+          type: object
+          required:
+            - roomId
+          properties:
+            roomId:
+              type: string
+              format: uuid
+        acknowledgement:
+          required: false
+        example:
+          payload:
+            roomId: 110e8400-e29b-41d4-a716-446655440010
+
+      chat:message:
+        description: |
+          Send chat message to all players at table.
+
+          Mapped Requirements: FR-045, FR-046
+        payload:
+          type: object
+          required:
+            - roomId
+            - message
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            message:
+              type: string
+              minLength: 1
+              maxLength: 500
+              description: Chat message content
+        acknowledgement:
+          required: false
+        example:
+          payload:
+            roomId: 110e8400-e29b-41d4-a716-446655440010
+            message: Good hand!
+
+    # ==================== Server to Client Events ====================
+    serverEvents:
+      game:state:
+        description: |
+          Full game state update sent on join or significant state changes.
+          Contains complete snapshot of current hand.
+
+          Mapped Requirements: FR-042, FR-043, FR-044
+        payload:
+          $ref: '#/components/schemas/GameState'
+        broadcasting:
+          type: room
+          target: All players in game room
+        example:
+          handId: bb0e8400-e29b-41d4-a716-446655440015
+          roomId: 110e8400-e29b-41d4-a716-446655440010
+          handNumber: 5
+          phase: river
+          dealerPosition: 2
+          potAmount: 120.00
+          communityCards: ['Ah', 'Kd', '5c', '9s', '2h']
+          players:
+            - userId: 550e8400-e29b-41d4-a716-446655440000
+              position: 0
+              chipStack: 50.00
+              currentBet: 30.00
+              status: active
+              hasActed: true
+              holeCards: ['Ac', 'Ad']
+            - userId: 660e8400-e29b-41d4-a716-446655440001
+              position: 2
+              chipStack: 85.00
+              currentBet: 30.00
+              status: active
+              hasActed: false
+          currentTurn: 2
+          actionTimerEndsAt: 2025-01-16T15:35:30Z
+          startedAt: 2025-01-16T15:28:00Z
+
+      game:hand-started:
+        description: |
+          New hand started. Dealer button rotated, blinds posted, hole cards
+          dealt. Signals beginning of new hand.
+
+          Mapped Requirements: FR-026, FR-028, FR-029
+        payload:
+          type: object
+          required:
+            - handId
+            - roomId
+            - handNumber
+            - dealerPosition
+            - smallBlindPosition
+            - bigBlindPosition
+            - smallBlindAmount
+            - bigBlindAmount
+            - players
+            - startedAt
+          properties:
+            handId:
+              type: string
+              format: uuid
+            roomId:
+              type: string
+              format: uuid
+            handNumber:
+              type: integer
+              minimum: 1
+            dealerPosition:
+              type: integer
+              minimum: 0
+              maximum: 8
+            smallBlindPosition:
+              type: integer
+              minimum: 0
+              maximum: 8
+            bigBlindPosition:
+              type: integer
+              minimum: 0
+              maximum: 8
+            smallBlindAmount:
+              type: number
+              format: decimal
+            bigBlindAmount:
+              type: number
+              format: decimal
+            players:
+              type: array
+              items:
+                $ref: '#/components/schemas/HandStartPlayer'
+            startedAt:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All players in game room
+        example:
+          handId: cc0e8400-e29b-41d4-a716-446655440016
+          roomId: 110e8400-e29b-41d4-a716-446655440010
+          handNumber: 6
+          dealerPosition: 3
+          smallBlindPosition: 4
+          bigBlindPosition: 5
+          smallBlindAmount: 5.00
+          bigBlindAmount: 10.00
+          players:
+            - userId: 550e8400-e29b-41d4-a716-446655440000
+              position: 0
+              chipStack: 120.00
+            - userId: 660e8400-e29b-41d4-a716-446655440001
+              position: 2
+              chipStack: 95.00
+            - userId: 770e8400-e29b-41d4-a716-446655440002
+              position: 4
+              chipStack: 85.00
+          startedAt: 2025-01-16T15:40:00Z
+
+      game:cards-dealt:
+        description: |
+          Cards dealt to player(s). For hole cards, only sent to card owner.
+          For community cards, broadcast to all players.
+
+          Mapped Requirements: FR-026, FR-027
+        payload:
+          type: object
+          required:
+            - handId
+            - cardType
+            - cards
+            - phase
+          properties:
+            handId:
+              type: string
+              format: uuid
+            cardType:
+              type: string
+              enum: [hole, community]
+            cards:
+              type: array
+              items:
+                type: string
+                pattern: '^[2-9TJQKA][cdhs]$'
+              description: Card strings (rank + suit)
+            phase:
+              type: string
+              enum: [preflop, flop, turn, river]
+            recipientUserId:
+              type: string
+              format: uuid
+              nullable: true
+              description: For hole cards, specific recipient. Null for community cards.
+        broadcasting:
+          type: conditional
+          target: Specific player for hole cards, all players for community cards
+        examples:
+          holeCards:
+            handId: cc0e8400-e29b-41d4-a716-446655440016
+            cardType: hole
+            cards: ['Ah', 'Kd']
+            phase: preflop
+            recipientUserId: 550e8400-e29b-41d4-a716-446655440000
+          flop:
+            handId: cc0e8400-e29b-41d4-a716-446655440016
+            cardType: community
+            cards: ['5c', '9s', '2h']
+            phase: flop
+            recipientUserId: null
+
+      game:player-action:
+        description: |
+          Player action executed. Broadcast to all players showing action type,
+          amount, and updated chip stack.
+
+          Mapped Requirements: FR-043, FR-044
+        payload:
+          type: object
+          required:
+            - handId
+            - userId
+            - username
+            - position
+            - action
+            - amount
+            - newChipStack
+            - currentPot
+            - timestamp
+          properties:
+            handId:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+            position:
+              type: integer
+              minimum: 0
+              maximum: 8
+            action:
+              type: string
+              enum: [fold, check, call, bet, raise, all_in, post_small_blind, post_big_blind]
+            amount:
+              type: number
+              format: decimal
+              minimum: 0
+            newChipStack:
+              type: number
+              format: decimal
+              minimum: 0
+            currentPot:
+              type: number
+              format: decimal
+            timestamp:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All players in game room
+        example:
+          handId: cc0e8400-e29b-41d4-a716-446655440016
+          userId: 550e8400-e29b-41d4-a716-446655440000
+          username: john_doe
+          position: 0
+          action: raise
+          amount: 20.00
+          newChipStack: 75.00
+          currentPot: 55.00
+          timestamp: 2025-01-16T15:40:15Z
+
+      game:betting-complete:
+        description: |
+          Betting round completed. All players acted, proceeding to next phase.
+
+          Mapped Requirements: FR-025, FR-027
+        payload:
+          type: object
+          required:
+            - handId
+            - completedPhase
+            - nextPhase
+            - finalPot
+            - activePlayers
+          properties:
+            handId:
+              type: string
+              format: uuid
+            completedPhase:
+              type: string
+              enum: [preflop, flop, turn, river]
+            nextPhase:
+              type: string
+              enum: [flop, turn, river, showdown]
+            finalPot:
+              type: number
+              format: decimal
+            activePlayers:
+              type: integer
+              minimum: 2
+              description: Number of players still in hand
+        broadcasting:
+          type: room
+          target: All players in game room
+        example:
+          handId: cc0e8400-e29b-41d4-a716-446655440016
+          completedPhase: preflop
+          nextPhase: flop
+          finalPot: 65.00
+          activePlayers: 4
+
+      game:pot-awarded:
+        description: |
+          Hand completed, pot distributed to winner(s). Shows winning hand
+          and amount awarded.
+
+          Mapped Requirements: FR-036, FR-037, FR-038, FR-039
+        payload:
+          type: object
+          required:
+            - handId
+            - winners
+            - completedAt
+          properties:
+            handId:
+              type: string
+              format: uuid
+            winners:
+              type: array
+              items:
+                $ref: '#/components/schemas/HandWinner'
+            completedAt:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All players in game room
+        examples:
+          singleWinner:
+            handId: cc0e8400-e29b-41d4-a716-446655440016
+            winners:
+              - userId: 550e8400-e29b-41d4-a716-446655440000
+                username: john_doe
+                amount: 120.00
+                handRank: Full House
+                handCards: ['Ah', 'Ac', 'Ad', '5c', '5h']
+                holeCards: ['Ah', 'Ac']
+            completedAt: 2025-01-16T15:42:00Z
+          splitPot:
+            handId: dd0e8400-e29b-41d4-a716-446655440017
+            winners:
+              - userId: 550e8400-e29b-41d4-a716-446655440000
+                username: john_doe
+                amount: 60.00
+                handRank: Pair of Aces
+                handCards: ['Ah', 'Ac', 'Kd', 'Qh', 'Jc']
+                holeCards: ['Ah', '2c']
+              - userId: 660e8400-e29b-41d4-a716-446655440001
+                username: jane_smith
+                amount: 60.00
+                handRank: Pair of Aces
+                handCards: ['Ad', 'As', 'Kd', 'Qh', 'Jc']
+                holeCards: ['Ad', '3h']
+            completedAt: 2025-01-16T15:45:00Z
+
+      game:player-joined:
+        description: |
+          Player joined table. Broadcast to existing players showing new player
+          information and seat assignment.
+
+          Mapped Requirements: FR-023, FR-024
+        payload:
+          type: object
+          required:
+            - roomId
+            - userId
+            - username
+            - avatarUrl
+            - position
+            - chipStack
+            - timestamp
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+            avatarUrl:
+              type: string
+              format: uri
+              nullable: true
+            position:
+              type: integer
+              minimum: 0
+              maximum: 8
+            chipStack:
+              type: number
+              format: decimal
+            timestamp:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All players in game room
+        example:
+          roomId: 110e8400-e29b-41d4-a716-446655440010
+          userId: 880e8400-e29b-41d4-a716-446655440003
+          username: new_player
+          avatarUrl: https://t.me/i/userpic/320/new_player.jpg
+          position: 5
+          chipStack: 100.00
+          timestamp: 2025-01-16T15:38:00Z
+
+      game:player-left:
+        description: |
+          Player left table. Broadcast to remaining players showing departed
+          player and chips returned to balance.
+        payload:
+          type: object
+          required:
+            - roomId
+            - userId
+            - username
+            - position
+            - chipStackReturned
+            - reason
+            - timestamp
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+            position:
+              type: integer
+              minimum: 0
+              maximum: 8
+            chipStackReturned:
+              type: number
+              format: decimal
+            reason:
+              type: string
+              enum: [voluntary, kicked, timeout, suspended]
+            timestamp:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All remaining players in game room
+        example:
+          roomId: 110e8400-e29b-41d4-a716-446655440010
+          userId: 770e8400-e29b-41d4-a716-446655440002
+          username: leaving_player
+          position: 4
+          chipStackReturned: 125.50
+          reason: voluntary
+          timestamp: 2025-01-16T15:50:00Z
+
+      game:player-disconnected:
+        description: |
+          Player disconnected from game. Other players notified. Player seat
+          held for 60 seconds for reconnection.
+
+          Mapped Requirements: FR-047, FR-048, FR-049
+        payload:
+          type: object
+          required:
+            - roomId
+            - userId
+            - username
+            - position
+            - reconnectTimeoutAt
+            - timestamp
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+            position:
+              type: integer
+              minimum: 0
+              maximum: 8
+            reconnectTimeoutAt:
+              type: string
+              format: date-time
+              description: When player will be auto-folded if not reconnected
+            timestamp:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All other players in game room
+        example:
+          roomId: 110e8400-e29b-41d4-a716-446655440010
+          userId: 660e8400-e29b-41d4-a716-446655440001
+          username: jane_smith
+          position: 2
+          reconnectTimeoutAt: 2025-01-16T15:46:00Z
+          timestamp: 2025-01-16T15:45:00Z
+
+      game:player-reconnected:
+        description: |
+          Disconnected player reconnected. Other players notified. Player
+          receives current game state.
+
+          Mapped Requirements: FR-048
+        payload:
+          type: object
+          required:
+            - roomId
+            - userId
+            - username
+            - position
+            - timestamp
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+            position:
+              type: integer
+              minimum: 0
+              maximum: 8
+            timestamp:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All players in game room
+        example:
+          roomId: 110e8400-e29b-41d4-a716-446655440010
+          userId: 660e8400-e29b-41d4-a716-446655440001
+          username: jane_smith
+          position: 2
+          timestamp: 2025-01-16T15:45:45Z
+
+      game:timer-update:
+        description: |
+          Action timer countdown for current player's turn. Sent periodically
+          (every 5 seconds) during player's turn.
+
+          Mapped Requirements: FR-033
+        payload:
+          type: object
+          required:
+            - handId
+            - userId
+            - position
+            - remainingSeconds
+            - endsAt
+          properties:
+            handId:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            position:
+              type: integer
+              minimum: 0
+              maximum: 8
+            remainingSeconds:
+              type: integer
+              minimum: 0
+              maximum: 30
+              description: Seconds remaining for action
+            endsAt:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All players in game room
+        example:
+          handId: cc0e8400-e29b-41d4-a716-446655440016
+          userId: 550e8400-e29b-41d4-a716-446655440000
+          position: 0
+          remainingSeconds: 15
+          endsAt: 2025-01-16T15:40:30Z
+
+      chat:message:
+        description: |
+          Chat message from player broadcast to all players at table.
+
+          Mapped Requirements: FR-045, FR-046
+        payload:
+          type: object
+          required:
+            - roomId
+            - userId
+            - username
+            - avatarUrl
+            - message
+            - timestamp
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+            avatarUrl:
+              type: string
+              format: uri
+              nullable: true
+            message:
+              type: string
+              minLength: 1
+              maxLength: 500
+            timestamp:
+              type: string
+              format: date-time
+        broadcasting:
+          type: room
+          target: All players in game room
+        example:
+          roomId: 110e8400-e29b-41d4-a716-446655440010
+          userId: 550e8400-e29b-41d4-a716-446655440000
+          username: john_doe
+          avatarUrl: https://t.me/i/userpic/320/john_doe.jpg
+          message: Good hand!
+          timestamp: 2025-01-16T15:42:30Z
+
+      error:
+        description: |
+          Error event sent to specific client when operation fails. Uses same
+          format as REST API errors for consistency.
+        payload:
+          $ref: '#/components/schemas/ErrorResponse'
+        broadcasting:
+          type: individual
+          target: Requesting client only
+        examples:
+          invalidAction:
+            type: wss://api.pokerplatform.example.com/errors/invalid-action
+            title: Invalid Action
+            status: 400
+            detail: Raise amount does not meet minimum raise requirement
+            code: INVALID_ACTION
+            minRaise: 20.00
+            attemptedRaise: 15.00
+          notYourTurn:
+            type: wss://api.pokerplatform.example.com/errors/not-your-turn
+            title: Not Your Turn
+            status: 403
+            detail: You cannot act when it is not your turn
+            code: NOT_YOUR_TURN
+            currentTurn: 2
+            yourPosition: 0
+
+  /lobby:
+    description: |
+      Real-time lobby updates for room discovery. Clients subscribe to receive
+      notifications when rooms are created, updated, or closed.
+
+    rooms:
+      description: |
+        Single shared lobby room: `lobby:main`
+
+    # ==================== Client to Server Events ====================
+    clientEvents:
+      lobby:subscribe:
+        description: |
+          Subscribe to lobby updates to receive room change notifications.
+        payload:
+          type: object
+          required:
+            - filters
+          properties:
+            filters:
+              type: object
+              properties:
+                minBlind:
+                  type: number
+                  format: decimal
+                  nullable: true
+                maxBlind:
+                  type: number
+                  format: decimal
+                  nullable: true
+                status:
+                  type: array
+                  items:
+                    type: string
+                    enum: [waiting, active]
+                  nullable: true
+              description: Optional filters for room updates
+        acknowledgement:
+          required: true
+          timeout: 3000
+          success:
+            type: object
+            required:
+              - status
+              - roomCount
+            properties:
+              status:
+                type: string
+                enum: [subscribed]
+              roomCount:
+                type: integer
+                minimum: 0
+                description: Current number of matching rooms
+          error:
+            $ref: '#/components/schemas/ErrorResponse'
+        example:
+          payload:
+            filters:
+              minBlind: 1.00
+              maxBlind: 10.00
+              status: [waiting, active]
+          acknowledgementSuccess:
+            status: subscribed
+            roomCount: 8
+
+      lobby:unsubscribe:
+        description: |
+          Unsubscribe from lobby updates to stop receiving notifications.
+        payload:
+          type: object
+        acknowledgement:
+          required: false
+
+    # ==================== Server to Client Events ====================
+    serverEvents:
+      lobby:room-created:
+        description: |
+          New room created and available for joining. Broadcast to all
+          subscribed lobby clients matching room filters.
+        payload:
+          $ref: '#/components/schemas/LobbyRoom'
+        broadcasting:
+          type: broadcast
+          target: All subscribed lobby clients with matching filters
+        example:
+          id: 440e8400-e29b-41d4-a716-446655440013
+          name: New Evening Game
+          smallBlind: 1.00
+          bigBlind: 2.00
+          minBuyIn: 40.00
+          maxBuyIn: 200.00
+          maxPlayers: 6
+          currentPlayers: 1
+          status: waiting
+          createdBy:
+            userId: 550e8400-e29b-41d4-a716-446655440000
+            username: john_doe
+          createdAt: 2025-01-16T19:00:00Z
+
+      lobby:room-updated:
+        description: |
+          Room details changed (player joined/left, status changed). Broadcast
+          to subscribed lobby clients.
+        payload:
+          type: object
+          required:
+            - roomId
+            - changes
+            - updatedRoom
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            changes:
+              type: object
+              properties:
+                currentPlayers:
+                  type: object
+                  properties:
+                    from:
+                      type: integer
+                    to:
+                      type: integer
+                status:
+                  type: object
+                  properties:
+                    from:
+                      type: string
+                    to:
+                      type: string
+              description: Fields that changed with old and new values
+            updatedRoom:
+              $ref: '#/components/schemas/LobbyRoom'
+        broadcasting:
+          type: broadcast
+          target: All subscribed lobby clients
+        example:
+          roomId: 440e8400-e29b-41d4-a716-446655440013
+          changes:
+            currentPlayers:
+              from: 1
+              to: 2
+          updatedRoom:
+            id: 440e8400-e29b-41d4-a716-446655440013
+            name: New Evening Game
+            smallBlind: 1.00
+            bigBlind: 2.00
+            minBuyIn: 40.00
+            maxBuyIn: 200.00
+            maxPlayers: 6
+            currentPlayers: 2
+            status: waiting
+            createdBy:
+              userId: 550e8400-e29b-41d4-a716-446655440000
+              username: john_doe
+            createdAt: 2025-01-16T19:00:00Z
+
+      lobby:room-closed:
+        description: |
+          Room closed and no longer available. Broadcast to subscribed clients.
+        payload:
+          type: object
+          required:
+            - roomId
+            - name
+            - reason
+            - closedAt
+          properties:
+            roomId:
+              type: string
+              format: uuid
+            name:
+              type: string
+            reason:
+              type: string
+              enum: [completed, suspended, deleted]
+            closedAt:
+              type: string
+              format: date-time
+        broadcasting:
+          type: broadcast
+          target: All subscribed lobby clients
+        example:
+          roomId: 330e8400-e29b-41d4-a716-446655440012
+          name: Closed Game
+          reason: completed
+          closedAt: 2025-01-16T19:30:00Z
+
+# ==================== Components ====================
+components:
+  schemas:
+    GameState:
+      type: object
+      required:
+        - handId
+        - roomId
+        - handNumber
+        - phase
+        - dealerPosition
+        - potAmount
+        - communityCards
+        - players
+        - startedAt
+      properties:
+        handId:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        handNumber:
+          type: integer
+          minimum: 1
+        phase:
+          type: string
+          enum: [preflop, flop, turn, river, showdown, completed]
+        dealerPosition:
+          type: integer
+          minimum: 0
+          maximum: 8
+        potAmount:
+          type: number
+          format: decimal
+          minimum: 0
+        communityCards:
+          type: array
+          items:
+            type: string
+            pattern: '^[2-9TJQKA][cdhs]$'
+          minItems: 0
+          maxItems: 5
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerState'
+        currentTurn:
+          type: integer
+          minimum: 0
+          maximum: 8
+          nullable: true
+        actionTimerEndsAt:
+          type: string
+          format: date-time
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+
+    PlayerState:
+      type: object
+      required:
+        - userId
+        - username
+        - avatarUrl
+        - position
+        - chipStack
+        - currentBet
+        - status
+        - hasActed
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        position:
+          type: integer
+          minimum: 0
+          maximum: 8
+        chipStack:
+          type: number
+          format: decimal
+          minimum: 0
+        currentBet:
+          type: number
+          format: decimal
+          minimum: 0
+        status:
+          type: string
+          enum: [active, folded, all_in, disconnected, sitting_out]
+        hasActed:
+          type: boolean
+        holeCards:
+          type: array
+          items:
+            type: string
+            pattern: '^[2-9TJQKA][cdhs]$'
+          minItems: 0
+          maxItems: 2
+          nullable: true
+          description: Only visible to card owner or at showdown
+
+    HandStartPlayer:
+      type: object
+      required:
+        - userId
+        - position
+        - chipStack
+      properties:
+        userId:
+          type: string
+          format: uuid
+        position:
+          type: integer
+          minimum: 0
+          maximum: 8
+        chipStack:
+          type: number
+          format: decimal
+          minimum: 0
+
+    HandWinner:
+      type: object
+      required:
+        - userId
+        - username
+        - amount
+        - handRank
+        - handCards
+        - holeCards
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        amount:
+          type: number
+          format: decimal
+        handRank:
+          type: string
+          description: Poker hand rank name
+          example: Full House
+        handCards:
+          type: array
+          items:
+            type: string
+            pattern: '^[2-9TJQKA][cdhs]$'
+          minItems: 5
+          maxItems: 5
+          description: Best 5 cards forming winning hand
+        holeCards:
+          type: array
+          items:
+            type: string
+            pattern: '^[2-9TJQKA][cdhs]$'
+          minItems: 2
+          maxItems: 2
+          description: Player's hole cards revealed
+
+    LobbyRoom:
+      type: object
+      required:
+        - id
+        - name
+        - smallBlind
+        - bigBlind
+        - minBuyIn
+        - maxBuyIn
+        - maxPlayers
+        - currentPlayers
+        - status
+        - createdBy
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        smallBlind:
+          type: number
+          format: decimal
+        bigBlind:
+          type: number
+          format: decimal
+        minBuyIn:
+          type: number
+          format: decimal
+        maxBuyIn:
+          type: number
+          format: decimal
+        maxPlayers:
+          type: integer
+          minimum: 2
+          maximum: 9
+        currentPlayers:
+          type: integer
+          minimum: 0
+          maximum: 9
+        status:
+          type: string
+          enum: [waiting, active]
+        createdBy:
+          type: object
+          required:
+            - userId
+            - username
+          properties:
+            userId:
+              type: string
+              format: uuid
+            username:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - code
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI identifying the error type
+          example: wss://api.pokerplatform.example.com/errors/invalid-action
+        title:
+          type: string
+          description: Short, human-readable error title
+          example: Invalid Action
+        status:
+          type: integer
+          description: HTTP-style status code
+          example: 400
+        detail:
+          type: string
+          description: Human-readable explanation
+          example: Raise amount does not meet minimum raise requirement
+        code:
+          type: string
+          description: Machine-readable error code
+          example: INVALID_ACTION
+        timestamp:
+          type: string
+          format: date-time
+          description: When error occurred
+
+# ==================== Error Codes ====================
+errorCodes:
+  AUTHENTICATION_FAILED:
+    status: 401
+    description: JWT token validation failed
+    example:
+      type: wss://api.pokerplatform.example.com/errors/authentication-failed
+      title: Authentication Failed
+      status: 401
+      detail: Invalid or expired JWT token
+      code: AUTHENTICATION_FAILED
+
+  ROOM_NOT_FOUND:
+    status: 404
+    description: Requested room does not exist
+    example:
+      type: wss://api.pokerplatform.example.com/errors/room-not-found
+      title: Room Not Found
+      status: 404
+      detail: The requested room does not exist or has been closed
+      code: ROOM_NOT_FOUND
+
+  NOT_YOUR_TURN:
+    status: 403
+    description: Action submitted when not player's turn
+    example:
+      type: wss://api.pokerplatform.example.com/errors/not-your-turn
+      title: Not Your Turn
+      status: 403
+      detail: You cannot act when it is not your turn
+      code: NOT_YOUR_TURN
+
+  INVALID_ACTION:
+    status: 400
+    description: Invalid action type or parameters
+    example:
+      type: wss://api.pokerplatform.example.com/errors/invalid-action
+      title: Invalid Action
+      status: 400
+      detail: The submitted action is not valid in the current game state
+      code: INVALID_ACTION
+
+  INSUFFICIENT_CHIPS:
+    status: 400
+    description: Player does not have enough chips for action
+    example:
+      type: wss://api.pokerplatform.example.com/errors/insufficient-chips
+      title: Insufficient Chips
+      status: 400
+      detail: You do not have enough chips to complete this action
+      code: INSUFFICIENT_CHIPS
+
+  DISCONNECTED:
+    status: 503
+    description: Connection lost, attempting reconnection
+    example:
+      type: wss://api.pokerplatform.example.com/errors/disconnected
+      title: Connection Lost
+      status: 503
+      detail: WebSocket connection lost, reconnecting...
+      code: DISCONNECTED
+
+  RATE_LIMITED:
+    status: 429
+    description: Too many events sent in short period
+    example:
+      type: wss://api.pokerplatform.example.com/errors/rate-limited
+      title: Rate Limited
+      status: 429
+      detail: Too many events sent, please slow down
+      code: RATE_LIMITED
+
+# ==================== State Restoration ====================
+stateRestoration:
+  description: |
+    When client reconnects after disconnection, server restores game state
+    through the following process:
+
+    1. Client reconnects with JWT token
+    2. Client re-emits `game:join` for rooms they were in
+    3. Server validates player is still seated
+    4. Server sends `game:state` with complete current state
+    5. Client resumes normal event stream
+
+  reconnectionFlow:
+    - step: 1
+      actor: Client
+      action: Detect connection loss
+      description: Client detects WebSocket connection closed event
+    - step: 2
+      actor: Client
+      action: Attempt reconnection
+      description: Client initiates reconnection with exponential backoff
+    - step: 3
+      actor: Server
+      action: Authenticate reconnection
+      description: Server validates JWT token in handshake
+    - step: 4
+      actor: Client
+      action: Rejoin game rooms
+      description: Client emits `game:join` for each active room
+    - step: 5
+      actor: Server
+      action: Restore state
+      description: Server responds with current `game:state` acknowledgement
+    - step: 6
+      actor: Server
+      action: Notify other players
+      description: Server broadcasts `game:player-reconnected` to room
+    - step: 7
+      actor: Client
+      action: Resume normal operation
+      description: Client processes state and continues receiving events
+
+  gracePeriod:
+    duration: 60000
+    description: |
+      Server holds player's seat for 60 seconds after disconnection.
+      If player does not reconnect within grace period:
+      - Active hand: Player is auto-folded
+      - No active hand: Player is removed from table
+      - Chips returned to user balance
+
+# ==================== Testing & Examples ====================
+examples:
+  completeHandFlow:
+    description: |
+      Complete event sequence for a single poker hand from start to pot award.
+    events:
+      - event: game:hand-started
+        direction: server-to-client
+        description: New hand begins, blinds posted
+      - event: game:cards-dealt
+        direction: server-to-client
+        description: Hole cards dealt to each player (private)
+      - event: game:timer-update
+        direction: server-to-client
+        description: Action timer for first player
+      - event: game:action
+        direction: client-to-server
+        description: Player 1 raises
+      - event: game:player-action
+        direction: server-to-client
+        description: Broadcast player 1's raise
+      - event: game:action
+        direction: client-to-server
+        description: Player 2 calls
+      - event: game:player-action
+        direction: server-to-client
+        description: Broadcast player 2's call
+      - event: game:betting-complete
+        direction: server-to-client
+        description: Preflop betting complete
+      - event: game:cards-dealt
+        direction: server-to-client
+        description: Flop dealt (3 community cards)
+      - event: game:timer-update
+        direction: server-to-client
+        description: Action timer for first player
+      - event: game:action
+        direction: client-to-server
+        description: Player 1 bets
+      - event: game:player-action
+        direction: server-to-client
+        description: Broadcast player 1's bet
+      - event: game:action
+        direction: client-to-server
+        description: Player 2 folds
+      - event: game:player-action
+        direction: server-to-client
+        description: Broadcast player 2's fold
+      - event: game:pot-awarded
+        direction: server-to-client
+        description: Player 1 wins pot, no showdown needed
+
+  playerDisconnectionFlow:
+    description: |
+      Event sequence when player disconnects and reconnects during active hand.
+    events:
+      - event: disconnect
+        direction: network
+        description: Player 2 loses connection
+      - event: game:player-disconnected
+        direction: server-to-client
+        description: Server notifies other players of disconnection
+        target: Other players only
+      - event: game:timer-update
+        direction: server-to-client
+        description: If it was disconnected player's turn, auto-fold countdown
+      - event: connect
+        direction: network
+        description: Player 2 reconnects within 60 seconds
+      - event: game:join
+        direction: client-to-server
+        description: Player 2 rejoins room
+      - event: game:state
+        direction: server-to-client
+        description: Server sends current game state to reconnected player
+        target: Reconnected player only
+      - event: game:player-reconnected
+        direction: server-to-client
+        description: Server notifies other players of reconnection
+        target: Other players only

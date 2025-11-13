@@ -1,0 +1,2723 @@
+openapi: 3.0.3
+info:
+  title: Texas Poker Platform MVP API
+  description: |
+    RESTful API for Texas Hold'em Poker platform with real-time multiplayer gameplay,
+    room management, integrated payment system, and comprehensive admin controls.
+
+    ## Authentication
+    All endpoints require JWT bearer token authentication obtained via Telegram OAuth.
+    Admin endpoints require additional role-based authorization.
+
+    ## Rate Limiting
+    - Standard endpoints: 100 requests/minute per user
+    - Admin endpoints: 200 requests/minute per admin
+    - Rate limit information returned in response headers
+
+    ## Error Handling
+    All errors follow RFC 7807 Problem Details format with consistent structure.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@pokerplatform.example.com
+  license:
+    name: Proprietary
+    url: https://pokerplatform.example.com/license
+
+servers:
+  - url: https://api.pokerplatform.example.com/v1
+    description: Production server
+  - url: https://staging-api.pokerplatform.example.com/v1
+    description: Staging server
+  - url: http://localhost:3000/v1
+    description: Local development server
+
+tags:
+  - name: Auth
+    description: Authentication and user profile management
+  - name: Wallet
+    description: Financial transactions and balance management
+  - name: Room
+    description: Game room discovery and management
+  - name: Game
+    description: Poker gameplay and hand history
+  - name: Admin
+    description: Administrative operations and platform management
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ==================== Auth Module ====================
+  /auth/telegram:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate via Telegram Mini App
+      description: |
+        Authenticates user using Telegram OAuth data. Creates new user profile
+        on first login with Telegram username and avatar. Returns JWT access
+        and refresh tokens for subsequent API requests.
+
+        Mapped to: FR-001, FR-002, FR-003
+      operationId: telegramAuth
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TelegramAuthRequest'
+            examples:
+              newUser:
+                summary: First-time user authentication
+                value:
+                  telegramId: 123456789
+                  username: john_doe
+                  firstName: John
+                  lastName: Doe
+                  photoUrl: https://t.me/i/userpic/320/john_doe.jpg
+                  authDate: 1705312800
+                  hash: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+              existingUser:
+                summary: Returning user authentication
+                value:
+                  telegramId: 987654321
+                  username: jane_smith
+                  authDate: 1705312900
+                  hash: p6o5n4m3l2k1j0i9h8g7f6e5d4c3b2a1
+      responses:
+        '200':
+          description: Authentication successful
+          headers:
+            X-RateLimit-Limit:
+              $ref: '#/components/headers/X-RateLimit-Limit'
+            X-RateLimit-Remaining:
+              $ref: '#/components/headers/X-RateLimit-Remaining'
+            X-RateLimit-Reset:
+              $ref: '#/components/headers/X-RateLimit-Reset'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              example:
+                accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                refreshToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                expiresIn: 3600
+                user:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  telegramId: 123456789
+                  username: john_doe
+                  avatarUrl: https://t.me/i/userpic/320/john_doe.jpg
+                  balance: 0.00
+                  role: player
+                  status: active
+                  createdAt: 2025-01-15T10:30:00Z
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid Telegram authentication data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/invalid-telegram-auth
+                title: Invalid Telegram Authentication
+                status: 401
+                detail: Telegram authentication hash validation failed
+                instance: /v1/auth/telegram
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh JWT access token
+      description: |
+        Obtains new access token using valid refresh token. Extends user session
+        without requiring re-authentication. Refresh token rotation implemented
+        for security.
+
+        Mapped to: FR-003
+      operationId: refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  description: Valid JWT refresh token
+                  example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/invalid-refresh-token
+                title: Invalid Refresh Token
+                status: 401
+                detail: Refresh token is expired or has been revoked
+                instance: /v1/auth/refresh
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user profile
+      description: |
+        Retrieves authenticated user's profile including balance and statistics.
+        Used for session verification and profile display.
+
+        Mapped to: FR-004
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+              example:
+                id: 550e8400-e29b-41d4-a716-446655440000
+                telegramId: 123456789
+                username: john_doe
+                avatarUrl: https://t.me/i/userpic/320/john_doe.jpg
+                balance: 150.50
+                role: player
+                status: active
+                createdAt: 2025-01-15T10:30:00Z
+                lastLogin: 2025-01-16T14:22:00Z
+                statistics:
+                  totalHandsPlayed: 42
+                  totalWinnings: 75.25
+                  totalLosses: 24.75
+                  winRate: 62.5
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Logout and invalidate tokens
+      description: |
+        Invalidates current access and refresh tokens. Terminates user session.
+        Client should discard stored tokens after logout.
+      operationId: logout
+      responses:
+        '204':
+          description: Logout successful, tokens invalidated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ==================== Wallet Module ====================
+  /wallet/deposit:
+    post:
+      tags:
+        - Wallet
+      summary: Request deposit
+      description: |
+        Creates deposit request with specified amount. Request enters pending
+        status awaiting admin approval. Balance updated after approval.
+
+        Mapped to: FR-006, FR-007
+      operationId: requestDeposit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: number
+                  format: decimal
+                  minimum: 10
+                  maximum: 10000
+                  description: Deposit amount in credits
+                  example: 100.00
+                notes:
+                  type: string
+                  maxLength: 500
+                  description: Optional notes for deposit request
+                  example: First deposit via bank transfer
+      responses:
+        '201':
+          description: Deposit request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+              example:
+                id: 660e8400-e29b-41d4-a716-446655440001
+                userId: 550e8400-e29b-41d4-a716-446655440000
+                type: deposit
+                amount: 100.00
+                balanceBefore: 50.50
+                balanceAfter: 50.50
+                status: pending
+                notes: First deposit via bank transfer
+                createdAt: 2025-01-16T15:30:00Z
+                processedBy: null
+                processedAt: null
+        '400':
+          description: Invalid deposit amount or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/invalid-deposit-amount
+                title: Invalid Deposit Amount
+                status: 400
+                detail: Deposit amount must be between 10 and 10000 credits
+                instance: /v1/wallet/deposit
+                errors:
+                  amount:
+                    - must be greater than or equal to 10
+                    - must be less than or equal to 10000
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /wallet/withdraw:
+    post:
+      tags:
+        - Wallet
+      summary: Request withdrawal
+      description: |
+        Creates withdrawal request if sufficient balance available. Deducts
+        amount from available balance immediately. Restored if request rejected.
+
+        Mapped to: FR-008, FR-009
+      operationId: requestWithdrawal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: number
+                  format: decimal
+                  minimum: 10
+                  maximum: 5000
+                  description: Withdrawal amount in credits
+                  example: 200.00
+                notes:
+                  type: string
+                  maxLength: 500
+                  description: Optional withdrawal notes
+                  example: Withdraw to bank account ending 1234
+      responses:
+        '201':
+          description: Withdrawal request created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+              example:
+                id: 770e8400-e29b-41d4-a716-446655440002
+                userId: 550e8400-e29b-41d4-a716-446655440000
+                type: withdrawal
+                amount: 200.00
+                balanceBefore: 350.50
+                balanceAfter: 150.50
+                status: pending
+                notes: Withdraw to bank account ending 1234
+                createdAt: 2025-01-16T16:00:00Z
+        '400':
+          description: Invalid withdrawal amount or insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/insufficient-balance
+                title: Insufficient Balance
+                status: 400
+                detail: Withdrawal amount exceeds available balance
+                instance: /v1/wallet/withdraw
+                balance: 150.50
+                requestedAmount: 200.00
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /wallet/balance:
+    get:
+      tags:
+        - Wallet
+      summary: Get current balance
+      description: |
+        Retrieves user's current available balance and locked balance (in active games).
+
+        Mapped to: FR-004
+      operationId: getBalance
+      responses:
+        '200':
+          description: Balance retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - userId
+                  - availableBalance
+                  - lockedBalance
+                  - totalBalance
+                properties:
+                  userId:
+                    type: string
+                    format: uuid
+                  availableBalance:
+                    type: number
+                    format: decimal
+                    description: Balance available for withdrawals and new games
+                  lockedBalance:
+                    type: number
+                    format: decimal
+                    description: Balance currently locked in active games
+                  totalBalance:
+                    type: number
+                    format: decimal
+                    description: Total balance (available + locked)
+              example:
+                userId: 550e8400-e29b-41d4-a716-446655440000
+                availableBalance: 150.50
+                lockedBalance: 40.00
+                totalBalance: 190.50
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /wallet/transactions:
+    get:
+      tags:
+        - Wallet
+      summary: List transaction history
+      description: |
+        Retrieves paginated transaction history with optional filters.
+        Supports cursor-based pagination for efficient large dataset handling.
+
+        Mapped to: FR-011, FR-012
+      operationId: listTransactions
+      parameters:
+        - name: cursor
+          in: query
+          description: Cursor for pagination (transaction ID)
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of transactions per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: type
+          in: query
+          description: Filter by transaction type
+          schema:
+            type: string
+            enum: [deposit, withdrawal, game_win, game_loss, admin_adjustment]
+        - name: status
+          in: query
+          description: Filter by transaction status
+          schema:
+            type: string
+            enum: [pending, processing, completed, rejected, failed]
+        - name: startDate
+          in: query
+          description: Filter transactions after this date
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          description: Filter transactions before this date
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Transaction list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  pagination:
+                    $ref: '#/components/schemas/CursorPagination'
+              example:
+                data:
+                  - id: 770e8400-e29b-41d4-a716-446655440002
+                    userId: 550e8400-e29b-41d4-a716-446655440000
+                    type: deposit
+                    amount: 100.00
+                    balanceBefore: 50.50
+                    balanceAfter: 150.50
+                    status: completed
+                    createdAt: 2025-01-16T10:00:00Z
+                    processedAt: 2025-01-16T10:05:00Z
+                  - id: 880e8400-e29b-41d4-a716-446655440003
+                    userId: 550e8400-e29b-41d4-a716-446655440000
+                    type: game_win
+                    amount: 25.00
+                    balanceBefore: 150.50
+                    balanceAfter: 175.50
+                    status: completed
+                    createdAt: 2025-01-16T11:30:00Z
+                pagination:
+                  nextCursor: 990e8400-e29b-41d4-a716-446655440004
+                  hasMore: true
+                  total: 42
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /wallet/transactions/{id}:
+    get:
+      tags:
+        - Wallet
+      summary: Get transaction details
+      description: |
+        Retrieves detailed information about specific transaction including
+        admin processing details if applicable.
+
+        Mapped to: FR-012
+      operationId: getTransaction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Transaction details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ==================== Room Module ====================
+  /rooms:
+    get:
+      tags:
+        - Room
+      summary: List available rooms
+      description: |
+        Retrieves paginated list of available poker rooms with filters.
+        Returns active and waiting rooms only (excludes completed/suspended).
+
+        Mapped to: FR-016, FR-017
+      operationId: listRooms
+      parameters:
+        - name: cursor
+          in: query
+          description: Cursor for pagination (room ID)
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of rooms per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: status
+          in: query
+          description: Filter by room status
+          schema:
+            type: string
+            enum: [waiting, active]
+        - name: minBlind
+          in: query
+          description: Minimum small blind filter
+          schema:
+            type: number
+            format: decimal
+        - name: maxBlind
+          in: query
+          description: Maximum small blind filter
+          schema:
+            type: number
+            format: decimal
+        - name: minPlayers
+          in: query
+          description: Minimum current players
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 9
+        - name: maxPlayers
+          in: query
+          description: Maximum current players
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 9
+        - name: hasSeats
+          in: query
+          description: Filter rooms with available seats
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Room list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Room'
+                  pagination:
+                    $ref: '#/components/schemas/CursorPagination'
+              example:
+                data:
+                  - id: 110e8400-e29b-41d4-a716-446655440010
+                    name: High Stakes Room
+                    smallBlind: 5.00
+                    bigBlind: 10.00
+                    minBuyIn: 100.00
+                    maxBuyIn: 1000.00
+                    maxPlayers: 9
+                    currentPlayers: 4
+                    status: active
+                    createdBy: 550e8400-e29b-41d4-a716-446655440000
+                    createdAt: 2025-01-16T12:00:00Z
+                  - id: 220e8400-e29b-41d4-a716-446655440011
+                    name: Micro Stakes
+                    smallBlind: 0.10
+                    bigBlind: 0.25
+                    minBuyIn: 5.00
+                    maxBuyIn: 25.00
+                    maxPlayers: 6
+                    currentPlayers: 2
+                    status: waiting
+                    createdBy: 660e8400-e29b-41d4-a716-446655440005
+                    createdAt: 2025-01-16T13:15:00Z
+                pagination:
+                  nextCursor: 330e8400-e29b-41d4-a716-446655440012
+                  hasMore: true
+                  total: 15
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - Room
+      summary: Create new room
+      description: |
+        Creates custom poker room with specified stakes and player limits.
+        Creator is automatically seated as first player.
+
+        Mapped to: FR-018, FR-019
+      operationId: createRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+            example:
+              name: My Private Game
+              smallBlind: 1.00
+              bigBlind: 2.00
+              minBuyIn: 40.00
+              maxBuyIn: 200.00
+              maxPlayers: 6
+      responses:
+        '201':
+          description: Room created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+              example:
+                id: 440e8400-e29b-41d4-a716-446655440013
+                name: My Private Game
+                smallBlind: 1.00
+                bigBlind: 2.00
+                minBuyIn: 40.00
+                maxBuyIn: 200.00
+                maxPlayers: 6
+                currentPlayers: 1
+                status: waiting
+                createdBy: 550e8400-e29b-41d4-a716-446655440000
+                createdAt: 2025-01-16T14:00:00Z
+        '400':
+          description: Invalid room configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/invalid-room-config
+                title: Invalid Room Configuration
+                status: 400
+                detail: Room configuration validation failed
+                instance: /v1/rooms
+                errors:
+                  maxBuyIn:
+                    - must be greater than or equal to minBuyIn
+                  bigBlind:
+                    - must be greater than smallBlind
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rooms/{id}:
+    get:
+      tags:
+        - Room
+      summary: Get room details
+      description: |
+        Retrieves detailed information about specific room including current
+        players and game state summary.
+
+        Mapped to: FR-016
+      operationId: getRoom
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Room UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Room details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rooms/{id}/join:
+    post:
+      tags:
+        - Room
+      summary: Join room with buy-in
+      description: |
+        Joins poker room if sufficient balance and seats available. Deducts
+        buy-in from balance and seats player at table.
+
+        Mapped to: FR-020, FR-021, FR-022, FR-023, FR-024
+      operationId: joinRoom
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Room UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - buyIn
+              properties:
+                buyIn:
+                  type: number
+                  format: decimal
+                  minimum: 0.01
+                  description: Buy-in amount (must be between room min and max)
+                  example: 100.00
+                seatPreference:
+                  type: integer
+                  minimum: 0
+                  maximum: 8
+                  description: Preferred seat number (optional, 0-8)
+                  example: 3
+      responses:
+        '200':
+          description: Successfully joined room
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - roomId
+                  - seatNumber
+                  - chipStack
+                  - newBalance
+                properties:
+                  roomId:
+                    type: string
+                    format: uuid
+                  seatNumber:
+                    type: integer
+                    minimum: 0
+                    maximum: 8
+                  chipStack:
+                    type: number
+                    format: decimal
+                  newBalance:
+                    type: number
+                    format: decimal
+              example:
+                roomId: 110e8400-e29b-41d4-a716-446655440010
+                seatNumber: 3
+                chipStack: 100.00
+                newBalance: 50.50
+        '400':
+          description: Invalid buy-in or insufficient balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/insufficient-balance
+                title: Insufficient Balance
+                status: 400
+                detail: Insufficient balance for buy-in
+                instance: /v1/rooms/110e8400-e29b-41d4-a716-446655440010/join
+                requiredAmount: 100.00
+                availableBalance: 50.50
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Room full or player already seated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/room-full
+                title: Room Full
+                status: 409
+                detail: No available seats in this room
+                instance: /v1/rooms/110e8400-e29b-41d4-a716-446655440010/join
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rooms/{id}/leave:
+    post:
+      tags:
+        - Room
+      summary: Leave room and cash out
+      description: |
+        Leaves poker room and returns remaining chip stack to user balance.
+        Cannot leave during active hand.
+      operationId: leaveRoom
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Room UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully left room
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - chipStackReturned
+                  - newBalance
+                properties:
+                  chipStackReturned:
+                    type: number
+                    format: decimal
+                  newBalance:
+                    type: number
+                    format: decimal
+              example:
+                chipStackReturned: 125.50
+                newBalance: 176.00
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Cannot leave during active hand
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/cannot-leave-during-hand
+                title: Cannot Leave During Hand
+                status: 409
+                detail: You must wait until the current hand completes before leaving
+                instance: /v1/rooms/110e8400-e29b-41d4-a716-446655440010/leave
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ==================== Game Module ====================
+  /games/{id}/state:
+    get:
+      tags:
+        - Game
+      summary: Get current game state
+      description: |
+        Retrieves complete game state for active hand including player positions,
+        chip stacks, community cards, and current action.
+
+        Mapped to: FR-042, FR-043, FR-044
+      operationId: getGameState
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: GameHand UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Game state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameState'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Not authorized to view this game
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{id}/history:
+    get:
+      tags:
+        - Game
+      summary: Get hand history
+      description: |
+        Retrieves complete action history for completed hand including all
+        player actions, cards dealt, and pot distribution.
+      operationId: getHandHistory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: GameHand UUID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Hand history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HandHistory'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /games/{id}/actions:
+    post:
+      tags:
+        - Game
+      summary: Submit player action
+      description: |
+        Submits player action (fold, check, call, bet, raise, all-in) for
+        current turn. Validates action legality and amount.
+
+        Mapped to: FR-031, FR-032, FR-033
+      operationId: submitAction
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: GameHand UUID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerAction'
+            examples:
+              fold:
+                summary: Fold action
+                value:
+                  action: fold
+              call:
+                summary: Call action
+                value:
+                  action: call
+              raise:
+                summary: Raise action
+                value:
+                  action: raise
+                  amount: 20.00
+              allIn:
+                summary: All-in action
+                value:
+                  action: all_in
+      responses:
+        '200':
+          description: Action submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - actionId
+                  - newChipStack
+                  - currentPot
+                properties:
+                  actionId:
+                    type: string
+                    format: uuid
+                  newChipStack:
+                    type: number
+                    format: decimal
+                  currentPot:
+                    type: number
+                    format: decimal
+              example:
+                actionId: aa0e8400-e29b-41d4-a716-446655440020
+                newChipStack: 80.00
+                currentPot: 45.00
+        '400':
+          description: Invalid action or amount
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+              example:
+                type: https://api.pokerplatform.example.com/errors/invalid-action
+                title: Invalid Action
+                status: 400
+                detail: Raise amount does not meet minimum raise requirement
+                instance: /v1/games/bb0e8400-e29b-41d4-a716-446655440015/actions
+                minRaise: 20.00
+                attemptedRaise: 15.00
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Not player's turn
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Action not allowed in current game state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ==================== Admin Module ====================
+  /admin/dashboard:
+    get:
+      tags:
+        - Admin
+      summary: Get dashboard metrics
+      description: |
+        Retrieves real-time platform metrics including active users, rooms,
+        financial summary, and recent activity.
+
+        Mapped to: FR-050, FR-051, FR-052
+      operationId: getAdminDashboard
+      security:
+        - bearerAuth: []
+          adminRole: []
+      responses:
+        '200':
+          description: Dashboard metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/withdrawals:
+    get:
+      tags:
+        - Admin
+      summary: List pending withdrawals
+      description: |
+        Retrieves queue of pending withdrawal requests for admin review.
+        Sorted by creation date (oldest first).
+
+        Mapped to: FR-055, FR-056
+      operationId: listPendingWithdrawals
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [pending, processing]
+            default: pending
+      responses:
+        '200':
+          description: Withdrawal queue retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WithdrawalDetails'
+                  pagination:
+                    $ref: '#/components/schemas/CursorPagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/withdrawals/{id}/approve:
+    post:
+      tags:
+        - Admin
+      summary: Approve withdrawal request
+      description: |
+        Approves withdrawal request and submits to payment gateway for processing.
+
+        Mapped to: FR-057, FR-059, FR-060
+      operationId: approveWithdrawal
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  maxLength: 1000
+                  description: Optional admin notes
+                  example: Verified via support ticket #12345
+      responses:
+        '200':
+          description: Withdrawal approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Withdrawal already processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/withdrawals/{id}/reject:
+    post:
+      tags:
+        - Admin
+      summary: Reject withdrawal request
+      description: |
+        Rejects withdrawal request, restores balance, and notifies user with reason.
+
+        Mapped to: FR-058, FR-061
+      operationId: rejectWithdrawal
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                  description: Rejection reason (required)
+                  example: Unable to verify account ownership. Please contact support.
+      responses:
+        '200':
+          description: Withdrawal rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Missing or invalid rejection reason
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/users:
+    get:
+      tags:
+        - Admin
+      summary: List all users
+      description: |
+        Retrieves paginated list of registered users with search and filter capabilities.
+
+        Mapped to: FR-063, FR-064
+      operationId: listUsers
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: search
+          in: query
+          description: Search by username or Telegram ID
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: Filter by account status
+          schema:
+            type: string
+            enum: [active, suspended, banned]
+        - name: role
+          in: query
+          description: Filter by role
+          schema:
+            type: string
+            enum: [player, admin]
+      responses:
+        '200':
+          description: User list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminUserDetails'
+                  pagination:
+                    $ref: '#/components/schemas/CursorPagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/users/{id}/suspend:
+    post:
+      tags:
+        - Admin
+      summary: Suspend user account
+      description: |
+        Temporarily suspends user account preventing login and gameplay.
+        Active sessions terminated immediately.
+
+        Mapped to: FR-065, FR-067, FR-068
+      operationId: suspendUser
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                  description: Suspension reason (required)
+                  example: Suspected collusion, under investigation
+                durationDays:
+                  type: integer
+                  minimum: 1
+                  maximum: 365
+                  description: Suspension duration in days (optional, null = indefinite)
+                  example: 7
+      responses:
+        '200':
+          description: User suspended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/users/{id}/ban:
+    post:
+      tags:
+        - Admin
+      summary: Ban user permanently
+      description: |
+        Permanently bans user account. Cannot be reversed. All active
+        sessions terminated and remaining balance frozen.
+
+        Mapped to: FR-066, FR-067, FR-068
+      operationId: banUser
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                  description: Ban reason (required)
+                  example: Confirmed cheating via third-party software
+      responses:
+        '200':
+          description: User banned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/rooms:
+    get:
+      tags:
+        - Admin
+      summary: List all rooms
+      description: |
+        Retrieves complete list of rooms including active, completed, and suspended.
+
+        Mapped to: FR-070, FR-071
+      operationId: listAllRooms
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: status
+          in: query
+          description: Filter by room status
+          schema:
+            type: string
+            enum: [waiting, active, completed, suspended]
+      responses:
+        '200':
+          description: Room list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AdminRoomDetails'
+                  pagination:
+                    $ref: '#/components/schemas/CursorPagination'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/rooms/{id}/suspend:
+    post:
+      tags:
+        - Admin
+      summary: Suspend room
+      description: |
+        Suspends active room, pausing current hand and preventing new actions.
+
+        Mapped to: FR-072, FR-073
+      operationId: suspendRoom
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reason
+              properties:
+                reason:
+                  type: string
+                  minLength: 10
+                  maxLength: 1000
+                  description: Suspension reason (required)
+                  example: Player dispute reported, investigating hand #42
+      responses:
+        '200':
+          description: Room suspended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/transactions:
+    get:
+      tags:
+        - Admin
+      summary: View all transactions
+      description: |
+        Retrieves complete transaction log with advanced filters and export capability.
+
+        Mapped to: FR-092
+      operationId: listAllTransactions
+      security:
+        - bearerAuth: []
+          adminRole: []
+      parameters:
+        - name: cursor
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: userId
+          in: query
+          description: Filter by user ID
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [deposit, withdrawal, game_win, game_loss, admin_adjustment]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, rejected, failed]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: export
+          in: query
+          description: Export format (csv or json)
+          schema:
+            type: string
+            enum: [csv, json]
+      responses:
+        '200':
+          description: Transaction log retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - pagination
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransactionDetails'
+                  pagination:
+                    $ref: '#/components/schemas/CursorPagination'
+            text/csv:
+              schema:
+                type: string
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /admin/settings:
+    get:
+      tags:
+        - Admin
+      summary: Get platform settings
+      description: |
+        Retrieves current platform configuration including game settings,
+        financial limits, and feature flags.
+
+        Mapped to: FR-076 to FR-083
+      operationId: getPlatformSettings
+      security:
+        - bearerAuth: []
+          adminRole: []
+      responses:
+        '200':
+          description: Platform settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformSettings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      tags:
+        - Admin
+      summary: Update platform settings
+      description: |
+        Updates platform configuration. Changes apply immediately to new games
+        and transactions.
+
+        Mapped to: FR-076 to FR-083
+      operationId: updatePlatformSettings
+      security:
+        - bearerAuth: []
+          adminRole: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatformSettings'
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+# ==================== Components ====================
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from /auth/telegram or /auth/refresh
+    adminRole:
+      type: apiKey
+      in: header
+      name: X-Admin-Role
+      description: Admin role verification (handled by JWT claims)
+
+  headers:
+    X-RateLimit-Limit:
+      description: Maximum requests per time window
+      schema:
+        type: integer
+        example: 100
+    X-RateLimit-Remaining:
+      description: Remaining requests in current window
+      schema:
+        type: integer
+        example: 95
+    X-RateLimit-Reset:
+      description: Unix timestamp when rate limit resets
+      schema:
+        type: integer
+        example: 1705312800
+
+  schemas:
+    # ==================== Auth Schemas ====================
+    TelegramAuthRequest:
+      type: object
+      required:
+        - telegramId
+        - authDate
+        - hash
+      properties:
+        telegramId:
+          type: integer
+          format: int64
+          description: Telegram user ID
+          example: 123456789
+        username:
+          type: string
+          maxLength: 255
+          description: Telegram username
+          example: john_doe
+        firstName:
+          type: string
+          maxLength: 255
+          description: User first name
+          example: John
+        lastName:
+          type: string
+          maxLength: 255
+          description: User last name
+          example: Doe
+        photoUrl:
+          type: string
+          format: uri
+          maxLength: 500
+          description: Telegram profile photo URL
+          example: https://t.me/i/userpic/320/john_doe.jpg
+        authDate:
+          type: integer
+          format: int64
+          description: Unix timestamp of authentication
+          example: 1705312800
+        hash:
+          type: string
+          minLength: 64
+          maxLength: 64
+          description: Telegram authentication hash
+          example: a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
+
+    AuthResponse:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+        - expiresIn
+        - user
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        refreshToken:
+          type: string
+          description: JWT refresh token
+        expiresIn:
+          type: integer
+          description: Access token expiration in seconds
+          example: 3600
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    UserProfile:
+      type: object
+      required:
+        - id
+        - telegramId
+        - username
+        - balance
+        - role
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        telegramId:
+          type: integer
+          format: int64
+        username:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        balance:
+          type: number
+          format: decimal
+          minimum: 0
+        role:
+          type: string
+          enum: [player, admin]
+        status:
+          type: string
+          enum: [active, suspended, banned]
+        suspensionReason:
+          type: string
+          nullable: true
+        lastLogin:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        statistics:
+          $ref: '#/components/schemas/UserStatistics'
+          nullable: true
+
+    UserStatistics:
+      type: object
+      required:
+        - totalHandsPlayed
+        - totalWinnings
+        - totalLosses
+        - winRate
+      properties:
+        totalHandsPlayed:
+          type: integer
+          minimum: 0
+        totalWinnings:
+          type: number
+          format: decimal
+          minimum: 0
+        totalLosses:
+          type: number
+          format: decimal
+          minimum: 0
+        winRate:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 100
+          description: Win rate percentage
+
+    # ==================== Transaction Schemas ====================
+    Transaction:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - amount
+        - balanceBefore
+        - balanceAfter
+        - status
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [deposit, withdrawal, game_win, game_loss, admin_adjustment]
+        amount:
+          type: number
+          format: decimal
+          minimum: 0.01
+        balanceBefore:
+          type: number
+          format: decimal
+          minimum: 0
+        balanceAfter:
+          type: number
+          format: decimal
+          minimum: 0
+        status:
+          type: string
+          enum: [pending, processing, completed, rejected, failed]
+        referenceId:
+          type: string
+          nullable: true
+          description: External payment gateway reference
+        notes:
+          type: string
+          nullable: true
+        processedBy:
+          type: string
+          format: uuid
+          nullable: true
+          description: Admin user ID who processed transaction
+        processedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    TransactionDetails:
+      allOf:
+        - $ref: '#/components/schemas/Transaction'
+        - type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/UserProfile'
+            processor:
+              $ref: '#/components/schemas/UserProfile'
+              nullable: true
+
+    WithdrawalDetails:
+      allOf:
+        - $ref: '#/components/schemas/TransactionDetails'
+        - type: object
+          properties:
+            userTransactionHistory:
+              type: array
+              items:
+                $ref: '#/components/schemas/Transaction'
+              description: Recent transaction history for context
+
+    # ==================== Room Schemas ====================
+    Room:
+      type: object
+      required:
+        - id
+        - name
+        - smallBlind
+        - bigBlind
+        - minBuyIn
+        - maxBuyIn
+        - maxPlayers
+        - currentPlayers
+        - status
+        - createdBy
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        smallBlind:
+          type: number
+          format: decimal
+          minimum: 0.01
+        bigBlind:
+          type: number
+          format: decimal
+          minimum: 0.02
+        minBuyIn:
+          type: number
+          format: decimal
+          minimum: 1
+        maxBuyIn:
+          type: number
+          format: decimal
+          minimum: 1
+        maxPlayers:
+          type: integer
+          minimum: 2
+          maximum: 9
+        currentPlayers:
+          type: integer
+          minimum: 0
+          maximum: 9
+        status:
+          type: string
+          enum: [waiting, active, completed, suspended]
+        createdBy:
+          type: string
+          format: uuid
+        suspensionReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    RoomDetails:
+      allOf:
+        - $ref: '#/components/schemas/Room'
+        - type: object
+          properties:
+            creator:
+              $ref: '#/components/schemas/UserProfile'
+            currentHand:
+              $ref: '#/components/schemas/GameHandSummary'
+              nullable: true
+            seatedPlayers:
+              type: array
+              items:
+                $ref: '#/components/schemas/SeatedPlayer'
+
+    CreateRoomRequest:
+      type: object
+      required:
+        - name
+        - smallBlind
+        - bigBlind
+        - minBuyIn
+        - maxBuyIn
+        - maxPlayers
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: My Private Game
+        smallBlind:
+          type: number
+          format: decimal
+          minimum: 0.01
+          example: 1.00
+        bigBlind:
+          type: number
+          format: decimal
+          minimum: 0.02
+          example: 2.00
+        minBuyIn:
+          type: number
+          format: decimal
+          minimum: 1
+          example: 40.00
+        maxBuyIn:
+          type: number
+          format: decimal
+          minimum: 1
+          example: 200.00
+        maxPlayers:
+          type: integer
+          minimum: 2
+          maximum: 9
+          example: 6
+
+    SeatedPlayer:
+      type: object
+      required:
+        - userId
+        - username
+        - avatarUrl
+        - position
+        - chipStack
+        - status
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+        position:
+          type: integer
+          minimum: 0
+          maximum: 8
+        chipStack:
+          type: number
+          format: decimal
+          minimum: 0
+        status:
+          type: string
+          enum: [active, folded, all_in, disconnected, sitting_out]
+
+    # ==================== Game Schemas ====================
+    GameState:
+      type: object
+      required:
+        - handId
+        - roomId
+        - handNumber
+        - phase
+        - dealerPosition
+        - potAmount
+        - communityCards
+        - players
+        - currentTurn
+        - actionTimerEndsAt
+      properties:
+        handId:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        handNumber:
+          type: integer
+          minimum: 1
+        phase:
+          type: string
+          enum: [preflop, flop, turn, river, showdown, completed]
+        dealerPosition:
+          type: integer
+          minimum: 0
+          maximum: 8
+        potAmount:
+          type: number
+          format: decimal
+          minimum: 0
+        communityCards:
+          type: array
+          items:
+            type: string
+            pattern: '^[2-9TJQKA][cdhs]$'
+          minItems: 0
+          maxItems: 5
+          example: ['Ah', 'Kd', '5c']
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerState'
+        currentTurn:
+          type: integer
+          minimum: 0
+          maximum: 8
+          nullable: true
+        actionTimerEndsAt:
+          type: string
+          format: date-time
+          nullable: true
+        startedAt:
+          type: string
+          format: date-time
+
+    PlayerState:
+      type: object
+      required:
+        - userId
+        - position
+        - chipStack
+        - currentBet
+        - status
+        - hasActed
+      properties:
+        userId:
+          type: string
+          format: uuid
+        position:
+          type: integer
+          minimum: 0
+          maximum: 8
+        chipStack:
+          type: number
+          format: decimal
+          minimum: 0
+        currentBet:
+          type: number
+          format: decimal
+          minimum: 0
+        status:
+          type: string
+          enum: [active, folded, all_in, disconnected, sitting_out]
+        hasActed:
+          type: boolean
+        holeCards:
+          type: array
+          items:
+            type: string
+            pattern: '^[2-9TJQKA][cdhs]$'
+          minItems: 0
+          maxItems: 2
+          nullable: true
+          description: Only visible to card owner or at showdown
+
+    PlayerAction:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [fold, check, call, bet, raise, all_in]
+        amount:
+          type: number
+          format: decimal
+          minimum: 0
+          nullable: true
+          description: Required for bet and raise actions
+
+    GameHandSummary:
+      type: object
+      required:
+        - handId
+        - handNumber
+        - phase
+        - potAmount
+      properties:
+        handId:
+          type: string
+          format: uuid
+        handNumber:
+          type: integer
+        phase:
+          type: string
+          enum: [preflop, flop, turn, river, showdown, completed]
+        potAmount:
+          type: number
+          format: decimal
+
+    HandHistory:
+      type: object
+      required:
+        - handId
+        - roomId
+        - handNumber
+        - startedAt
+        - completedAt
+        - players
+        - actions
+        - communityCards
+        - winners
+      properties:
+        handId:
+          type: string
+          format: uuid
+        roomId:
+          type: string
+          format: uuid
+        handNumber:
+          type: integer
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/HandHistoryPlayer'
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/HandHistoryAction'
+        communityCards:
+          type: array
+          items:
+            type: string
+        winners:
+          type: array
+          items:
+            $ref: '#/components/schemas/HandWinner'
+
+    HandHistoryPlayer:
+      type: object
+      required:
+        - userId
+        - username
+        - position
+        - initialChipStack
+        - finalChipStack
+        - holeCards
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        position:
+          type: integer
+        initialChipStack:
+          type: number
+          format: decimal
+        finalChipStack:
+          type: number
+          format: decimal
+        holeCards:
+          type: array
+          items:
+            type: string
+          minItems: 2
+          maxItems: 2
+
+    HandHistoryAction:
+      type: object
+      required:
+        - playerId
+        - action
+        - amount
+        - phase
+        - timestamp
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        action:
+          type: string
+          enum: [fold, check, call, bet, raise, all_in, post_small_blind, post_big_blind]
+        amount:
+          type: number
+          format: decimal
+        phase:
+          type: string
+          enum: [preflop, flop, turn, river]
+        timestamp:
+          type: string
+          format: date-time
+
+    HandWinner:
+      type: object
+      required:
+        - userId
+        - amount
+        - handRank
+        - handCards
+      properties:
+        userId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: decimal
+        handRank:
+          type: string
+          example: Full House
+        handCards:
+          type: array
+          items:
+            type: string
+          minItems: 5
+          maxItems: 5
+
+    # ==================== Admin Schemas ====================
+    AdminDashboard:
+      type: object
+      required:
+        - activeUsers
+        - activeRooms
+        - totalPlayersOnline
+        - pendingWithdrawals
+        - financialSummary
+        - recentActivity
+      properties:
+        activeUsers:
+          type: integer
+          minimum: 0
+          description: Users active in last 5 minutes
+        activeRooms:
+          type: integer
+          minimum: 0
+          description: Rooms with active hands
+        totalPlayersOnline:
+          type: integer
+          minimum: 0
+          description: Total players currently seated
+        pendingWithdrawals:
+          type: integer
+          minimum: 0
+          description: Count of pending withdrawal requests
+        financialSummary:
+          $ref: '#/components/schemas/FinancialSummary'
+        recentActivity:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActivityEvent'
+          description: Last 20 significant events
+
+    FinancialSummary:
+      type: object
+      required:
+        - totalDeposits24h
+        - totalWithdrawals24h
+        - pendingWithdrawalAmount
+        - platformProfit24h
+      properties:
+        totalDeposits24h:
+          type: number
+          format: decimal
+        totalWithdrawals24h:
+          type: number
+          format: decimal
+        pendingWithdrawalAmount:
+          type: number
+          format: decimal
+        platformProfit24h:
+          type: number
+          format: decimal
+
+    ActivityEvent:
+      type: object
+      required:
+        - eventType
+        - description
+        - timestamp
+      properties:
+        eventType:
+          type: string
+          enum: [user_registered, deposit_requested, withdrawal_approved, room_created, game_completed]
+        description:
+          type: string
+        userId:
+          type: string
+          format: uuid
+          nullable: true
+        timestamp:
+          type: string
+          format: date-time
+
+    AdminUserDetails:
+      allOf:
+        - $ref: '#/components/schemas/UserProfile'
+        - type: object
+          properties:
+            totalDeposits:
+              type: number
+              format: decimal
+            totalWithdrawals:
+              type: number
+              format: decimal
+            gamesPlayed:
+              type: integer
+            lastActivity:
+              type: string
+              format: date-time
+              nullable: true
+
+    AdminRoomDetails:
+      allOf:
+        - $ref: '#/components/schemas/RoomDetails'
+        - type: object
+          properties:
+            totalHandsPlayed:
+              type: integer
+            totalPotAwarded:
+              type: number
+              format: decimal
+            lastActivity:
+              type: string
+              format: date-time
+              nullable: true
+
+    PlatformSettings:
+      type: object
+      required:
+        - defaultSmallBlind
+        - defaultBigBlind
+        - maxRoomSize
+        - actionTimerSeconds
+        - disconnectTimeoutSeconds
+        - minDepositAmount
+        - maxDepositAmount
+        - minWithdrawalAmount
+        - maxWithdrawalAmount
+        - withdrawalFeePercent
+        - maintenanceMode
+        - allowRoomCreation
+        - allowDeposits
+        - allowWithdrawals
+      properties:
+        defaultSmallBlind:
+          type: number
+          format: decimal
+          minimum: 0.01
+        defaultBigBlind:
+          type: number
+          format: decimal
+          minimum: 0.02
+        maxRoomSize:
+          type: integer
+          minimum: 2
+          maximum: 9
+        actionTimerSeconds:
+          type: integer
+          minimum: 10
+          maximum: 120
+        disconnectTimeoutSeconds:
+          type: integer
+          minimum: 30
+          maximum: 300
+        minDepositAmount:
+          type: number
+          format: decimal
+          minimum: 1
+        maxDepositAmount:
+          type: number
+          format: decimal
+          minimum: 1
+        minWithdrawalAmount:
+          type: number
+          format: decimal
+          minimum: 1
+        maxWithdrawalAmount:
+          type: number
+          format: decimal
+          minimum: 1
+        withdrawalFeePercent:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 100
+        maintenanceMode:
+          type: boolean
+        maintenanceMessage:
+          type: string
+          maxLength: 500
+          nullable: true
+        announcementBanner:
+          type: string
+          maxLength: 500
+          nullable: true
+        allowRoomCreation:
+          type: boolean
+        allowDeposits:
+          type: boolean
+        allowWithdrawals:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+        updatedBy:
+          type: string
+          format: uuid
+          nullable: true
+
+    # ==================== Utility Schemas ====================
+    CursorPagination:
+      type: object
+      required:
+        - hasMore
+      properties:
+        nextCursor:
+          type: string
+          format: uuid
+          nullable: true
+          description: Cursor for next page (null if no more data)
+        hasMore:
+          type: boolean
+          description: Whether more data is available
+        total:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Total count (optional, may be expensive to compute)
+
+    ProblemDetails:
+      type: object
+      required:
+        - type
+        - title
+        - status
+        - detail
+        - instance
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI reference identifying the problem type
+          example: https://api.pokerplatform.example.com/errors/insufficient-balance
+        title:
+          type: string
+          description: Short, human-readable summary
+          example: Insufficient Balance
+        status:
+          type: integer
+          description: HTTP status code
+          example: 400
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence
+          example: Withdrawal amount exceeds available balance
+        instance:
+          type: string
+          format: uri
+          description: URI reference identifying the specific occurrence
+          example: /v1/wallet/withdraw
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          description: Validation errors by field name
+          nullable: true
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters or validation errors
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://api.pokerplatform.example.com/errors/validation-error
+            title: Validation Error
+            status: 400
+            detail: Request validation failed
+            instance: /v1/wallet/deposit
+            errors:
+              amount:
+                - must be a positive number
+                - must not exceed maximum deposit amount
+
+    Unauthorized:
+      description: Unauthorized - missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://api.pokerplatform.example.com/errors/unauthorized
+            title: Unauthorized
+            status: 401
+            detail: Valid authentication token required
+            instance: /v1/wallet/balance
+
+    Forbidden:
+      description: Forbidden - insufficient permissions for requested resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://api.pokerplatform.example.com/errors/forbidden
+            title: Forbidden
+            status: 403
+            detail: Admin role required for this operation
+            instance: /v1/admin/dashboard
+
+    NotFound:
+      description: Not found - requested resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://api.pokerplatform.example.com/errors/not-found
+            title: Not Found
+            status: 404
+            detail: Requested resource not found
+            instance: /v1/rooms/550e8400-e29b-41d4-a716-446655440099
+
+    InternalServerError:
+      description: Internal server error - unexpected server-side error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            type: https://api.pokerplatform.example.com/errors/internal-error
+            title: Internal Server Error
+            status: 500
+            detail: An unexpected error occurred while processing your request
+            instance: /v1/games/bb0e8400-e29b-41d4-a716-446655440015/state
