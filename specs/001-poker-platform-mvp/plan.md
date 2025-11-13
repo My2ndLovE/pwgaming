@@ -28,7 +28,7 @@ Build a Telegram mini app + web platform for Texas Hold'em poker with real-time 
 **Target Platform**:
 - Primary: Telegram Mini App (mobile-first, portrait orientation)
 - Secondary: Web application (responsive desktop fallback)
-- Server: Linux server (Docker containers, cloud deployment)
+- Server: Azure Container Apps (Southeast Asia region, auto-scaling)
 
 **Project Type**: Web application (separate backend and frontend)
 
@@ -237,6 +237,93 @@ docs/                    # Project documentation (existing)
    - Output: i18n architecture in research.md
 
 **Next Step**: Generate `research.md` using Task tool with general-purpose agent for comprehensive research on each topic.
+
+## Azure Deployment Architecture
+
+### Cloud Infrastructure (Microsoft Azure)
+
+**Deployment Region**: Southeast Asia (Singapore) - `southeastasia`
+- Primary market: Southeast Asia (Philippines, Thailand, Vietnam, Indonesia)
+- Latency: 10-50ms to target markets
+- Compliance: Singapore data residency for gambling licenses
+
+**Core Services**:
+
+| Component | Azure Service | SKU (MVP) | Monthly Cost | Rationale |
+|-----------|---------------|-----------|--------------|-----------|
+| **Backend API** | Azure Container Apps | 0.5 vCPU, 1GB RAM, 1 replica | $25 | Auto-scaling, WebSocket sticky sessions, serverless pricing |
+| **Frontend** | Azure Static Web Apps | Free tier | $0 | CDN included, global edge caching, Telegram Mini App optimized |
+| **Database** | PostgreSQL Flexible Server | B1ms (1 vCore, 2GB) | $25 | ACID transactions, TypeORM native, pessimistic locking |
+| **Cache** | Azure Cache for Redis | Basic C1 (1GB) | $16 | Socket.io pub/sub, game state, session management |
+| **Storage** | Blob Storage (Hot tier) | 1GB | <$1 | Card images (WebP), user avatars, CDN integration |
+| **Secrets** | Key Vault | Standard | $0 (free tier) | JWT secrets, DB credentials, Telegram bot token |
+| **Monitoring** | Application Insights | 5GB/month | $0 (free tier) | Custom metrics, alerts, financial event tracking |
+| **Registry** | Container Registry | Basic | $5 | Docker image storage |
+| **Total MVP** | | | **~$72/month** | **Scales to $323/month for 100+ concurrent players** |
+
+**Architecture Decision: Express vs Fastify**
+
+**RECOMMENDATION: NestJS with Express (Default)**
+
+| Criterion | Express | Fastify | Winner |
+|-----------|---------|---------|--------|
+| Socket.io Maturity | Native, battle-tested | Adapter required | Express |
+| Latency (p95) | 12.8ms | 6.3ms | Fastify |
+| Throughput | 32k req/s | 68k req/s | Fastify |
+| MVP Timeline Risk | Low | Medium | Express |
+| Target (200ms p95) | ✅ Met (12.8ms) | ✅ Met (6.3ms) | Tie |
+
+**Decision**: Start with **Express** for MVP (proven WebSocket support), evaluate Fastify migration when concurrent players exceed 300.
+
+**WebSocket Configuration**:
+```yaml
+# Container Apps sticky sessions for Socket.io
+sessionAffinity: sticky
+transport: auto  # HTTP/1.1, HTTP/2, WebSocket
+pingInterval: 10000ms
+pingTimeout: 5000ms
+```
+
+**Database Configuration**:
+```typescript
+// Azure PostgreSQL with SSL
+{
+  type: 'postgres',
+  host: 'poker-db.postgres.database.azure.com',
+  ssl: { rejectUnauthorized: false },
+  extra: {
+    max: 20,  // Connection pool for 100 concurrent
+    min: 2,
+    idleTimeoutMillis: 30000,
+  }
+}
+```
+
+**Redis Configuration**:
+```typescript
+// Azure Redis with TLS
+{
+  host: 'poker-redis.redis.cache.windows.net',
+  port: 6380,
+  password: process.env.REDIS_KEY,
+  tls: { servername: 'poker-redis.redis.cache.windows.net' },
+  lazyConnect: true,
+}
+```
+
+**Cost Optimization Strategies**:
+1. **Auto-scaling**: Scale Container Apps to 1 replica during off-peak (save 50%)
+2. **Reserved Capacity**: 1-year PostgreSQL reservation (save 32%)
+3. **Blob Lifecycle**: Archive old game replays after 90 days
+4. **Budget Alerts**: $80/month (MVP), $350/month (scale)
+
+**Deployment Pipeline** (GitHub Actions + Azure):
+```yaml
+# Backend: Build → ACR → Container Apps
+# Frontend: Build → Static Web Apps (automatic)
+# Database: Migrations via TypeORM CLI
+# Monitoring: Application Insights auto-instrumented
+```
 
 ## Phase 1: Design & Contracts ✅ COMPLETED
 

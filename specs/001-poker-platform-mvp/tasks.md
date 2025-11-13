@@ -9,16 +9,17 @@
 
 ## Summary
 
-**Total Tasks**: 247
+**Total Tasks**: 265
 **User Stories**: 12 (7 P1, 3 P2, 2 P3)
 **Estimated Timeline**: 8 weeks
 **MVP Scope**: User Stories 1, 2, 3, 5, 9 (P1 stories)
+**Deployment**: Azure (Container Apps, PostgreSQL, Redis, Static Web Apps)
 
 ### Task Breakdown by Phase
 
 | Phase | Name | Task Count | Story |
 |-------|------|------------|-------|
-| 1 | Setup & Infrastructure | 25 | N/A |
+| 1 | Setup & Infrastructure (Azure) | 43 | N/A |
 | 2 | Foundational Services | 18 | N/A |
 | 3 | User Story 1 - Authentication | 22 | P1 |
 | 4 | User Story 2 - Wallet Management | 24 | P1 |
@@ -121,35 +122,59 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 - [ ] T006 [P] Install backend dependencies: @nestjs/typeorm, typeorm, pg, redis, socket.io, class-validator, class-transformer, bcrypt, @nestjs/jwt, @nestjs/passport
 - [ ] T007 [P] Install frontend dependencies: socket.io-client, @telegram-apps/sdk, lucide-react, tailwindcss, zustand
 
-### Database & Cache Setup
+### Azure Infrastructure Setup
 
-- [ ] T008 Create Docker Compose file with PostgreSQL 15, Redis 7, and pgAdmin services
-- [ ] T009 Configure TypeORM data source in backend/src/config/database.config.ts
-- [ ] T010 Configure Redis connection in backend/src/config/redis.config.ts
-- [ ] T011 Create database migration script structure in backend/migrations/
+- [ ] T008 Install Azure CLI and authenticate (az login)
+- [ ] T009 Create Azure resource group in Southeast Asia region (poker-platform-rg)
+- [ ] T010 Create Azure Key Vault for secrets management (JWT, DB credentials, Telegram token)
+- [ ] T011 Create Azure Container Registry for Docker images (pokerplatformacr)
+- [ ] T012 Create Azure PostgreSQL Flexible Server (B1ms SKU, 32GB storage, version 15)
+- [ ] T013 Configure PostgreSQL SSL enforcement and connection pool settings (max_connections: 100)
+- [ ] T014 Create poker_platform database and run initial setup
+- [ ] T015 Create Azure Cache for Redis (Basic C1, 1GB, TLS enabled)
+- [ ] T016 Configure Redis persistence (AOF for game state integrity)
+- [ ] T017 Store database and Redis connection strings in Key Vault
+
+### Database & Local Development Setup
+
+- [ ] T018 Create Docker Compose file for local development (PostgreSQL 15, Redis 7, pgAdmin)
+- [ ] T019 Configure TypeORM data source with Azure PostgreSQL SSL settings in backend/src/config/database.config.ts
+- [ ] T020 Configure Redis connection with TLS for Azure in backend/src/config/redis.config.ts
+- [ ] T021 Create database migration script structure in backend/migrations/
 
 ### Testing Infrastructure (TDD Setup)
 
-- [ ] T012 [P] Configure Jest for backend with coverage threshold 70% in backend/jest.config.js
-- [ ] T013 [P] Configure Jest for frontend with React Testing Library in frontend/jest.config.js
-- [ ] T014 Set up Supertest for integration tests in backend/test/setup.ts
-- [ ] T015 Create test database configuration for isolated test runs
-- [ ] T016 [P] Add TDD helper scripts to backend/package.json (test:watch, test:cov, test:tdd)
+- [ ] T022 [P] Configure Jest for backend with coverage threshold 70% in backend/jest.config.js
+- [ ] T023 [P] Configure Jest for frontend with React Testing Library in frontend/jest.config.js
+- [ ] T024 Set up Supertest for integration tests in backend/test/setup.ts
+- [ ] T025 Create test database configuration for isolated test runs
+- [ ] T026 [P] Add TDD helper scripts to backend/package.json (test:watch, test:cov, test:tdd)
 
 ### Environment & Configuration
 
-- [ ] T017 Create .env.example for backend with all required variables (DATABASE_URL, REDIS_URL, JWT_SECRET, TELEGRAM_BOT_TOKEN)
-- [ ] T018 Create .env.local.example for frontend with NEXT_PUBLIC_API_URL, NEXT_PUBLIC_WS_URL
-- [ ] T019 [P] Implement configuration service in backend/src/config/configuration.ts using @nestjs/config
-- [ ] T020 [P] Set up environment validation using class-validator in backend/src/config/env.validation.ts
+- [ ] T027 Create .env.example for backend (DATABASE_URL with Azure PostgreSQL, REDIS_URL with Azure Redis TLS, JWT_SECRET, TELEGRAM_BOT_TOKEN, APPLICATIONINSIGHTS_CONNECTION_STRING)
+- [ ] T028 Create .env.local.example for frontend with NEXT_PUBLIC_API_URL, NEXT_PUBLIC_WS_URL
+- [ ] T029 [P] Implement configuration service with Azure Key Vault integration in backend/src/config/configuration.ts using @nestjs/config and @azure/keyvault-secrets
+- [ ] T030 [P] Set up environment validation using class-validator in backend/src/config/env.validation.ts
 
-### CI/CD & DevOps
+### Azure Deployment Configuration
 
-- [ ] T021 Create GitHub Actions workflow for backend tests (.github/workflows/backend-test.yml)
-- [ ] T022 Create GitHub Actions workflow for frontend tests (.github/workflows/frontend-test.yml)
-- [ ] T023 [P] Add pre-commit hooks with Husky for linting and formatting
-- [ ] T024 Create Dockerfile for backend production build
-- [ ] T025 Create Dockerfile for frontend production build
+- [ ] T031 Create Azure Container Apps environment (poker-env)
+- [ ] T032 Create backend Dockerfile optimized for Azure (multi-stage build, health checks)
+- [ ] T033 Create staticwebapp.config.json for Next.js frontend with CDN caching rules
+- [ ] T034 Create Azure Storage account for card images and avatars (Hot tier, LRS replication)
+- [ ] T035 Upload card images to Blob Storage (convert to WebP, public read access)
+- [ ] T036 Create Application Insights resource for monitoring and custom metrics
+
+### CI/CD Pipelines (GitHub Actions)
+
+- [ ] T037 Create GitHub Actions workflow for backend tests (.github/workflows/backend-test.yml)
+- [ ] T038 Create GitHub Actions workflow for frontend tests (.github/workflows/frontend-test.yml)
+- [ ] T039 Create GitHub Actions workflow for backend deployment to Container Apps (.github/workflows/deploy-backend.yml)
+- [ ] T040 Create GitHub Actions workflow for frontend deployment to Static Web Apps (.github/workflows/deploy-frontend.yml)
+- [ ] T041 [P] Add pre-commit hooks with Husky for linting and formatting
+- [ ] T042 Configure GitHub secrets (AZURE_CREDENTIALS, ACR_LOGIN_SERVER, ACR_USERNAME, ACR_PASSWORD, AZURE_STATIC_WEB_APPS_API_TOKEN)
+- [ ] T043 Set up automatic database migrations in deployment pipeline
 
 ---
 
