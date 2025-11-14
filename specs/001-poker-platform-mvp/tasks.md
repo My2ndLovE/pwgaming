@@ -114,13 +114,13 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 ### Project Initialization
 
-- [ ] T001 Initialize NestJS backend project using @nestjs/cli in backend/ directory
-- [ ] T002 Initialize Next.js frontend project using create-next-app in frontend/ directory
-- [ ] T003 [P] Configure TypeScript strict mode in backend/tsconfig.json
-- [ ] T004 [P] Configure TypeScript strict mode in frontend/tsconfig.json
-- [ ] T005 Set up ESLint and Prettier with shared config in both projects
-- [ ] T006 [P] Install backend dependencies: @nestjs/typeorm, typeorm, pg, redis, socket.io, class-validator, class-transformer, bcrypt, @nestjs/jwt, @nestjs/passport
-- [ ] T007 [P] Install frontend dependencies: socket.io-client, @telegram-apps/sdk, lucide-react, tailwindcss, zustand
+- [X] T001 Initialize NestJS backend project using @nestjs/cli in backend/ directory
+- [X] T002 Initialize Next.js frontend project using create-next-app in frontend/ directory
+- [X] T003 [P] Configure TypeScript strict mode in backend/tsconfig.json
+- [X] T004 [P] Configure TypeScript strict mode in frontend/tsconfig.json
+- [X] T005 Set up ESLint and Prettier with shared config in both projects
+- [X] T006 [P] Install backend dependencies: @nestjs/typeorm, typeorm, pg, redis, socket.io, class-validator, class-transformer, bcrypt, @nestjs/jwt, @nestjs/passport
+- [X] T007 [P] Install frontend dependencies: socket.io-client, @telegram-apps/sdk, lucide-react, tailwindcss, zustand
 
 ### Azure Infrastructure Setup
 
@@ -137,25 +137,25 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 ### Database & Local Development Setup
 
-- [ ] T018 Create Docker Compose file for local development (PostgreSQL 15, Redis 7, pgAdmin)
-- [ ] T019 Configure TypeORM data source with Azure PostgreSQL SSL settings in backend/src/config/database.config.ts
-- [ ] T020 Configure Redis connection with TLS for Azure in backend/src/config/redis.config.ts
-- [ ] T021 Create database migration script structure in backend/migrations/
+- [X] T018 Create Docker Compose file for local development (PostgreSQL 15, Redis 7, pgAdmin)
+- [X] T019 Configure TypeORM data source with Azure PostgreSQL SSL settings in backend/src/config/database.config.ts
+- [X] T020 Configure Redis connection with TLS for Azure in backend/src/config/redis.config.ts
+- [X] T021 Create database migration script structure in backend/migrations/
 
 ### Testing Infrastructure (TDD Setup)
 
-- [ ] T022 [P] Configure Jest for backend with coverage threshold 70% in backend/jest.config.js
-- [ ] T023 [P] Configure Jest for frontend with React Testing Library in frontend/jest.config.js
-- [ ] T024 Set up Supertest for integration tests in backend/test/setup.ts
-- [ ] T025 Create test database configuration for isolated test runs
-- [ ] T026 [P] Add TDD helper scripts to backend/package.json (test:watch, test:cov, test:tdd)
+- [X] T022 [P] Configure Jest for backend with coverage threshold 70% in backend/jest.config.js
+- [X] T023 [P] Configure Jest for frontend with React Testing Library in frontend/jest.config.js
+- [X] T024 Set up Supertest for integration tests in backend/test/setup.ts
+- [X] T025 Create test database configuration for isolated test runs
+- [X] T026 [P] Add TDD helper scripts to backend/package.json (test:watch, test:cov, test:tdd)
 
 ### Environment & Configuration
 
-- [ ] T027 Create .env.example for backend (DATABASE_URL with Azure PostgreSQL, REDIS_URL with Azure Redis TLS, JWT_SECRET, TELEGRAM_BOT_TOKEN, APPLICATIONINSIGHTS_CONNECTION_STRING)
-- [ ] T028 Create .env.local.example for frontend with NEXT_PUBLIC_API_URL, NEXT_PUBLIC_WS_URL
-- [ ] T029 [P] Implement configuration service with Azure Key Vault integration in backend/src/config/configuration.ts using @nestjs/config and @azure/keyvault-secrets
-- [ ] T030 [P] Set up environment validation using class-validator in backend/src/config/env.validation.ts
+- [X] T027 Create .env.example for backend (DATABASE_URL with Azure PostgreSQL, REDIS_URL with Azure Redis TLS, JWT_SECRET, TELEGRAM_BOT_TOKEN, APPLICATIONINSIGHTS_CONNECTION_STRING)
+- [X] T028 Create .env.local.example for frontend with NEXT_PUBLIC_API_URL, NEXT_PUBLIC_WS_URL
+- [X] T029 [P] Implement configuration service with Azure Key Vault integration in backend/src/config/configuration.ts using @nestjs/config and @azure/keyvault-secrets
+- [X] T030 [P] Set up environment validation using class-validator in backend/src/config/env.validation.ts
 
 ### Azure Deployment Configuration
 
