@@ -21,6 +21,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { WalletModule } from './modules/wallet/wallet.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { RoomModule } from './modules/room/room.module';
+import { GameModule } from './modules/game/game.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { RoomModule } from './modules/room/room.module';
     WalletModule,
     AdminModule,
     RoomModule,
+    GameModule,
   ],
   controllers: [AppController],
   providers: [
