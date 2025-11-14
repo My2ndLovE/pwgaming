@@ -17,6 +17,7 @@ import { validate } from './config/env.validation';
 import { getDatabaseConfig } from './config/database.config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
         new HeaderResolver(['x-lang']),
       ],
     }),
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
