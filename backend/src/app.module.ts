@@ -18,6 +18,9 @@ import { getDatabaseConfig } from './config/database.config';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
+import { WalletModule } from './modules/wallet/wallet.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { RoomModule } from './modules/room/room.module';
 
 @Module({
   imports: [
@@ -44,6 +47,9 @@ import { AuthModule } from './modules/auth/auth.module';
       ],
     }),
     AuthModule,
+    WalletModule,
+    AdminModule,
+    RoomModule,
   ],
   controllers: [AppController],
   providers: [
