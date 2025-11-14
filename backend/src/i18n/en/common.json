@@ -1,0 +1,9 @@
+{
+  "WELCOME": "Welcome to PWGaming Poker Platform",
+  "UNAUTHORIZED": "Unauthorized access",
+  "FORBIDDEN": "Access forbidden",
+  "NOT_FOUND": "Resource not found",
+  "INTERNAL_ERROR": "Internal server error",
+  "VALIDATION_ERROR": "Validation error",
+  "RATE_LIMIT_EXCEEDED": "Too many requests. Please try again later."
+}

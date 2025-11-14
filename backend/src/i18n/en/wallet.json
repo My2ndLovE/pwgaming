@@ -1,0 +1,10 @@
+{
+  "DEPOSIT_CREATED": "Deposit request created successfully",
+  "WITHDRAWAL_CREATED": "Withdrawal request created successfully",
+  "INSUFFICIENT_FUNDS": "Insufficient funds for withdrawal",
+  "TRANSACTION_PENDING": "Transaction is pending approval",
+  "TRANSACTION_COMPLETED": "Transaction completed successfully",
+  "TRANSACTION_REJECTED": "Transaction was rejected",
+  "MINIMUM_AMOUNT_NOT_MET": "Minimum amount not met",
+  "MAXIMUM_AMOUNT_EXCEEDED": "Maximum amount exceeded"
+}

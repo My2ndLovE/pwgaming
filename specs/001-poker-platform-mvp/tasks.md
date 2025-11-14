@@ -184,33 +184,33 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 ### Core Entities (Common Models)
 
-- [ ] T026 [P] Create User entity in backend/src/modules/auth/entities/user.entity.ts with TypeORM decorators
-- [ ] T027 [P] Create Transaction entity in backend/src/modules/wallet/entities/transaction.entity.ts
-- [ ] T028 [P] Create Room entity in backend/src/modules/room/entities/room.entity.ts
-- [ ] T029 [P] Create GameHand entity in backend/src/modules/game/entities/game-hand.entity.ts
-- [ ] T030 [P] Create PlayerSeat entity in backend/src/modules/game/entities/player-seat.entity.ts
-- [ ] T031 [P] Create BettingAction entity in backend/src/modules/game/entities/betting-action.entity.ts
-- [ ] T032 [P] Create AuditLog entity in backend/src/modules/audit/entities/audit-log.entity.ts
-- [ ] T033 [P] Create PlatformSettings entity in backend/src/modules/admin/entities/platform-settings.entity.ts
+- [X] T044 [P] Create User entity in backend/src/modules/auth/entities/user.entity.ts with TypeORM decorators
+- [X] T045 [P] Create Transaction entity in backend/src/modules/wallet/entities/transaction.entity.ts
+- [X] T046 [P] Create Room entity in backend/src/modules/room/entities/room.entity.ts
+- [X] T047 [P] Create GameHand entity in backend/src/modules/game/entities/game-hand.entity.ts
+- [X] T048 [P] Create PlayerSeat entity in backend/src/modules/game/entities/player-seat.entity.ts
+- [X] T049 [P] Create BettingAction entity in backend/src/modules/game/entities/betting-action.entity.ts
+- [X] T050 [P] Create AuditLog entity in backend/src/modules/audit/entities/audit-log.entity.ts
+- [X] T051 [P] Create PlatformSettings entity in backend/src/modules/admin/entities/platform-settings.entity.ts
 
 ### Database Migrations
 
-- [ ] T034 Generate initial migration for all entities using TypeORM CLI
-- [ ] T035 Create seed data migration for PlatformSettings default values
-- [ ] T036 Create database indexes migration for performance optimization
-- [ ] T037 Test migration rollback and re-run procedures
+- [X] T052 Generate initial migration for all entities using TypeORM CLI
+- [ ] T053 Create seed data migration for PlatformSettings default values
+- [ ] T054 Create database indexes migration for performance optimization
+- [ ] T055 Test migration rollback and re-run procedures
 
 ### Global Middleware & Filters
 
-- [ ] T038 [P] Create global exception filter in backend/src/common/filters/global-exception.filter.ts
-- [ ] T039 [P] Create global validation pipe configuration in backend/src/main.ts
-- [ ] T040 [P] Create rate limiting guard in backend/src/common/guards/rate-limit.guard.ts
-- [ ] T041 [P] Create audit interceptor in backend/src/common/interceptors/audit.interceptor.ts
+- [X] T056 [P] Create global exception filter in backend/src/common/filters/global-exception.filter.ts
+- [X] T057 [P] Create global validation pipe configuration in backend/src/main.ts
+- [X] T058 [P] Create rate limiting guard in backend/src/common/guards/rate-limit.guard.ts
+- [X] T059 [P] Create audit interceptor in backend/src/common/interceptors/audit.interceptor.ts
 
 ### Localization Infrastructure
 
-- [ ] T042 [P] Set up nestjs-i18n in backend with English resource files in backend/src/i18n/resources/en/
-- [ ] T043 [P] Set up next-intl in frontend with English resource files in frontend/i18n/en.json
+- [X] T060 [P] Set up nestjs-i18n in backend with English resource files in backend/src/i18n/resources/en/
+- [ ] T061 [P] Set up next-intl in frontend with English resource files in frontend/i18n/en.json
 
 ---
 

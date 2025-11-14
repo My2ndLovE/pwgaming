@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  OneToMany,
   BeforeInsert,
   BeforeUpdate,
   Index,
@@ -98,13 +97,10 @@ export class User {
 
   @BeforeUpdate()
   validateStatusTransition(): void {
-    // Validate status transitions
-    const validTransitions: Record<UserStatus, UserStatus[]> = {
-      [UserStatus.ACTIVE]: [UserStatus.SUSPENDED, UserStatus.BANNED],
-      [UserStatus.SUSPENDED]: [UserStatus.ACTIVE, UserStatus.BANNED],
-      [UserStatus.BANNED]: [], // No transitions allowed from banned
-    };
-
-    // Additional validation logic would be implemented in service layer
+    // Validate status transitions in service layer
+    // Valid transitions:
+    // ACTIVE -> SUSPENDED, BANNED
+    // SUSPENDED -> ACTIVE, BANNED
+    // BANNED -> (no transitions allowed)
   }
 }

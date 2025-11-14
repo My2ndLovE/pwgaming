@@ -1,0 +1,12 @@
+{
+  "INSUFFICIENT_BALANCE": "Insufficient balance",
+  "INVALID_BET_AMOUNT": "Invalid bet amount",
+  "NOT_YOUR_TURN": "It's not your turn",
+  "GAME_NOT_FOUND": "Game not found",
+  "SEAT_OCCUPIED": "Seat is already occupied",
+  "ROOM_FULL": "Room is full",
+  "MINIMUM_BUY_IN_NOT_MET": "Minimum buy-in not met",
+  "PLAYER_FOLDED": "Player folded",
+  "PLAYER_ALL_IN": "Player went all-in",
+  "HAND_COMPLETED": "Hand completed"
+}
