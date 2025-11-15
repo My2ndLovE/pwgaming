@@ -1663,7 +1663,7 @@ npm run start:dev
   - Entity relationships
   - Field descriptions
 
-- **Technical Reference**: `/docs/texas-holdem-technical-reference.md`
+- **Technical Reference**: `/docs/technical/texas-holdem-technical-reference.md`
   - Game rules and logic
   - Hand ranking algorithm
   - Betting rounds

@@ -97,9 +97,9 @@ cd frontend
 npm run dev
 ```
 
-Backend: http://localhost:4101
-Frontend: http://localhost:4100
-pgAdmin: http://localhost:5050 (if Docker running)
+Backend: http://localhost:4110
+Frontend: http://localhost:4120
+pgAdmin: http://localhost:4130 (if Docker running)
 
 ### What's Configured
 

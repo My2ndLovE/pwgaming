@@ -409,7 +409,7 @@ npm run start:prod
 
 All documentation is up-to-date:
 - **STATUS.md** - Detailed implementation status
-- **SETUP.md** - Development setup guide
+- **docs/setup/SETUP.md** - Development setup guide
 - **tasks.md** - Task checklist with progress
 - **specs/001-poker-platform-mvp/** - Complete specifications
 

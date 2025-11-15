@@ -339,7 +339,7 @@ docker compose down       # Stop services
 - `specs/001-poker-platform-mvp/plan.md` - Technical plan
 - `specs/001-poker-platform-mvp/tasks.md` - Task breakdown
 - `specs/001-poker-platform-mvp/data-model.md` - Entity definitions
-- `SETUP.md` - Initial setup guide
+- `docs/setup/SETUP.md` - Initial setup guide
 - `STATUS.md` - This file
 
 ---

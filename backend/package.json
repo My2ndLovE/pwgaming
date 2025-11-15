@@ -21,7 +21,10 @@
     "test:tdd": "jest --watch --verbose",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
-    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source.ts"
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source.ts",
+    "db:reset": "node scripts/reset-db.js",
+    "docker:stop": "docker-compose stop",
+    "docker:down": "docker-compose down"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

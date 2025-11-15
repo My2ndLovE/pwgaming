@@ -173,7 +173,8 @@ frontend/                # Next.js web app + Telegram Mini App
 docs/                    # Project documentation (existing)
 ├── intro.md             # Project overview (deleted, moved to specs/)
 ├── specify-prompt.md    # Feature description
-└── texas-holdem-technical-reference.md # 1365-line technical guide
+└── technical/
+    └── texas-holdem-technical-reference.md # 1365-line technical guide
 
 .specify/                # Specify tooling (existing)
 ├── memory/

@@ -226,7 +226,7 @@ Both Azure Container Apps and Web App for Containers run **the exact same Docker
 1. **Same Runtime Environment**: Both use Linux containers with Node.js 18
 2. **Same Port Configuration**: Both read `process.env.PORT` (backend/src/main.ts:6)
 3. **Same Environment Variables**: Both use the same env var names (DATABASE_URL, REDIS_URL, JWT_SECRET)
-4. **Same Dockerfile**: Use the same Dockerfile for both platforms (already documented in azure-deployment-guide.md:376-412)
+4. **Same Dockerfile**: Use the same Dockerfile for both platforms (already documented in technical/azure-deployment-guide.md:376-412)
 5. **Same Container Registry**: Both pull from Azure Container Registry
 
 ### What Changes? (Infrastructure Only)
@@ -482,7 +482,7 @@ az webapp deployment slot swap \
 
 ### Container Apps Setup (Current)
 
-- [x] Architecture documented in `azure-deployment-guide.md:340`
+- [x] Architecture documented in `technical/azure-deployment-guide.md:340`
 - [ ] Deploy Container Apps environment
 - [ ] Configure sticky sessions (`--affinity sticky`)
 - [ ] Set `min-replicas: 1` to avoid cold starts

@@ -47,7 +47,4 @@ Create a new progress document when:
 - Deployment or infrastructure changes occur
 - Future reference or handoff documentation is needed
 
-### Log File
-- `log.md` - Detailed execution log (not moved, stays in root for active reference)
-
 <!-- MANUAL ADDITIONS END -->
