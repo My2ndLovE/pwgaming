@@ -16,7 +16,7 @@ module.exports = {
     '!src/data-source.ts',
   ],
   coverageDirectory: './coverage',
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches: 70,
       functions: 70,
