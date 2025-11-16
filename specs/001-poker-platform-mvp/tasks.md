@@ -9,31 +9,36 @@
 
 ## Summary
 
-**Total Tasks**: 265
+**Total Tasks**: 342 (265 original + 77 Phase 7 additions)
 **User Stories**: 12 (7 P1, 3 P2, 2 P3)
-**Estimated Timeline**: 8 weeks
+**Estimated Timeline**: 10 weeks (Phase 7 expanded from 2 weeks to 5-6 weeks)
 **MVP Scope**: User Stories 1, 2, 3, 5, 9 (P1 stories)
 **Deployment**: Azure (Container Apps, PostgreSQL, Redis, Static Web Apps)
 
 ### Task Breakdown by Phase
 
-| Phase | Name | Task Count | Story |
-|-------|------|------------|-------|
-| 1 | Setup & Infrastructure (Azure) | 43 | N/A |
-| 2 | Foundational Services | 18 | N/A |
-| 3 | User Story 1 - Authentication | 22 | P1 |
-| 4 | User Story 2 - Wallet Management | 24 | P1 |
-| 5 | User Story 9 - Admin Withdrawal Mgmt | 20 | P1 |
-| 6 | User Story 3 - Browse & Join Rooms | 18 | P1 |
-| 7 | User Story 5 - Play Texas Hold'em | 35 | P1 |
-| 8 | User Story 4 - Create Custom Room | 12 | P2 |
-| 9 | User Story 8 - Admin Dashboard | 16 | P2 |
-| 10 | User Story 10 - Admin User Mgmt | 14 | P2 |
-| 11 | User Story 11 - Admin Room Mgmt | 12 | P2 |
-| 12 | User Story 6 - Game History | 10 | P3 |
-| 13 | User Story 7 - Live Chat | 8 | P3 |
-| 14 | User Story 12 - Platform Settings | 8 | P3 |
-| 15 | Polish & Integration | 15 | N/A |
+| Phase | Name | Task Count | Story | Notes |
+|-------|------|------------|-------|-------|
+| 1 | Setup & Infrastructure (Azure) | 43 | N/A | |
+| 2 | Foundational Services | 18 | N/A | |
+| 3 | User Story 1 - Authentication | 22 | P1 | |
+| 4 | User Story 2 - Wallet Management | 24 | P1 | |
+| 5 | User Story 9 - Admin Withdrawal Mgmt | 20 | P1 | |
+| 6 | User Story 3 - Browse & Join Rooms | 18 | P1 | |
+| **7** | **User Story 5 - Play Texas Hold'em** | **76** (203 w/ sub-tasks) | **P1** | **Production-ready: 7A+7B+7C** |
+| 8 | User Story 4 - Create Custom Room | 12 | P2 | |
+| 9 | User Story 8 - Admin Dashboard | 16 | P2 | |
+| 10 | User Story 10 - Admin User Mgmt | 14 | P2 | |
+| 11 | User Story 11 - Admin Room Mgmt | 12 | P2 | |
+| 12 | User Story 6 - Game History | 10 | P3 | |
+| 13 | User Story 7 - Live Chat | 8 | P3 | |
+| 14 | User Story 12 - Platform Settings | 8 | P3 | |
+| 15 | Polish & Integration | 15 | N/A | |
+
+**Phase 7 Breakdown**:
+- **7A: Core Gameplay (T128-T176)**: 49 tasks, 2-3 weeks, MVP-ready poker game
+- **7B: Production Hardening (T177-T187)**: 11 tasks (with ~70 sub-tasks), 2 weeks, all poker rules + edge cases
+- **7C: Polish & Operations (T188-T203)**: 16 tasks (with ~50 sub-tasks), 1 week, testing + docs + admin tools
 
 ---
 
@@ -283,12 +288,12 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 ### Frontend Implementation
 
-- [ ] T079 [P] [US2] Create useWallet hook in frontend/hooks/use-wallet.ts
-- [ ] T080 [P] [US2] Create DepositModal component with amount input in frontend/components/wallet/deposit-modal.tsx
-- [ ] T081 [P] [US2] Create WithdrawModal component in frontend/components/wallet/withdraw-modal.tsx
-- [ ] T082 [P] [US2] Create TransactionHistory component with pagination in frontend/components/wallet/transaction-history.tsx
-- [ ] T083 [P] [US2] Create BalanceDisplay component in frontend/components/wallet/balance-display.tsx
-- [ ] T084 [P] [US2] Create wallet page in frontend/app/(wallet)/wallet/page.tsx
+- [x] T079 [P] [US2] Create useWallet hook in frontend/hooks/use-wallet.ts
+- [x] T080 [P] [US2] Create DepositModal component with amount input in frontend/components/wallet/deposit-form.tsx
+- [x] T081 [P] [US2] Create WithdrawModal component in frontend/components/wallet/withdrawal-form.tsx
+- [x] T082 [P] [US2] Create TransactionHistory component with pagination in frontend/components/wallet/transaction-history.tsx
+- [x] T083 [P] [US2] Create BalanceDisplay component in frontend/components/wallet/balance-card.tsx
+- [x] T084 [P] [US2] Create wallet page in frontend/app/(game)/wallet/page.tsx
 
 ### Integration Tests
 
@@ -326,11 +331,11 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 ### Frontend Implementation
 
-- [ ] T102 [P] [US9] Create useAdminWithdrawals hook in frontend/hooks/use-admin-withdrawals.ts
-- [ ] T103 [P] [US9] Create WithdrawalQueue component in frontend/components/admin/withdrawal-queue.tsx
+- [x] T102 [P] [US9] Create useAdminWithdrawals hook in frontend/hooks/use-admin-withdrawals.ts
+- [x] T103 [P] [US9] Create WithdrawalQueue component in frontend/components/admin/withdrawal-queue.tsx
 - [ ] T104 [P] [US9] Create WithdrawalDetailsModal component in frontend/components/admin/withdrawal-details-modal.tsx
 - [ ] T105 [P] [US9] Create ApprovalActionButtons component in frontend/components/admin/approval-action-buttons.tsx
-- [ ] T106 [P] [US9] Create admin withdrawal management page in frontend/app/(admin)/admin/withdrawals/page.tsx
+- [x] T106 [P] [US9] Create admin withdrawal management page in frontend/app/(admin)/admin/withdrawals/page.tsx
 
 ### Integration Tests
 
@@ -364,12 +369,12 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 ### Frontend Implementation
 
-- [ ] T120 [P] [US3] Create useRooms hook with filtering in frontend/hooks/use-rooms.ts
+- [x] T120 [P] [US3] Create useRooms hook with filtering in frontend/hooks/use-rooms.ts
 - [ ] T121 [P] [US3] Create RoomList component in frontend/components/room/room-list.tsx
-- [ ] T122 [P] [US3] Create RoomCard component in frontend/components/room/room-card.tsx
+- [x] T122 [P] [US3] Create RoomCard component in frontend/components/room/room-card.tsx
 - [ ] T123 [P] [US3] Create RoomFilters component in frontend/components/room/room-filters.tsx
 - [ ] T124 [P] [US3] Create JoinRoomButton component with balance check in frontend/components/room/join-room-button.tsx
-- [ ] T125 [P] [US3] Create rooms browse page in frontend/app/(game)/rooms/page.tsx
+- [x] T125 [P] [US3] Create rooms browse page in frontend/app/(game)/rooms/page.tsx
 
 ### Integration Tests
 
@@ -380,79 +385,647 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 ## Phase 7: User Story 5 - Play Texas Hold'em Cash Game (P1)
 
-**Story Goal**: Enable real-time Texas Hold'em gameplay with all poker mechanics
-**Independent Test**: Play complete hand from preflop to showdown with pot distribution
+**Story Goal**: Enable production-ready Texas Hold'em gameplay with ALL poker mechanics (no MVP shortcuts)
+**Independent Test**: Play complete hand from preflop to showdown with pot distribution, all edge cases handled
 **Priority**: P1 (MVP Critical - Core Value)
+**Implementation Approach**: Phased (7A: Core Gameplay → 7B: Production Hardening → 7C: Polish)
 
-### Tests (RED Phase - Game Logic)
+**Reference**: See `plan.md` Phase 7 Architecture Deep Dive for complete technical requirements
 
-- [ ] T128 [P] [US5] Write failing test for card deck shuffle using Fisher-Yates in backend/test/unit/game/deck.service.spec.ts
-- [ ] T129 [P] [US5] Write failing test for hand evaluation using poker-evaluator in backend/test/unit/game/hand-evaluator.service.spec.ts
-- [ ] T130 [P] [US5] Write failing test for pot calculation in backend/test/unit/game/pot.service.spec.ts
-- [ ] T131 [P] [US5] Write failing test for side pot calculation with multiple all-ins in backend/test/unit/game/side-pot.service.spec.ts
-- [ ] T132 [P] [US5] Write failing test for betting validation (minimum raise) in backend/test/unit/game/betting.service.spec.ts
-- [ ] T133 [P] [US5] Write failing test for game state transitions (preflop → flop → turn → river → showdown) in backend/test/unit/game/game-state-machine.spec.ts
-- [ ] T134 [P] [US5] Write failing test for player timeout and auto-fold in backend/test/unit/game/timeout.service.spec.ts
+---
 
-### Backend Implementation (GREEN Phase - Game Engine)
+### PHASE 7A: CORE GAMEPLAY (MVP) - Weeks 1-3
 
-- [ ] T135 [US5] Create DeckService with cryptographic shuffle in backend/src/modules/game/services/deck.service.ts
-- [ ] T136 [US5] Create HandEvaluatorService wrapping poker-evaluator library in backend/src/modules/game/services/hand-evaluator.service.ts
-- [ ] T137 [US5] Create PotService with main pot and side pot calculation in backend/src/modules/game/services/pot.service.ts
-- [ ] T138 [US5] Create BettingService with validation in backend/src/modules/game/services/betting.service.ts
-- [ ] T139 [US5] Create GameStateMachine with phase transitions in backend/src/modules/game/services/game-state-machine.service.ts
-- [ ] T140 [US5] Create TimeoutService for player action timers in backend/src/modules/game/services/timeout.service.ts
-- [ ] T141 [US5] Create GameEngine orchestrating all game services in backend/src/modules/game/services/game-engine.service.ts
+**Goal**: Playable Texas Hold'em with basic features
+**Deliverable**: Players can join, play complete hands, receive winnings
 
-### Tests (RED Phase - WebSocket)
+**IMPORTANT**: All tasks must follow strict TDD (RED → GREEN → REFACTOR). See `.specify/memory/constitution.md` for detailed requirements.
 
-- [ ] T142 [P] [US5] Write failing test for WebSocket authentication in backend/test/unit/realtime/ws-auth.guard.spec.ts
-- [ ] T143 [P] [US5] Write failing test for game:join event in backend/test/unit/realtime/game.gateway.spec.ts
-- [ ] T144 [P] [US5] Write failing test for game:action event broadcast in backend/test/integration/realtime/game-actions.e2e-spec.ts
-- [ ] T145 [P] [US5] Write failing test for player reconnection with state restoration in backend/test/integration/realtime/reconnection.e2e-spec.ts
+#### Foundation & Quality Setup (T127a-T127h) - Week 0 (Pre-Implementation)
 
-### Backend Implementation (GREEN Phase - Real-time)
+> **Purpose**: Establish SpecKit compliance, resolve existing TDD violations, ensure type safety, validate architecture
 
-- [ ] T146 [US5] Set up Redis adapter for Socket.io in backend/src/modules/realtime/adapters/redis.adapter.ts
-- [ ] T147 [US5] Create WsAuthGuard for WebSocket authentication in backend/src/modules/realtime/guards/ws-auth.guard.ts
-- [ ] T148 [US5] Create GameGateway with event handlers in backend/src/modules/realtime/gateways/game.gateway.ts
-- [ ] T149 [US5] Implement game:join event handler with seat assignment
-- [ ] T150 [US5] Implement game:action event handler (fold, check, call, bet, raise, all-in)
-- [ ] T151 [US5] Implement game:leave event handler with balance return
-- [ ] T152 [US5] Implement player reconnection logic with 60-second grace period
-- [ ] T153 [US5] Create LobbyGateway for room updates in backend/src/modules/realtime/gateways/lobby.gateway.ts
-- [ ] T154 [US5] Register RealtimeModule in backend/src/app.module.ts
+- [ ] T127a [P1] [1h] [P] [US5] **SpecKit Clarification**: Run `/speckit.clarify` on Phase 7A scope to resolve any ambiguities in specification
+  - **Acceptance**: All ambiguous requirements documented and resolved
+  - **Outputs**: Updated spec.md with clarifications
 
-### Frontend Implementation (Game UI)
+- [ ] T127b [P1] [1h] [P] [US5] **SpecKit Analysis**: Run `/speckit.analyze` to validate spec-plan-tasks consistency
+  - **Acceptance**: No consistency errors between spec.md, plan.md, and tasks.md
+  - **Outputs**: Analysis report showing consistency validation
 
-- [ ] T155 [P] [US5] Create useWebSocket hook with reconnection logic in frontend/hooks/use-websocket.ts
-- [ ] T156 [P] [US5] Create useGame hook for game state management in frontend/hooks/use-game.ts
-- [ ] T157 [P] [US5] Create Card component with lucide-react icons in frontend/components/game/card.tsx
-- [ ] T158 [P] [US5] Create PokerTable component in frontend/components/game/poker-table.tsx
-- [ ] T159 [P] [US5] Create PlayerSeat component in frontend/components/game/player-seat.tsx
-- [ ] T160 [P] [US5] Create CommunityCards component in frontend/components/game/community-cards.tsx
-- [ ] T161 [P] [US5] Create PotDisplay component in frontend/components/game/pot-display.tsx
-- [ ] T162 [P] [US5] Create BettingControls component (Fold, Check, Call, Bet, Raise) in frontend/components/game/betting-controls.tsx
-- [ ] T163 [P] [US5] Create ActionTimer component with countdown in frontend/components/game/action-timer.tsx
-- [ ] T164 [P] [US5] Create WinnerAnnouncement component with animation in frontend/components/game/winner-announcement.tsx
-- [ ] T165 [P] [US5] Create game play page in frontend/app/(game)/game/[id]/page.tsx
+- [ ] T127c [P1] [2h] [US5] **Install PHE Library and Create TypeScript Definitions**
+  - **Sub-tasks**:
+    - Install PHE library: `npm install phe`
+    - Create `backend/src/types/phe.d.ts` with minimal type definitions (evaluateCards, rankCards, rankBoard, rankDescription)
+    - Update HandEvaluatorService to use PHE instead of poker-evaluator
+    - Verify card format compatibility ('Ah', 'Kd', etc.)
+  - **Acceptance**: PHE installed, types working, no TypeScript errors
+  - **Note**: Comprehensive PHE types deferred to Phase 7C (see technical-debt.md TD-006)
+  - **Files**: backend/package.json, backend/src/types/phe.d.ts, backend/src/modules/game/services/hand-evaluator.service.ts
 
-### Integration Tests (E2E Gameplay)
+- [ ] T127d [P1] [3h] [P] [US5] **Test Infrastructure Setup**
+  - **Sub-tasks**:
+    - Configure Jest for backend unit tests (jest.config.js)
+    - Create test utilities in backend/test/utils/ (mock factories for users, rooms, games)
+    - Set up test database configuration (test.env)
+    - Configure coverage thresholds (70%+ for services)
+    - Verify `npm run test` and `npm run test:cov` work
+  - **Acceptance**: Jest configured, test:cov runs, coverage reporting works
+  - **Files**: backend/jest.config.js, backend/test/utils/
 
-- [ ] T166 [US5] Write E2E test for complete hand (2 players, preflop to showdown)
-- [ ] T167 [US5] Write E2E test for 6-player hand with multiple betting rounds
-- [ ] T168 [US5] Write E2E test for all-in scenario with side pot calculation
-- [ ] T169 [US5] Write E2E test for player timeout and auto-fold
-- [ ] T170 [US5] Write E2E test for player disconnect and reconnect
-- [ ] T171 [US5] Test real-time action broadcast to all players (<1s latency)
-- [ ] T172 [US5] Verify pot distribution with multiple winners (tied hands)
+- [ ] T127e [P1] [2h] [P] [US5] **Retroactive Tests: DeckService** (TDD Compliance Fix)
+  - **Approach**: Write tests for existing DeckService to achieve TDD compliance
+  - **Tests to Write**:
+    - Test createDeck() returns 52 unique cards
+    - Test shuffle() uses Fisher-Yates algorithm (verify distribution)
+    - Test shuffle() uses crypto.randomBytes (mock and verify)
+    - Test dealCards() returns correct count and remaining deck
+    - Test getSecureRandomInt() distribution (chi-squared test)
+  - **Refactor**: Fix any issues found during testing
+  - **Acceptance**: DeckService has 100% test coverage, all tests pass
+  - **Files**: backend/test/unit/game/deck.service.spec.ts
 
-### Refactor (Performance Optimization)
+- [ ] T127f [P1] [2h] [P] [US5] **Retroactive Tests: HandEvaluatorService** (TDD Compliance Fix)
+  - **Approach**: Write tests for existing HandEvaluatorService, update to use PHE
+  - **Tests to Write**:
+    - Test evaluateHand() with various hand types (flush, straight, pair, etc.)
+    - Test compareHands() returns correct winner
+    - Test findWinners() handles ties correctly
+    - Test error handling (< 5 cards)
+  - **Refactor**: Update to use PHE library, fix any issues
+  - **Acceptance**: HandEvaluatorService has 100% test coverage, uses PHE, all tests pass
+  - **Files**: backend/test/unit/game/hand-evaluator.service.spec.ts
 
-- [ ] T173 [US5] Optimize WebSocket message payload size (compress game state)
-- [ ] T174 [US5] Add Redis caching for active game states
-- [ ] T175 [US5] Implement connection pooling for database queries
-- [ ] T176 [US5] Add performance monitoring for <500ms action processing
+- [ ] T127g [P1] [3h] [P] [US5] **Retroactive Tests: PotService** (TDD Compliance Fix)
+  - **Approach**: Write tests for existing PotService, validate against plan.md algorithm
+  - **Tests to Write**:
+    - Test calculatePots() with single pot (no all-ins)
+    - Test calculatePots() with 2-player all-in (main + side pot)
+    - Test calculatePots() with multiple all-ins (3+ pots)
+    - Test distributePots() with single winner
+    - Test distributePots() with tied winners (split pot)
+    - Test edge case: all players all-in at same amount
+  - **Refactor**: Compare implementation with plan.md section 0.4, fix discrepancies
+  - **Acceptance**: PotService has 100% test coverage, algorithm matches plan.md, all tests pass
+  - **Files**: backend/test/unit/game/pot.service.spec.ts
+
+- [ ] T127h [P1] [4h] [US5] **Security Review and Refactor Existing Services**
+  - **Scope**: Review DeckService, HandEvaluatorService, PotService, GameGateway for security issues
+  - **Checklist**:
+    - [ ] DeckService: Verify cryptographic randomness (no Math.random())
+    - [ ] DeckService: Ensure no shuffle seed leaks in logs
+    - [ ] HandEvaluatorService: Validate input (prevent injection)
+    - [ ] PotService: Validate all calculations prevent negative values
+    - [ ] GameGateway: Verify card visibility (players can't request others' cards)
+    - [ ] GameGateway: Validate actions (is it player's turn? valid action?)
+    - [ ] GameGateway: Implement action locking (prevent race conditions)
+    - [ ] GameGateway: Sanitize state before broadcasting
+  - **Refactor**: Fix any security issues found
+  - **Acceptance**: Security checklist complete, no critical vulnerabilities, code review documented
+  - **Outputs**: Security review notes in docs/progress/10-phase7a-security-review.md
+
+**Phase 7A.0 Acceptance**: All foundation tasks complete, existing services have tests, security validated, PHE library integrated
+
+---
+
+#### Core Game Logic Tests (T128-T134)
+
+- [ ] T128 [P1] [2h] [P] [US5] Write failing test for card deck shuffle using Fisher-Yates with crypto.randomBytes in backend/test/unit/game/deck.service.spec.ts
+- [ ] T129 [P1] [2h] [P] [US5] Write failing test for hand evaluation using PHE library in backend/test/unit/game/hand-evaluator.service.spec.ts (Note: Updated from pokersolver to PHE - see T127c)
+- [ ] T130 [P1] [2h] [P] [US5] Write failing test for pot calculation in backend/test/unit/game/pot.service.spec.ts
+- [ ] T131 [P1] [3h] [P] [US5] Write failing test for side pot calculation with multiple all-ins in backend/test/unit/game/side-pot.service.spec.ts
+- [ ] T132 [P1] [2h] [P] [US5] Write failing test for betting validation (minimum raise, all-in rules) in backend/test/unit/game/betting.service.spec.ts
+- [ ] T133 [P1] [2h] [P] [US5] Write failing test for game state transitions (preflop → flop → turn → river → showdown) in backend/test/unit/game/game-state-machine.spec.ts
+- [ ] T134 [P1] [2h] [P] [US5] Write failing test for player timeout and auto-fold in backend/test/unit/game/timeout.service.spec.ts
+
+#### Core Services Implementation (T135-T141)
+
+- [ ] T135 [P1] [4h] [US5] Create DeckService with cryptographic shuffle, burn card support in backend/src/modules/game/services/deck.service.ts
+- [ ] T136 [P1] [3h] [US5] Create HandEvaluatorService wrapper for PHE library in backend/src/modules/game/services/hand-evaluator.service.ts (Note: PHE installed in T127c, this task creates comprehensive wrapper with error handling)
+- [ ] T137 [P1] [4h] [US5] Create PotService with main pot, side pots, odd chip distribution in backend/src/modules/game/services/pot.service.ts
+- [ ] T138 [P1] [4h] [US5] Create BettingService with min raise, all-in validation in backend/src/modules/game/services/betting.service.ts
+- [ ] T139 [P1] [6h] [US5] Create GameStateMachine with phase transitions, dealer rotation in backend/src/modules/game/services/game-state-machine.service.ts
+- [ ] T140 [P1] [3h] [US5] Create TimeoutService for player action timers in backend/src/modules/game/services/timeout.service.ts
+- [ ] T141 [P1] [4h] [US5] Create GameEngine orchestrating all services in backend/src/modules/game/services/game-engine.service.ts
+
+#### WebSocket Tests (T142-T145)
+
+- [ ] T142 [P1] [2h] [P] [US5] Write failing test for WebSocket authentication in backend/test/unit/realtime/ws-auth.guard.spec.ts
+- [ ] T143 [P1] [2h] [P] [US5] Write failing test for game:join event in backend/test/unit/realtime/game.gateway.spec.ts
+- [ ] T144 [P1] [3h] [P] [US5] Write failing test for game:action event broadcast in backend/test/integration/realtime/game-actions.e2e-spec.ts
+- [ ] T145 [P1] [3h] [P] [US5] Write failing test for player reconnection with state restoration in backend/test/integration/realtime/reconnection.e2e-spec.ts
+
+#### WebSocket Implementation (T146-T154)
+
+- [ ] T146 [P1] [2h] [US5] Set up Redis adapter for Socket.io horizontal scaling in backend/src/modules/realtime/adapters/redis.adapter.ts
+- [ ] T147 [P1] [2h] [US5] Create WsAuthGuard for WebSocket authentication in backend/src/modules/realtime/guards/ws-auth.guard.ts
+- [ ] T148 [P1] [4h] [US5] Create GameGateway skeleton with event handlers in backend/src/modules/realtime/gateways/game.gateway.ts
+- [ ] T149 [P1] [3h] [US5] Implement game:join event handler with seat assignment, buy-in validation
+- [ ] T150 [P1] [4h] [US5] Implement game:action event handler (fold, check, call, bet, raise, all-in)
+- [ ] T151 [P1] [2h] [US5] Implement game:leave event handler with cash-out logic
+- [ ] T152 [P1] [4h] [US5] Implement player reconnection with 60-second grace period, state restoration
+- [ ] T153 [P1] [2h] [P] [US5] Create LobbyGateway for room list updates in backend/src/modules/realtime/gateways/lobby.gateway.ts
+- [ ] T154 [P1] [1h] [US5] Register RealtimeModule in backend/src/app.module.ts
+
+#### Frontend Core Components (T155-T165)
+
+- [ ] T155 [P1] [4h] [P] [US5] Create useWebSocket hook with reconnection, exponential backoff in frontend/hooks/use-websocket.ts
+- [ ] T156 [P1] [4h] [P] [US5] Create useGame hook for game state management in frontend/hooks/use-game.ts
+- [ ] T157 [P1] [2h] [P] [US5] Create Card component with suit/rank rendering in frontend/components/game/card.tsx
+- [ ] T158 [P1] [4h] [P] [US5] Create PokerTable component with oval layout in frontend/components/game/poker-table.tsx
+- [ ] T159 [P1] [3h] [P] [US5] Create PlayerSeat component with chip stack, status in frontend/components/game/player-seat.tsx
+- [ ] T160 [P1] [2h] [P] [US5] Create CommunityCards component (flop, turn, river) in frontend/components/game/community-cards.tsx
+- [ ] T161 [P1] [2h] [P] [US5] Create PotDisplay component with side pots in frontend/components/game/pot-display.tsx
+- [ ] T162 [P1] [4h] [P] [US5] Create BettingControls component (Fold, Check, Call, Bet, Raise) in frontend/components/game/betting-controls.tsx
+- [ ] T163 [P1] [3h] [P] [US5] Create ActionTimer component with countdown, warning in frontend/components/game/action-timer.tsx
+- [ ] T164 [P1] [2h] [P] [US5] Create WinnerAnnouncement component with animation in frontend/components/game/winner-announcement.tsx
+- [ ] T165 [P1] [3h] [P] [US5] Create game play page in frontend/app/(game)/game/[id]/page.tsx
+
+#### Basic Integration Tests (T166-T172)
+
+- [ ] T166 [P1] [2h] [US5] Write E2E test for complete 2-player hand (preflop to showdown)
+- [ ] T167 [P1] [3h] [US5] Write E2E test for 6-player hand with multiple betting rounds
+- [ ] T168 [P1] [3h] [US5] Write E2E test for all-in scenario with side pot calculation
+- [ ] T169 [P1] [2h] [US5] Write E2E test for player timeout and auto-fold
+- [ ] T170 [P1] [2h] [US5] Write E2E test for player disconnect and reconnect
+- [ ] T171 [P1] [2h] [US5] Test real-time action broadcast latency (<500ms p95)
+- [ ] T172 [P1] [2h] [US5] Verify pot distribution with multiple winners (tied hands)
+
+#### Performance Baseline (T173-T176)
+
+- [ ] T173 [P1] [2h] [US5] Optimize WebSocket message payload size (enable perMessageDeflate)
+- [ ] T174 [P1] [2h] [US5] Add Redis caching for active game states with TTL
+- [ ] T175 [P1] [2h] [US5] Implement database connection pooling (20 max, 5 min idle)
+- [ ] T176 [P1] [3h] [US5] Add performance monitoring, benchmarking for <500ms action processing
+
+**Phase 7A Acceptance**: 2-player and 6-player games work end-to-end, ~60 tests passing
+
+---
+
+### PHASE 7B: PRODUCTION HARDENING - Weeks 4-5
+
+**Goal**: Production-ready with all poker rules, edge cases, security, performance
+**Deliverable**: Enterprise-grade poker platform ready for real money gameplay
+
+#### Blind Posting System (T177)
+
+- [ ] T177 [P1] [8h] [US5] **Blind Posting System** in backend/src/modules/game/services/blind.service.ts
+  **Sub-tasks:**
+  - T177.1 [2h] Write failing test for blind posting (small blind, big blind)
+  - T177.2 [3h] Create BlindService (postSmallBlind, postBigBlind, getBlindAmount)
+  - T177.3 [2h] Integrate with GameStateMachine (call before dealing cards)
+  - T177.4 [1h] E2E test for complete blind posting flow
+  **Acceptance**: Blinds auto-posted before cards dealt, heads-up rules work, big blind option implemented
+
+#### Burn Cards & Dealer Button (T178)
+
+- [ ] T178 [P1] [6h] [US5] **Burn Cards & Dealer Button Rotation** in backend/src/modules/game/services/deck.service.ts and GameStateMachine
+  **Sub-tasks:**
+  - T178.1 [1h] Implement burnCard() method in DeckService
+  - T178.2 [2h] Integrate burn cards (1 before flop/turn/river)
+  - T178.3 [2h] Implement rotateDealer() and position calculations (SB, BB, UTG, first-to-act)
+  - T178.4 [1h] Test heads-up special rules (dealer is SB)
+  **Acceptance**: 3 burn cards per hand, dealer button rotates clockwise, position logic correct
+
+#### Buy-in, Cash-out, Rebuy (T179)
+
+- [ ] T179 [P1] [8h] [US5] **Buy-in/Cash-out/Rebuy Wallet Integration** in backend/src/modules/game/services/game.service.ts
+  **Sub-tasks:**
+  - T179.1 [2h] Write test for buy-in validation (20-100 BB range, wallet balance check)
+  - T179.2 [3h] Implement validateBuyIn(), integrate with GameGateway game:join
+  - T179.3 [2h] Implement cashOutPlayer() (return chips to wallet), integrate with game:leave
+  - T179.4 [1h] Implement rebuyChips() (between hands only), add game:rebuy event
+  **Acceptance**: Buy-in validates range and balance, cash-out returns chips to wallet, rebuy works between hands
+
+#### Rake & Platform Commission (T180)
+
+- [ ] T180 [P1] [4h] [US5] **Rake Calculation & Persistence** in backend/src/modules/game/services/rake.service.ts
+  **Sub-tasks:**
+  - T180.1 [1h] Write test for rake calculation (5% up to $3 cap, no rake on pots <$10)
+  - T180.2 [2h] Create RakeService, integrate with pot distribution
+  - T180.3 [1h] Create rake_history table migration, implement persistence
+  **Acceptance**: Rake deducted before pot distribution, logged to database for accounting
+
+#### Betting Round Completion & Turn Logic (T181)
+
+- [ ] T181 [P1] [8h] [US5] **Betting Round Completion & Action Turn** in GameStateMachine
+  **Sub-tasks:**
+  - T181.1 [2h] Write tests for betting round completion (all acted + bets equal, all folded, all all-in)
+  - T181.2 [3h] Implement isBettingRoundComplete() logic
+  - T181.3 [2h] Implement getNextPlayerToAct() (skip folded/all-in players)
+  - T181.4 [1h] Implement advancePhase() and resetBettingRound()
+  **Acceptance**: Betting rounds complete correctly, turn advances properly, phases transition automatically
+
+#### Showdown & Hand Reveal (T182)
+
+- [ ] T182 [P1] [6h] [US5] **Showdown Logic & Card Reveal** in GameEngine
+  **Sub-tasks:**
+  - T182.1 [2h] Write tests for showdown card reveal order (last aggressor first, clockwise)
+  - T182.2 [2h] Implement determineShowdownOrder(), allow mucking for losers
+  - T182.3 [1h] Enforce all-in players must show cards
+  - T182.4 [1h] Implement evaluateShowdown() using pokersolver, distributePot() with tie-breaking
+  **Acceptance**: Cards revealed in correct order, mucking works, ties split pot correctly
+
+#### Side Pot Edge Cases (T183)
+
+- [ ] T183 [P1] [6h] [US5] **Side Pot Edge Cases** in PotService and BettingService
+  **Sub-tasks:**
+  - T183.1 [2h] Write tests for odd chip distribution (to player closest to button), 4+ player all-ins
+  - T183.2 [2h] Enhance calculateSidePots() for complex scenarios
+  - T183.3 [1h] Implement all-in raise validation (< min raise doesn't reopen, = min raise reopens)
+  - T183.4 [1h] Test side pot distribution with multiple winners, tied hands
+  **Acceptance**: All side pot edge cases handled correctly, odd chip to correct player
+
+#### State Persistence & Recovery (T184)
+
+- [ ] T184 [P1] [8h] [US5] **State Persistence & Crash Recovery** in GameEngine and GameStateStore
+  **Sub-tasks:**
+  - T184.1 [2h] Write tests for game hand persistence to PostgreSQL
+  - T184.2 [3h] Implement saveCompletedHand() (save to game_hands table)
+  - T184.3 [2h] Create GameStateStore for Redis operations, implement state consistency checks
+  - T184.4 [1h] Implement recoverGameFromCrash() (load from Redis on restart)
+  **Acceptance**: Completed hands saved to DB, state persists in Redis, recovery from crash works
+
+#### Reconnection & Disconnection (T185)
+
+- [ ] T185 [P1] [8h] [US5] **Reconnection & Disconnection Handling** in GameGateway
+  **Sub-tasks:**
+  - T185.1 [2h] Write tests for full state restoration (game state, hole cards, action history)
+  - T185.2 [4h] Implement handleReconnect() (send state, cards, timer restoration)
+  - T185.3 [1h] Implement handleDisconnect() with 60-second grace period
+  - T185.4 [1h] Test reconnection during different game phases, multiple disconnects
+  **Acceptance**: Reconnection restores full state, timer resumes, grace period works
+
+#### Security & Anti-Cheating (T186)
+
+- [ ] T186 [P1] [8h] [US5] **Security & Anti-Cheating Measures** in GameGateway and services
+  **Sub-tasks:**
+  - T186.1 [2h] Write tests for card visibility security (cannot request others' cards)
+  - T186.2 [2h] Implement action validation (turn check, action locking for race conditions)
+  - T186.3 [2h] Create BotDetectionService (flag <500ms avg response time)
+  - T186.4 [2h] Implement multi-accounting detection (same IP flagged), audit logging
+  **Acceptance**: Card visibility enforced, race conditions prevented, bot/multi-accounting flagged
+
+#### Performance Optimization (T187)
+
+- [ ] T187 [P1] [6h] [US5] **Performance Optimization & Load Testing** in backend
+  **Sub-tasks:**
+  - T187.1 [2h] Write performance benchmark test (<500ms p95 action processing)
+  - T187.2 [2h] Write load test for 100 concurrent games
+  - T187.3 [1h] Implement WebSocket payload compression
+  - T187.4 [1h] Optimize database queries with indexes, configure connection pooling (max 20, min 5)
+  **Acceptance**: <500ms p95 met, 100 concurrent games stable, WebSocket compression enabled, connection pooling configured
+
+#### Additional Security & Infrastructure (T186.5-T186.8, T187.5-T187.8) - FROM TECHNICAL DEBT
+
+> **Source**: technical-debt.md items TD-001, TD-004, TD-008, TD-009, TD-010, TD-011, TD-012, TD-013
+
+- [ ] T186.5 [P1] [4h] [US5] **Rate Limiting Implementation** (TD-001)
+  - **Sub-tasks**:
+    - Install express-rate-limit and rate-limit-redis
+    - Configure rate limits (API: 100 req/min, WebSocket: 50 msg/min per user)
+    - Add rate limit middleware to all API endpoints
+    - Add WebSocket rate limiting per user
+    - Test rate limit behavior and error responses
+  - **Acceptance**: All endpoints rate-limited, 429 responses on exceed, Redis-backed for distributed systems
+  - **Files**: backend/src/middleware/rate-limit.middleware.ts
+
+- [ ] T186.6 [P1] [1h] [US5] **CORS Configuration** (TD-010)
+  - **Sub-tasks**:
+    - Configure allowed origins from environment variables
+    - Set proper CORS headers for credentials
+    - Test cross-origin requests from frontend
+  - **Acceptance**: CORS restricted to allowed origins, credentials properly handled
+  - **Files**: backend/src/main.ts
+
+- [ ] T186.7 [P1] [2h] [US5] **Security Headers (Helmet.js)** (TD-011)
+  - **Sub-tasks**:
+    - Install helmet.js
+    - Configure CSP policy
+    - Add HSTS headers
+    - Configure X-Frame-Options
+    - Test security headers in browser DevTools
+  - **Acceptance**: All security headers present, CSP policy enforced
+  - **Files**: backend/src/main.ts
+
+- [ ] T186.8 [P1] [4h] [US5] **Request Validation Middleware** (TD-012)
+  - **Sub-tasks**:
+    - Install class-validator and class-transformer
+    - Create DTO classes for all game endpoints
+    - Add validation pipes to controllers
+    - Add sanitization for XSS prevention
+    - Test validation error responses
+  - **Acceptance**: All inputs validated, XSS prevented, clear error messages
+  - **Files**: backend/src/modules/game/dto/
+
+- [ ] T187.5 [P1] [6h] [US5] **Structured Logging System** (TD-004)
+  - **Sub-tasks**:
+    - Install winston or pino
+    - Configure log levels (debug/info/warn/error)
+    - Add request ID tracking middleware
+    - Set up log rotation (daily, keep 30 days)
+    - Add correlation IDs for distributed tracing
+    - Replace all console.log with logger
+  - **Acceptance**: Structured logs with levels, request correlation, log rotation configured
+  - **Files**: backend/src/common/logger/, backend/src/middleware/request-id.middleware.ts
+
+- [ ] T187.6 [P1] [2h] [US5] **WebSocket Connection Limits** (TD-008)
+  - **Sub-tasks**:
+    - Implement connection limit per user (max 5 concurrent)
+    - Add connection tracking in Redis
+    - Add graceful connection rejection with error message
+    - Test connection limit enforcement
+  - **Acceptance**: Max 5 connections per user, graceful rejection on exceed
+  - **Files**: backend/src/modules/realtime/guards/ws-connection-limit.guard.ts
+
+- [ ] T187.7 [P1] [3h] [US5] **Session Management and Cleanup** (TD-009)
+  - **Sub-tasks**:
+    - Implement TTL on all Redis keys (game state: 24h, session: 7d)
+    - Add session cleanup cron job (run hourly)
+    - Monitor Redis memory usage (add alerts)
+    - Test session expiration behavior
+  - **Acceptance**: TTL on all keys, cleanup job running, no memory leaks
+  - **Files**: backend/src/modules/game/services/game-state-cleanup.service.ts
+
+- [ ] T187.8 [P1] [1h] [US5] **HTTP Response Compression** (TD-013)
+  - **Sub-tasks**:
+    - Install compression middleware
+    - Configure compression settings (gzip, threshold 1KB)
+    - Test compressed responses
+  - **Acceptance**: HTTP responses compressed, payload sizes reduced
+  - **Files**: backend/src/main.ts
+
+**Phase 7B Acceptance**: All poker rules implemented, edge cases handled, security validated, performance benchmarks met, critical technical debt resolved (TD-001, TD-004, TD-008-TD-013), ~140 tests passing
+
+---
+
+### PHASE 7C: POLISH & OPERATIONS (Post-MVP / Can run in parallel with other phases)
+
+**Goal**: User experience polish, comprehensive testing, admin tools, documentation
+**Deliverable**: Fully documented, monitored, deployable system
+
+#### Frontend Polish & Advanced Components (T188)
+
+- [ ] T188 [P2] [12h] [P] [US5] **Frontend Polish & Advanced Components**
+  **Deliverables:**
+  - BetSlider component (bet amount input with quick buttons) in frontend/components/game/bet-slider.tsx
+  - DealerButton component (position indicator with rotation) in frontend/components/game/dealer-button.tsx
+  - ChipStack component (visual chip display) in frontend/components/game/chip-stack.tsx
+  - ActionHistory component (recent actions log) in frontend/components/game/action-history.tsx
+  - ConnectionStatus component (WebSocket health indicator) in frontend/components/game/connection-status.tsx
+  - Card deal animation in PokerTable
+  - Chip movement animation in PotDisplay
+  - Winner celebration animation in WinnerAnnouncement
+  - Mobile-responsive layout (portrait mode, touch gestures, vibration feedback)
+  **Acceptance**: All advanced components functional, animations smooth (60fps), mobile UX polished
+
+#### Accessibility & Settings (T189)
+
+- [ ] T189 [P2] [8h] [P] [US5] **Accessibility & User Settings**
+  **Deliverables:**
+  - ARIA labels for all game components
+  - Keyboard shortcuts (F=fold, C=call, R=raise)
+  - Dark mode support
+  - Sound effects with toggle in frontend/components/game/game-settings.tsx
+  - Game settings panel (sound, animations, theme)
+  **Acceptance**: WCAG AA compliant, keyboard navigation works, dark mode implemented
+
+#### Comprehensive Test Suites (T190-T197)
+
+- [ ] T190 [P1] [6h] [US5] **Game Flow Test Suite** in backend/test/integration/game/
+  **Includes**: Complete 6-player flow, heads-up flow, player leaving mid-hand, all fold except one, all players all-in, minimum players check
+  **Acceptance**: All game flow scenarios pass (~8 test files)
+
+- [ ] T191 [P1] [4h] [US5] **Edge Case Test Suite** in backend/test/unit/game/
+  **Includes**: Insufficient chips for blind, invalid actions during wrong phase, invalid bet amounts, call when no bet, check when bet exists, raise with invalid amount, betting after folding
+  **Acceptance**: All edge cases handled (~10 test files)
+
+- [ ] T192 [P1] [4h] [US5] **Security Test Suite** in backend/test/security/
+  **Includes**: XSS attack prevention, SQL injection prevention, CSRF token validation, authorization bypass attempts
+  **Acceptance**: All security tests pass (~4 test files)
+
+- [ ] T193 [P1] [6h] [US5] **Cross-Browser & Mobile Test Suite** in frontend/__tests__/e2e/
+  **Includes**: Desktop browsers (Chrome, Firefox, Safari, Edge), mobile browsers (iOS Safari, Android Chrome), tablet (iPad, Android), landscape orientation handling
+  **Acceptance**: All browsers tested, documented
+
+- [ ] T194 [P1] [6h] [US5] **Performance Test Suite** in backend/test/performance/
+  **Includes**: Action processing <500ms (p95), load test 100 concurrent games, WebSocket message rate 100 msg/sec, memory leak test (24-hour run)
+  **Acceptance**: All benchmarks met
+
+- [ ] T195 [P1] [4h] [US5] **Network Resilience Test Suite** in backend/test/integration/
+  **Includes**: Offline handling, slow connection (3G simulation), concurrent actions (race conditions), server restart recovery
+  **Acceptance**: All network scenarios handled
+
+- [ ] T196 [P1] [4h] [US5] **Failure Recovery Test Suite** in backend/test/integration/
+  **Includes**: Database failure (graceful degradation), Redis failure (fallback to in-memory), session timeout (inactive player auto-fold)
+  **Acceptance**: All failures handled gracefully
+
+- [ ] T197 [P1] [2h] [US5] **Validation Checks Test Suite**
+  **Includes**: Duplicate cards (collision detection), negative chip stack, pot calculation mismatch (consistency check fails)
+  **Acceptance**: All validation checks working
+
+#### Documentation (T198-T201)
+
+- [ ] T198 [P2] [4h] [P] [US5] **API & Integration Documentation**
+  **Deliverables:**
+  - WebSocket events reference (contracts/websocket-events.md)
+  - REST API documentation (Swagger/OpenAPI)
+  - Integration guide for frontend developers
+  **Acceptance**: Complete API docs published
+
+- [ ] T199 [P2] [4h] [P] [US5] **Developer Documentation**
+  **Deliverables:**
+  - Game engine architecture guide (docs/architecture/)
+  - Poker rules implementation reference (docs/game-logic/)
+  - Troubleshooting guide (docs/troubleshooting/)
+  **Acceptance**: Developer docs complete
+
+- [ ] T200 [P2] [6h] [P] [US5] **Operations Documentation**
+  **Deliverables:**
+  - Deployment guide for production
+  - Monitoring and alerting setup
+  - Database backup/restore procedures
+  - Disaster recovery plan
+  - Performance tuning guide
+  **Acceptance**: Ops runbooks complete
+
+- [ ] T201 [P2] [4h] [P] [US5] **User Documentation**
+  **Deliverables:**
+  - Player manual (how to play)
+  - Admin manual (how to manage games)
+  - FAQ document
+  - Known limitations and roadmap
+  **Acceptance**: User docs published
+
+#### Admin Monitoring & Controls (T202)
+
+- [ ] T202 [P2] [12h] [P] [US5] **Admin Monitoring & Game Controls**
+  **Deliverables:**
+  - Live game monitoring view in frontend/app/(admin)/admin/games/live/page.tsx
+  - Pause/resume game endpoints in backend/src/modules/admin/controllers/game.controller.ts
+  - Cancel hand endpoint (refund all bets)
+  - Export hand history endpoint (CSV/JSON)
+  - Game state inspection UI
+  - Suspicious activity alerts, bot detection report
+  - Multi-accounting flagging UI
+  - Hand replay viewer (using shuffle seed - requires T213)
+  - Rake statistics view, performance metrics dashboard
+  - Game error log viewer, player action history viewer
+  - Real-time game count, player count on admin dashboard
+  - Alert system for anomalies (slow actions, high error rate)
+  **Acceptance**: Admin tools functional, monitoring enabled
+
+#### Additional Infrastructure & Operations (T203-T213) - FROM TECHNICAL DEBT
+
+> **Source**: technical-debt.md items TD-002, TD-003, TD-005, TD-006, TD-007, TD-014-TD-021, TD-028-TD-029
+
+- [ ] T203 [P1] [12h] [US5] **Localization Infrastructure Setup** (TD-002 - CONSTITUTIONAL REQUIREMENT)
+  - **Sub-tasks**:
+    - Install next-i18next / i18next for frontend and backend
+    - Create locales structure (locales/en/, locales/vi/, locales/th/)
+    - Extract all hardcoded strings from components
+    - Create translation keys for all text
+    - Update all components to use t() function
+    - Add language switcher in settings
+    - Test language switching
+  - **Acceptance**: Zero hardcoded strings, English translations complete, i18n infrastructure ready for Vietnamese/Thai
+  - **Note**: CRITICAL per constitution.md Principle VI - NO hardcoded strings
+  - **Files**: frontend/locales/, frontend/components/**, backend/src/i18n/
+
+- [ ] T204 [P1] [4h] [US5] **Error Tracking and Monitoring (Sentry)** (TD-005)
+  - **Sub-tasks**:
+    - Install @sentry/node and @sentry/nextjs
+    - Configure Sentry DSN from environment variables
+    - Add error reporting to backend global exception filter
+    - Add React error boundaries with Sentry reporting
+    - Configure source map upload for production
+    - Set up alert rules (email on critical errors)
+    - Test error reporting end-to-end
+  - **Acceptance**: All errors reported to Sentry, source maps working, alerts configured
+  - **Files**: backend/src/common/filters/sentry-exception.filter.ts, frontend/app/error.tsx
+
+- [ ] T205 [P2] [4h] [P] [US5] **Comprehensive PHE TypeScript Type Definitions** (TD-006)
+  - **Sub-tasks**:
+    - Create comprehensive @types/phe declaration file
+    - Document all PHE functions (evaluateCards, rankCards, cardCodes, etc.)
+    - Add JSDoc comments with examples
+    - Test types in HandEvaluatorService
+    - Consider contributing types to DefinitelyTyped
+  - **Acceptance**: Complete PHE types, no TypeScript errors, well-documented
+  - **Files**: backend/src/types/phe.d.ts
+  - **Future**: Submit PR to DefinitelyTyped repository
+
+- [ ] T206 [P1] [3h] [US5] **Health Check Endpoints** (TD-014)
+  - **Sub-tasks**:
+    - Implement /health/liveness endpoint (server up check)
+    - Implement /health/readiness endpoint (dependencies healthy)
+    - Check PostgreSQL connection in readiness
+    - Check Redis connection in readiness
+    - Return detailed health status JSON
+    - Add health check to deployment pipeline
+  - **Acceptance**: Liveness and readiness endpoints working, dependencies checked
+  - **Files**: backend/src/modules/health/health.controller.ts
+
+- [ ] T207 [P2] [3h] [US5] **Environment Configuration Management** (TD-016)
+  - **Sub-tasks**:
+    - Create config module with @nestjs/config
+    - Add environment variable validation (Joi schema)
+    - Document all required env vars in .env.example
+    - Validate on startup (fail fast if misconfigured)
+    - Add type-safe config service
+  - **Acceptance**: Config validated on startup, type-safe access, documented
+  - **Files**: backend/src/config/*, .env.example
+
+- [ ] T208 [P2] [3h] [US5] **JWT Token Expiration Handling** (TD-021)
+  - **Sub-tasks**:
+    - Add axios interceptor for 401 responses
+    - Implement token refresh flow on frontend
+    - Add refresh token endpoint on backend
+    - Redirect to login on unrecoverable expiration
+    - Test token expiration scenarios
+  - **Acceptance**: Token refresh automatic, graceful login redirect on expiration
+  - **Files**: frontend/lib/api/auth-interceptor.ts, backend/src/modules/auth/controllers/auth.controller.ts
+
+- [ ] T209 [P3] [8h] [P] [US5] **Tablet-Specific Layouts** (TD-022)
+  - **Sub-tasks**:
+    - Design tablet layout (landscape poker table)
+    - Implement responsive breakpoints (md: tablets, lg: desktop)
+    - Test on iPad and Android tablets
+    - Optimize touch targets for tablets
+  - **Acceptance**: Tablet layout optimized, tested on real devices
+  - **Files**: frontend/components/game/**
+
+- [ ] T210 [P3] [6h] [P] [US5] **Landscape Orientation Support** (TD-023)
+  - **Sub-tasks**:
+    - Design landscape poker table layout
+    - Implement orientation detection
+    - Add landscape-specific styles
+    - Test orientation changes
+  - **Acceptance**: Landscape mode works, smooth orientation transitions
+  - **Files**: frontend/components/game/**
+
+- [ ] T211 [P3] [8h] [P] [US5] **Sound Effects System** (TD-025)
+  - **Sub-tasks**:
+    - Select/create sound assets (cards dealing, chips, win, fold)
+    - Implement audio player service
+    - Add sound effects to all game events
+    - Implement volume control in settings
+    - Add mute toggle
+    - Preload sounds for performance
+  - **Acceptance**: Sound effects on all actions, volume control, mute works
+  - **Files**: frontend/lib/audio/, public/sounds/
+
+- [ ] T212 [P3] [6h] [P] [US5] **Dark Mode Implementation** (TD-026)
+  - **Sub-tasks**:
+    - Design dark theme color palette
+    - Implement theme switching (Tailwind dark mode)
+    - Persist theme preference in localStorage
+    - Test readability and contrast (WCAG AA)
+    - Add theme toggle in settings
+  - **Acceptance**: Dark mode implemented, preference persisted, WCAG compliant
+  - **Files**: frontend/app/layout.tsx, tailwind.config.js
+
+- [ ] T213 [P2] [4h] [US5] **Hand Replay Backend Implementation** (TD-028, TD-029)
+  - **Sub-tasks**:
+    - Add shuffle_seed column to game_hands table migration
+    - Store crypto.randomBytes seed in saveCompletedHand()
+    - Create hand replay reconstruction endpoint
+    - Generate action-by-action replay data
+    - Test seed-based replay accuracy
+  - **Acceptance**: Shuffle seed stored, replay endpoint returns accurate hand recreation
+  - **Note**: Required for T202 hand replay viewer
+  - **Files**: backend/src/modules/game/entities/game-hand.entity.ts, backend/src/modules/admin/controllers/hand-replay.controller.ts
+
+#### Final Integration & Validation (T214)
+
+- [ ] T214 [P1] [8h] [US5] **Final Integration & Deployment Readiness**
+  **Tasks:**
+  - Run full test suite, verify 200+ tests passing
+  - Run ESLint, fix all errors
+  - Run TypeScript strict mode, fix all errors
+  - Build backend and frontend, verify no compilation errors
+  - Run security audit (npm audit), fix high/critical vulnerabilities
+  - Run accessibility audit (Lighthouse), fix violations
+  - Run performance audit (Lighthouse), optimize for Core Web Vitals
+  - Verify all animations smooth (60fps)
+  - Load test with 100 concurrent games
+  - Stress test with 1000 concurrent connections
+  - Verify graceful shutdown (save state, close connections)
+  - Create deployment checklist
+  - Deploy to staging environment, verify end-to-end
+  - Write Phase 7 completion report in docs/progress/10-phase7-game-engine-complete.md
+  **Acceptance**: Production-ready, all validations passed, deployed to staging
+
+**Phase 7C Acceptance**: All test suites passing (150+ tests), all documentation complete, admin tools functional, deployed to staging
+
+---
+
+**Phase 7 Summary:**
+- **Total Tasks**: 203 (T128-T203) - 76 detailed tasks vs original 49
+- **Total Sub-tasks**: ~220 implementation steps across all phases
+- **Timeline**: 5-6 weeks (7A: 2-3 weeks, 7B: 2 weeks, 7C: 1 week parallel)
+- **Tests**: 150+ comprehensive tests
+- **Approach**: Production-ready, no MVP shortcuts, all poker rules implemented
 
 ---
 

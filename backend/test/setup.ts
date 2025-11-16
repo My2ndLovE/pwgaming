@@ -1,42 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import configuration from '../src/config/configuration';
+/**
+ * Jest setup file
+ * Runs before each test suite
+ */
 
-export async function createTestApp(
-  moduleMetadata: any,
-): Promise<INestApplication> {
-  const moduleFixture: TestingModule = await Test.createTestingModule({
-    imports: [
-      ConfigModule.forRoot({
-        isGlobal: true,
-        load: [configuration],
-      }),
-      TypeOrmModule.forRoot({
-        type: 'postgres',
-        host: process.env.DB_HOST || 'localhost',
-        port: parseInt(process.env.DB_PORT || '5432', 10),
-        username: process.env.DB_USERNAME || 'poker_user',
-        password: process.env.DB_PASSWORD || 'poker_dev_password',
-        database: process.env.DB_DATABASE_TEST || 'poker_platform_test',
-        entities: [__dirname + '/../src/**/*.entity{.ts,.js}'],
-        synchronize: true,
-        dropSchema: true, // Clean slate for each test run
-      }),
-      ...moduleMetadata.imports,
-    ],
-    controllers: moduleMetadata.controllers || [],
-    providers: moduleMetadata.providers || [],
-  }).compile();
+// Set test environment variables
+process.env.NODE_ENV = 'test';
+process.env.DATABASE_URL = process.env.TEST_DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/pwgaming_test';
+process.env.REDIS_URL = process.env.TEST_REDIS_URL || 'redis://localhost:6379/1';
+process.env.JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 
-  const app = moduleFixture.createNestApplication();
-  await app.init();
-  return app;
-}
+// Set test timeouts
+jest.setTimeout(10000); // 10 seconds for tests
 
-export async function closeTestApp(app: INestApplication): Promise<void> {
-  if (app) {
-    await app.close();
-  }
-}
+// Global test utilities
+global.console = {
+  ...console,
+  // Suppress console.log during tests (keep error and warn)
+  log: jest.fn(),
+  debug: jest.fn(),
+  info: jest.fn(),
+};
