@@ -5,7 +5,7 @@
 
 import type { AuthResponse, AuthTokens, User } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4110';
 
 class AuthClientError extends Error {
   constructor(
@@ -68,7 +68,7 @@ export const authClient = {
    * Get current user profile
    */
   async getProfile(accessToken: string): Promise<User> {
-    const response = await fetch(`${API_URL}/auth/profile`, {
+    const response = await fetch(`${API_URL}/auth/me`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
