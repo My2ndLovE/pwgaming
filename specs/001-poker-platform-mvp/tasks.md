@@ -575,13 +575,14 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 #### Blind Posting System (T177)
 
-- [ ] T177 [P1] [8h] [US5] **Blind Posting System** in backend/src/modules/game/services/blind.service.ts
+- [x] T177 [P1] [8h] [US5] **Blind Posting System** in backend/src/modules/game/services/blind.service.ts
   **Sub-tasks:**
-  - T177.1 [2h] Write failing test for blind posting (small blind, big blind)
-  - T177.2 [3h] Create BlindService (postSmallBlind, postBigBlind, getBlindAmount)
-  - T177.3 [2h] Integrate with GameStateMachine (call before dealing cards)
-  - T177.4 [1h] E2E test for complete blind posting flow
+  - [x] T177.1 [2h] Write failing test for blind posting (small blind, big blind)
+  - [x] T177.2 [3h] Create BlindService (postSmallBlind, postBigBlind, getBlindAmount)
+  - [x] T177.3 [2h] Integrate with GameStateMachine (call before dealing cards)
+  - [x] T177.4 [1h] E2E test for complete blind posting flow
   **Acceptance**: Blinds auto-posted before cards dealt, heads-up rules work, big blind option implemented
+  **Completed**: 15 tests passing, integrated with GameEngine
 
 #### Burn Cards & Dealer Button (T178)
 

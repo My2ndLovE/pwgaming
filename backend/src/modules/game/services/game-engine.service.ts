@@ -3,6 +3,7 @@ import { DeckService } from './deck.service';
 import { HandEvaluatorService } from './hand-evaluator.service';
 import { PotService } from './pot.service';
 import { BettingService } from './betting.service';
+import { BlindService } from './blind.service';
 import { GameStateMachine, GameState, PlayerState } from './game-state-machine.service';
 import { HandPhase } from '../entities/game-hand.entity';
 import { ActionType } from '../entities/betting-action.entity';
@@ -43,6 +44,7 @@ export class GameEngine {
     private readonly handEvaluator: HandEvaluatorService,
     private readonly potService: PotService,
     private readonly bettingService: BettingService,
+    private readonly blindService: BlindService,
     private readonly stateMachine: GameStateMachine
   ) {}
 
@@ -67,6 +69,9 @@ export class GameEngine {
     const deck = this.deckService.createDeck();
     const shuffledDeck = this.deckService.shuffle(deck);
 
+    // Post blinds using BlindService
+    const stateWithBlinds = this.blindService.postBlinds(state, smallBlind, bigBlind);
+
     // Deal 2 cards to each player
     let remainingDeck = shuffledDeck;
     const playerHands: Array<{ userId: string; cards: string[] }> = [];
@@ -80,30 +85,8 @@ export class GameEngine {
       remainingDeck = remaining;
     });
 
-    // Post blinds
-    const sbPosition = state.smallBlindPosition;
-    const bbPosition = state.bigBlindPosition;
-
-    state.activePlayers = state.activePlayers.map(player => {
-      if (player.position === sbPosition) {
-        return {
-          ...player,
-          chipStack: (player.chipStack || 0) - smallBlind,
-          currentBet: smallBlind,
-        };
-      }
-      if (player.position === bbPosition) {
-        return {
-          ...player,
-          chipStack: (player.chipStack || 0) - bigBlind,
-          currentBet: bigBlind,
-        };
-      }
-      return player;
-    });
-
     return {
-      state,
+      state: stateWithBlinds,
       deck: remainingDeck,
       communityCards: [],
       playerHands,

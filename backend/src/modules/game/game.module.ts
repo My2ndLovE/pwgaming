@@ -7,6 +7,11 @@ import { Room } from '../room/entities/room.entity';
 import { DeckService } from './services/deck.service';
 import { HandEvaluatorService } from './services/hand-evaluator.service';
 import { PotService } from './services/pot.service';
+import { BettingService } from './services/betting.service';
+import { GameStateMachine } from './services/game-state-machine.service';
+import { GameEngine } from './services/game-engine.service';
+import { TimeoutService } from './services/timeout.service';
+import { BlindService } from './services/blind.service';
 import { GameGateway } from './gateways/game.gateway';
 import { AuthModule } from '../auth/auth.module';
 import { RoomModule } from '../room/room.module';
@@ -17,7 +22,26 @@ import { RoomModule } from '../room/room.module';
     AuthModule,
     RoomModule,
   ],
-  providers: [DeckService, HandEvaluatorService, PotService, GameGateway],
-  exports: [DeckService, HandEvaluatorService, PotService],
+  providers: [
+    DeckService,
+    HandEvaluatorService,
+    PotService,
+    BettingService,
+    GameStateMachine,
+    GameEngine,
+    TimeoutService,
+    BlindService,
+    GameGateway,
+  ],
+  exports: [
+    DeckService,
+    HandEvaluatorService,
+    PotService,
+    BettingService,
+    GameStateMachine,
+    GameEngine,
+    TimeoutService,
+    BlindService,
+  ],
 })
 export class GameModule {}

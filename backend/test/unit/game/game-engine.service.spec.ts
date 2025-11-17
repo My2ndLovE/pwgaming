@@ -3,6 +3,7 @@ import { DeckService } from '../../../src/modules/game/services/deck.service';
 import { HandEvaluatorService } from '../../../src/modules/game/services/hand-evaluator.service';
 import { PotService } from '../../../src/modules/game/services/pot.service';
 import { BettingService } from '../../../src/modules/game/services/betting.service';
+import { BlindService } from '../../../src/modules/game/services/blind.service';
 import { GameStateMachine } from '../../../src/modules/game/services/game-state-machine.service';
 import { HandPhase } from '../../../src/modules/game/entities/game-hand.entity';
 import { ActionType } from '../../../src/modules/game/entities/betting-action.entity';
@@ -14,6 +15,7 @@ describe('GameEngine', () => {
   let handEvaluator: HandEvaluatorService;
   let potService: PotService;
   let bettingService: BettingService;
+  let blindService: BlindService;
   let stateMachine: GameStateMachine;
 
   beforeEach(() => {
@@ -21,6 +23,7 @@ describe('GameEngine', () => {
     handEvaluator = new HandEvaluatorService();
     potService = new PotService();
     bettingService = new BettingService();
+    blindService = new BlindService();
     stateMachine = new GameStateMachine();
 
     engine = new GameEngine(
@@ -28,6 +31,7 @@ describe('GameEngine', () => {
       handEvaluator,
       potService,
       bettingService,
+      blindService,
       stateMachine
     );
   });
