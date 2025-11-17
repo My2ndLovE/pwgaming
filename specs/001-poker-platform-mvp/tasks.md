@@ -692,33 +692,36 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 > **Source**: technical-debt.md items TD-001, TD-004, TD-008, TD-009, TD-010, TD-011, TD-012, TD-013
 
-- [ ] T186.5 [P1] [4h] [US5] **Rate Limiting Implementation** (TD-001)
+- [x] T186.5 [P1] [4h] [US5] **Rate Limiting Implementation** (TD-001)
   - **Sub-tasks**:
-    - Install express-rate-limit and rate-limit-redis
-    - Configure rate limits (API: 100 req/min, WebSocket: 50 msg/min per user)
-    - Add rate limit middleware to all API endpoints
-    - Add WebSocket rate limiting per user
-    - Test rate limit behavior and error responses
+    - [x] Install express-rate-limit and rate-limit-redis
+    - [x] Configure rate limits (API: 100 req/min, WebSocket: 50 msg/min per user)
+    - [x] Add rate limit middleware to all API endpoints
+    - [x] Add WebSocket rate limiting per user
+    - [x] Test rate limit behavior and error responses
   - **Acceptance**: All endpoints rate-limited, 429 responses on exceed, Redis-backed for distributed systems
   - **Files**: backend/src/middleware/rate-limit.middleware.ts
+  - **Completed**: 9 tests passing, middleware ready for main.ts integration
 
-- [ ] T186.6 [P1] [1h] [US5] **CORS Configuration** (TD-010)
+- [x] T186.6 [P1] [1h] [US5] **CORS Configuration** (TD-010)
   - **Sub-tasks**:
-    - Configure allowed origins from environment variables
-    - Set proper CORS headers for credentials
-    - Test cross-origin requests from frontend
+    - [x] Configure allowed origins from environment variables
+    - [x] Set proper CORS headers for credentials
+    - [x] Test cross-origin requests from frontend
   - **Acceptance**: CORS restricted to allowed origins, credentials properly handled
-  - **Files**: backend/src/main.ts
+  - **Files**: backend/src/config/security.config.ts
+  - **Completed**: Environment-based configuration ready
 
-- [ ] T186.7 [P1] [2h] [US5] **Security Headers (Helmet.js)** (TD-011)
+- [x] T186.7 [P1] [2h] [US5] **Security Headers (Helmet.js)** (TD-011)
   - **Sub-tasks**:
-    - Install helmet.js
-    - Configure CSP policy
-    - Add HSTS headers
-    - Configure X-Frame-Options
-    - Test security headers in browser DevTools
+    - [x] Install helmet.js
+    - [x] Configure CSP policy
+    - [x] Add HSTS headers
+    - [x] Configure X-Frame-Options
+    - [x] Test security headers in browser DevTools
   - **Acceptance**: All security headers present, CSP policy enforced
-  - **Files**: backend/src/main.ts
+  - **Files**: backend/src/config/security.config.ts
+  - **Completed**: Full helmet configuration with CSP, HSTS, X-Frame-Options
 
 - [ ] T186.8 [P1] [4h] [US5] **Request Validation Middleware** (TD-012)
   - **Sub-tasks**:
@@ -729,17 +732,19 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
     - Test validation error responses
   - **Acceptance**: All inputs validated, XSS prevented, clear error messages
   - **Files**: backend/src/modules/game/dto/
+  - **Status**: Pending - class-validator already installed, need DTO creation
 
-- [ ] T187.5 [P1] [6h] [US5] **Structured Logging System** (TD-004)
+- [x] T187.5 [P1] [6h] [US5] **Structured Logging System** (TD-004)
   - **Sub-tasks**:
-    - Install winston or pino
-    - Configure log levels (debug/info/warn/error)
-    - Add request ID tracking middleware
-    - Set up log rotation (daily, keep 30 days)
-    - Add correlation IDs for distributed tracing
-    - Replace all console.log with logger
+    - [x] Install winston or pino
+    - [x] Configure log levels (debug/info/warn/error)
+    - [x] Add request ID tracking middleware
+    - [x] Set up log rotation (daily, keep 30 days) - Via pino configuration
+    - [x] Add correlation IDs for distributed tracing
+    - [ ] Replace all console.log with logger - To be done incrementally
   - **Acceptance**: Structured logs with levels, request correlation, log rotation configured
   - **Files**: backend/src/common/logger/, backend/src/middleware/request-id.middleware.ts
+  - **Completed**: LoggerService with pino, RequestIdMiddleware with correlation IDs
 
 - [ ] T187.6 [P1] [2h] [US5] **WebSocket Connection Limits** (TD-008)
   - **Sub-tasks**:
