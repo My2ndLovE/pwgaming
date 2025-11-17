@@ -151,24 +151,37 @@ export class GameEngine {
 
   /**
    * Advances to the next phase (flop, turn, river, showdown)
+   * Burns one card before dealing community cards (standard poker procedure)
    */
   advanceToNextPhase(handState: HandState): HandState {
     const currentPhase = handState.state.phase;
 
     // Deal community cards based on phase
     if (currentPhase === HandPhase.PREFLOP) {
+      // Burn 1 card before dealing flop
+      const burnResult = this.deckService.burnCard(handState.deck);
+      let remainingDeck = burnResult.remaining;
+
       // Deal flop (3 cards)
-      const { dealt, remaining } = this.deckService.dealCards(handState.deck, 3);
+      const { dealt, remaining } = this.deckService.dealCards(remainingDeck, 3);
       handState.communityCards = dealt;
       handState.deck = remaining;
     } else if (currentPhase === HandPhase.FLOP) {
+      // Burn 1 card before dealing turn
+      const burnResult = this.deckService.burnCard(handState.deck);
+      let remainingDeck = burnResult.remaining;
+
       // Deal turn (1 card)
-      const { dealt, remaining } = this.deckService.dealCards(handState.deck, 1);
+      const { dealt, remaining } = this.deckService.dealCards(remainingDeck, 1);
       handState.communityCards.push(dealt[0]);
       handState.deck = remaining;
     } else if (currentPhase === HandPhase.TURN) {
+      // Burn 1 card before dealing river
+      const burnResult = this.deckService.burnCard(handState.deck);
+      let remainingDeck = burnResult.remaining;
+
       // Deal river (1 card)
-      const { dealt, remaining } = this.deckService.dealCards(handState.deck, 1);
+      const { dealt, remaining } = this.deckService.dealCards(remainingDeck, 1);
       handState.communityCards.push(dealt[0]);
       handState.deck = remaining;
     }

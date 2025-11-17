@@ -586,13 +586,14 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 #### Burn Cards & Dealer Button (T178)
 
-- [ ] T178 [P1] [6h] [US5] **Burn Cards & Dealer Button Rotation** in backend/src/modules/game/services/deck.service.ts and GameStateMachine
+- [x] T178 [P1] [6h] [US5] **Burn Cards & Dealer Button Rotation** in backend/src/modules/game/services/deck.service.ts and GameStateMachine
   **Sub-tasks:**
-  - T178.1 [1h] Implement burnCard() method in DeckService
-  - T178.2 [2h] Integrate burn cards (1 before flop/turn/river)
-  - T178.3 [2h] Implement rotateDealer() and position calculations (SB, BB, UTG, first-to-act)
-  - T178.4 [1h] Test heads-up special rules (dealer is SB)
+  - [x] T178.1 [1h] Implement burnCard() method in DeckService
+  - [x] T178.2 [2h] Integrate burn cards (1 before flop/turn/river)
+  - [x] T178.3 [2h] Implement rotateDealer() and position calculations (SB, BB, UTG, first-to-act) - Already existed
+  - [x] T178.4 [1h] Test heads-up special rules (dealer is SB) - Already existed
   **Acceptance**: 3 burn cards per hand, dealer button rotates clockwise, position logic correct
+  **Completed**: 5 burn card tests passing, integrated with GameEngine, dealer rotation already implemented
 
 #### Buy-in, Cash-out, Rebuy (T179)
 

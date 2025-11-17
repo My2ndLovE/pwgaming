@@ -270,7 +270,7 @@ describe('GameEngine', () => {
 
       expect(result.state.phase).toBe(HandPhase.FLOP);
       expect(result.communityCards).toHaveLength(3);
-      expect(result.deck).toHaveLength(43); // 46 - 3
+      expect(result.deck).toHaveLength(42); // 46 - 1 burn - 3 flop
     });
 
     it('should deal turn (1 card) when advancing from FLOP', () => {

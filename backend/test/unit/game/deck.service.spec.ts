@@ -187,6 +187,63 @@ describe('DeckService', () => {
     });
   });
 
+  describe('burnCard', () => {
+    it('should remove top card from deck and return it', () => {
+      const deck = service.createDeck();
+      const topCard = deck[0];
+      const { burned, remaining } = service.burnCard(deck);
+
+      expect(burned).toBe(topCard);
+      expect(remaining).toHaveLength(51);
+      expect(remaining).not.toContain(topCard);
+    });
+
+    it('should not modify original deck', () => {
+      const deck = service.createDeck();
+      const originalLength = deck.length;
+      service.burnCard(deck);
+
+      expect(deck).toHaveLength(originalLength);
+    });
+
+    it('should work correctly when called multiple times', () => {
+      let deck = service.createDeck();
+      const burnedCards: string[] = [];
+
+      // Burn 3 cards (as in real poker: before flop, turn, river)
+      for (let i = 0; i < 3; i++) {
+        const { burned, remaining } = service.burnCard(deck);
+        burnedCards.push(burned);
+        deck = remaining;
+      }
+
+      expect(burnedCards).toHaveLength(3);
+      expect(deck).toHaveLength(49); // 52 - 3
+      expect(new Set(burnedCards).size).toBe(3); // All unique
+
+      // Burned cards should not be in remaining deck
+      burnedCards.forEach(card => {
+        expect(deck).not.toContain(card);
+      });
+    });
+
+    it('should handle burning from deck with one card left', () => {
+      const deck = ['Ah'];
+      const { burned, remaining } = service.burnCard(deck);
+
+      expect(burned).toBe('Ah');
+      expect(remaining).toHaveLength(0);
+    });
+
+    it('should return undefined when burning from empty deck', () => {
+      const deck: string[] = [];
+      const { burned, remaining } = service.burnCard(deck);
+
+      expect(burned).toBeUndefined();
+      expect(remaining).toHaveLength(0);
+    });
+  });
+
   describe('Edge Cases', () => {
     it('should handle shuffling empty array', () => {
       const shuffled = service.shuffle([]);
@@ -201,7 +258,7 @@ describe('DeckService', () => {
     it('should handle dealing zero cards', () => {
       const deck = service.createDeck();
       const { dealt, remaining } = service.dealCards(deck, 0);
-      
+
       expect(dealt).toHaveLength(0);
       expect(remaining).toHaveLength(52);
     });

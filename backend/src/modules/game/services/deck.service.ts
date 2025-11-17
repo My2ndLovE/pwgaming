@@ -48,4 +48,20 @@ export class DeckService {
     const remaining = deck.slice(count);
     return { dealt, remaining };
   }
+
+  /**
+   * Burns the top card from the deck (removes it without revealing)
+   * Used in Texas Hold'em before dealing flop, turn, and river
+   * @param deck - The deck to burn from
+   * @returns The burned card and the remaining deck
+   */
+  burnCard(deck: Card[]): { burned: Card | undefined; remaining: Card[] } {
+    if (deck.length === 0) {
+      return { burned: undefined, remaining: [] };
+    }
+
+    const burned = deck[0];
+    const remaining = deck.slice(1);
+    return { burned, remaining };
+  }
 }
