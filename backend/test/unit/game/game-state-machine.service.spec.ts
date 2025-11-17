@@ -256,6 +256,34 @@ describe('GameStateMachine', () => {
       const isComplete = service.isBettingRoundComplete(state);
       expect(isComplete).toBe(true);
     });
+
+    it('should return true when everyone called and all players acted', () => {
+      const state = {
+        currentBet: 200,
+        activePlayers: [
+          { userId: 'p1', position: 0, currentBet: 200, status: SeatStatus.ACTIVE, hasActed: true },
+          { userId: 'p2', position: 1, currentBet: 200, status: SeatStatus.ACTIVE, hasActed: true },
+          { userId: 'p3', position: 2, currentBet: 200, status: SeatStatus.ACTIVE, hasActed: true },
+        ],
+      };
+
+      const isComplete = service.isBettingRoundComplete(state);
+      expect(isComplete).toBe(true);
+    });
+
+    it('should return true when all players all-in', () => {
+      const state = {
+        currentBet: 500,
+        activePlayers: [
+          { userId: 'p1', position: 0, currentBet: 500, status: SeatStatus.ALL_IN, hasActed: true },
+          { userId: 'p2', position: 1, currentBet: 300, status: SeatStatus.ALL_IN, hasActed: true },
+          { userId: 'p3', position: 2, currentBet: 200, status: SeatStatus.ALL_IN, hasActed: true },
+        ],
+      };
+
+      const isComplete = service.isBettingRoundComplete(state);
+      expect(isComplete).toBe(true);
+    });
   });
 
   describe('isHandComplete', () => {

@@ -617,23 +617,25 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 #### Betting Round Completion & Turn Logic (T181)
 
-- [ ] T181 [P1] [8h] [US5] **Betting Round Completion & Action Turn** in GameStateMachine
+- [x] T181 [P1] [8h] [US5] **Betting Round Completion & Action Turn** in GameStateMachine
   **Sub-tasks:**
-  - T181.1 [2h] Write tests for betting round completion (all acted + bets equal, all folded, all all-in)
-  - T181.2 [3h] Implement isBettingRoundComplete() logic
-  - T181.3 [2h] Implement getNextPlayerToAct() (skip folded/all-in players)
-  - T181.4 [1h] Implement advancePhase() and resetBettingRound()
+  - [x] T181.1 [2h] Write tests for betting round completion (all acted + bets equal, all folded, all all-in) - Already existed
+  - [x] T181.2 [3h] Implement isBettingRoundComplete() logic - Already existed
+  - [x] T181.3 [2h] Implement getNextPlayerToAct() (skip folded/all-in players) - Already existed
+  - [x] T181.4 [1h] Implement advancePhase() and resetBettingRound() - Already existed
   **Acceptance**: Betting rounds complete correctly, turn advances properly, phases transition automatically
+  **Completed**: Implementation already exists from Phase 7A, added 2 additional edge case tests (31 tests total)
 
 #### Showdown & Hand Reveal (T182)
 
-- [ ] T182 [P1] [6h] [US5] **Showdown Logic & Card Reveal** in GameEngine
+- [x] T182 [P1] [6h] [US5] **Showdown Logic & Card Reveal** in GameEngine
   **Sub-tasks:**
-  - T182.1 [2h] Write tests for showdown card reveal order (last aggressor first, clockwise)
-  - T182.2 [2h] Implement determineShowdownOrder(), allow mucking for losers
-  - T182.3 [1h] Enforce all-in players must show cards
-  - T182.4 [1h] Implement evaluateShowdown() using pokersolver, distributePot() with tie-breaking
+  - [x] T182.1 [2h] Write tests for showdown card reveal order (last aggressor first, clockwise)
+  - [x] T182.2 [2h] Implement determineShowdownOrder(), allow mucking for losers
+  - [x] T182.3 [1h] Enforce all-in players must show cards
+  - [x] T182.4 [1h] Implement evaluateShowdown() using pokersolver, distributePot() with tie-breaking
   **Acceptance**: Cards revealed in correct order, mucking works, ties split pot correctly
+  **Completed**: 13 showdown tests passing, ShowdownService created with reveal order and mucking logic
 
 #### Side Pot Edge Cases (T183)
 

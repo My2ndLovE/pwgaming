@@ -14,6 +14,7 @@ import { GameEngine } from './services/game-engine.service';
 import { TimeoutService } from './services/timeout.service';
 import { BlindService } from './services/blind.service';
 import { RakeService } from './services/rake.service';
+import { ShowdownService } from './services/showdown.service';
 import { GameGateway } from './gateways/game.gateway';
 import { AuthModule } from '../auth/auth.module';
 import { RoomModule } from '../room/room.module';
@@ -34,6 +35,7 @@ import { RoomModule } from '../room/room.module';
     TimeoutService,
     BlindService,
     RakeService,
+    ShowdownService,
     GameGateway,
   ],
   exports: [
@@ -46,6 +48,7 @@ import { RoomModule } from '../room/room.module';
     TimeoutService,
     BlindService,
     RakeService,
+    ShowdownService,
   ],
 })
 export class GameModule {}
