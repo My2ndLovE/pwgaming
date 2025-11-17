@@ -11,72 +11,72 @@ describe('HandEvaluatorService', () => {
     it('should evaluate royal flush correctly', () => {
       const cards = ['Ah', 'Kh', 'Qh', 'Jh', 'Th'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(0); // STRAIGHT_FLUSH
+
+      expect(result.handType).toBe(9); // pokersolver: rank 9 = STRAIGHT_FLUSH
       expect(result.handName).toBe('Straight Flush');
     });
 
     it('should evaluate four of a kind correctly', () => {
       const cards = ['As', 'Ah', 'Ad', 'Ac', 'Kh'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(1); // FOUR_OF_A_KIND
+
+      expect(result.handType).toBe(8); // pokersolver: rank 8 = FOUR_OF_A_KIND
       expect(result.handName).toBe('Four of a Kind');
     });
 
     it('should evaluate full house correctly', () => {
       const cards = ['As', 'Ah', 'Ad', 'Kc', 'Kh'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(2); // FULL_HOUSE
+
+      expect(result.handType).toBe(7); // pokersolver: rank 7 = FULL_HOUSE
       expect(result.handName).toBe('Full House');
     });
 
     it('should evaluate flush correctly', () => {
       const cards = ['Ah', 'Kh', '9h', '7h', '4h'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(3); // FLUSH
+
+      expect(result.handType).toBe(6); // pokersolver: rank 6 = FLUSH
       expect(result.handName).toBe('Flush');
     });
 
     it('should evaluate straight correctly', () => {
       const cards = ['9h', '8d', '7c', '6s', '5h'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(4); // STRAIGHT
+
+      expect(result.handType).toBe(5); // pokersolver: rank 5 = STRAIGHT
       expect(result.handName).toBe('Straight');
     });
 
     it('should evaluate three of a kind correctly', () => {
       const cards = ['As', 'Ah', 'Ad', 'Kc', 'Qh'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(5); // THREE_OF_A_KIND
+
+      expect(result.handType).toBe(4); // pokersolver: rank 4 = THREE_OF_A_KIND
       expect(result.handName).toBe('Three of a Kind');
     });
 
     it('should evaluate two pair correctly', () => {
       const cards = ['As', 'Ah', 'Kd', 'Kc', 'Qh'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(6); // TWO_PAIR
+
+      expect(result.handType).toBe(3); // pokersolver: rank 3 = TWO_PAIR
       expect(result.handName).toBe('Two Pair');
     });
 
     it('should evaluate one pair correctly', () => {
       const cards = ['As', 'Ah', 'Kd', 'Qc', 'Jh'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(7); // ONE_PAIR
-      expect(result.handName).toBe('One Pair');
+
+      expect(result.handType).toBe(2); // pokersolver: rank 2 = ONE_PAIR
+      expect(result.handName).toBe('Pair');
     });
 
     it('should evaluate high card correctly', () => {
       const cards = ['As', 'Kh', 'Qd', 'Jc', '9h'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(8); // HIGH_CARD
+
+      expect(result.handType).toBe(1); // pokersolver: rank 1 = HIGH_CARD
       expect(result.handName).toBe('High Card');
     });
 
@@ -95,8 +95,8 @@ describe('HandEvaluatorService', () => {
     it('should handle 7-card hand (best 5 cards)', () => {
       const cards = ['Ah', 'Kh', 'Qh', 'Jh', 'Th', '2c', '3d'];
       const result = service.evaluateHand(cards);
-      
-      expect(result.handType).toBe(0); // STRAIGHT_FLUSH
+
+      expect(result.handType).toBe(9); // pokersolver: rank 9 = STRAIGHT_FLUSH
       expect(result.cards).toHaveLength(5);
     });
   });

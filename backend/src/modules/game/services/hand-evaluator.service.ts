@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { evaluateCards, rankCards, rankDescription, type HandRank } from 'phe';
+import { Hand } from 'pokersolver';
 
 export interface HandResult {
-  handType: HandRank;
+  handType: number;
   handName: string;
   value: number;
   cards: string[];
@@ -11,7 +11,7 @@ export interface HandResult {
 @Injectable()
 export class HandEvaluatorService {
   /**
-   * Evaluate a poker hand using PHE library
+   * Evaluate a poker hand using pokersolver library
    * @param cards - Array of 5-7 cards (format: 'Ah', 'Kd', etc.)
    * @returns Hand evaluation with type, name, and value
    */
@@ -24,17 +24,14 @@ export class HandEvaluatorService {
       throw new Error('Cannot evaluate more than 7 cards');
     }
 
-    // PHE expects format like ['Ah', 'Kd', 'Qc', 'Js', 'Ts']
-    // evaluateCards returns hand strength (lower is better)
-    const value = evaluateCards(cards);
-    const handType = rankCards(cards);
-    const handName = rankDescription[handType];
+    // pokersolver expects format like ['Ah', 'Kd', 'Qc', 'Js', 'Ts']
+    const hand = Hand.solve(cards);
 
     return {
-      handType,
-      handName,
-      value,
-      cards: cards.slice(0, 5), // Return best 5 cards
+      handType: hand.rank,
+      handName: hand.name,
+      value: hand.value, // pokersolver: higher value = stronger hand
+      cards: hand.cards.map(c => c.value + c.suit.toLowerCase()),
     };
   }
 
@@ -45,13 +42,15 @@ export class HandEvaluatorService {
    * @returns 1 if hand1 wins, -1 if hand2 wins, 0 if tie
    */
   compareHands(hand1: string[], hand2: string[]): number {
-    const eval1 = this.evaluateHand(hand1);
-    const eval2 = this.evaluateHand(hand2);
+    const solvedHand1 = Hand.solve(hand1);
+    const solvedHand2 = Hand.solve(hand2);
 
-    // PHE: Lower value wins (opposite of poker-evaluator)
-    if (eval1.value < eval2.value) return 1;
-    if (eval1.value > eval2.value) return -1;
-    return 0;
+    // Use pokersolver's winners method to determine winner
+    const winners = Hand.winners([solvedHand1, solvedHand2]);
+
+    if (winners.length === 2) return 0; // Tie
+    if (winners[0] === solvedHand1) return 1; // hand1 wins
+    return -1; // hand2 wins
   }
 
   /**
@@ -63,13 +62,18 @@ export class HandEvaluatorService {
     if (playerHands.length === 0) return [];
     if (playerHands.length === 1) return [playerHands[0].userId];
 
-    const evaluations = playerHands.map((ph) => ({
+    const hands = playerHands.map(ph => ({
       userId: ph.userId,
-      evaluation: this.evaluateHand(ph.cards),
+      hand: Hand.solve(ph.cards),
     }));
 
-    // PHE: Lower value wins
-    const minValue = Math.min(...evaluations.map((e) => e.evaluation.value));
-    return evaluations.filter((e) => e.evaluation.value === minValue).map((e) => e.userId);
+    // Use pokersolver's winners() method
+    const solvedHands = hands.map(h => h.hand);
+    const winners = Hand.winners(solvedHands);
+
+    // Map back to userIds
+    return hands
+      .filter(h => winners.includes(h.hand))
+      .map(h => h.userId);
   }
 }

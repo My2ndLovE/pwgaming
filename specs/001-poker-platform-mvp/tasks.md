@@ -635,7 +635,7 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
   - [x] T182.3 [1h] Enforce all-in players must show cards
   - [x] T182.4 [1h] Implement evaluateShowdown() using pokersolver, distributePot() with tie-breaking
   **Acceptance**: Cards revealed in correct order, mucking works, ties split pot correctly
-  **Completed**: 13 showdown tests passing, ShowdownService created with reveal order and mucking logic
+  **Completed**: 13 showdown tests passing, ShowdownService created with reveal order and mucking logic using pokersolver library
 
 #### Side Pot Edge Cases (T183)
 
