@@ -24,7 +24,12 @@ export enum TransactionType {
   WITHDRAWAL = 'withdrawal',
   GAME_WIN = 'game_win',
   GAME_LOSS = 'game_loss',
+  GAME_BUYIN = 'game_buyin',
+  GAME_CASHOUT = 'game_cashout',
+  GAME_REBUY = 'game_rebuy',
   ADMIN_ADJUSTMENT = 'admin_adjustment',
+  ADMIN_CREDIT = 'admin_credit',
+  ADMIN_DEBIT = 'admin_debit',
 }
 
 export enum TransactionStatus {
@@ -89,6 +94,15 @@ export class Transaction {
   @Length(0, 1000)
   notes!: string | null;
 
+  // Payment gateway fields (NULL for internal wallet mode)
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Length(0, 255)
+  gatewayReference!: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Length(0, 50)
+  gatewayStatus!: string | null;
+
   @Column({ type: 'uuid', nullable: true })
   @IsUUID()
   processedBy!: string | null;
@@ -134,10 +148,15 @@ export class Transaction {
     switch (this.type) {
       case TransactionType.DEPOSIT:
       case TransactionType.GAME_WIN:
+      case TransactionType.GAME_CASHOUT:
+      case TransactionType.GAME_REBUY:
       case TransactionType.ADMIN_ADJUSTMENT:
+      case TransactionType.ADMIN_CREDIT:
         return this.balanceBefore + this.amount;
       case TransactionType.WITHDRAWAL:
       case TransactionType.GAME_LOSS:
+      case TransactionType.GAME_BUYIN:
+      case TransactionType.ADMIN_DEBIT:
         return this.balanceBefore - this.amount;
       default:
         throw new Error('Invalid transaction type');

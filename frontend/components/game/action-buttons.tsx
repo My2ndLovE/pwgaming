@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UseGameStateReturn } from '../../hooks/use-game-state';
+import { useKeyboardShortcuts } from '../../hooks/use-keyboard-shortcuts';
 
 interface ActionButtonsProps {
   gameState: UseGameStateReturn;
+  enableKeyboardShortcuts?: boolean;
 }
 
-export function ActionButtons({ gameState }: ActionButtonsProps) {
+export function ActionButtons({
+  gameState,
+  enableKeyboardShortcuts = true,
+}: ActionButtonsProps) {
   const [betAmount, setBetAmount] = useState(0);
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -20,6 +25,17 @@ export function ActionButtons({ gameState }: ActionButtonsProps) {
       setError(err instanceof Error ? err.message : 'Action failed');
     }
   };
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onFold: () => gameState.isYourTurn && handleAction(gameState.fold),
+    onCheck: () => gameState.isYourTurn && gameState.canCheck && handleAction(gameState.check),
+    onCall: () => gameState.isYourTurn && gameState.canCall && handleAction(gameState.call),
+    onRaise: () => gameState.isYourTurn && gameState.canRaise && raiseAmount >= gameState.minRaiseAmount && handleAction(() => gameState.raise(raiseAmount)),
+    onBet: () => gameState.isYourTurn && gameState.canBet && betAmount >= gameState.minBetAmount && handleAction(() => gameState.bet(betAmount)),
+    onAllIn: () => gameState.isYourTurn && handleAction(gameState.allIn),
+    enabled: enableKeyboardShortcuts && gameState.isYourTurn,
+  });
 
   if (!gameState.isYourTurn) {
     return (
@@ -39,13 +55,15 @@ export function ActionButtons({ gameState }: ActionButtonsProps) {
       )}
 
       {/* Quick actions */}
-      <div className="flex gap-3 justify-center flex-wrap">
+      <div className="flex gap-3 justify-center flex-wrap" role="group" aria-label="Poker actions">
         {/* Fold */}
         <button
           onClick={() => handleAction(gameState.fold)}
           className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+          aria-label="Fold your hand (Keyboard: F)"
+          aria-keyshortcuts="F"
         >
-          Fold
+          Fold <span className="text-xs opacity-75">(F)</span>
         </button>
 
         {/* Check */}
@@ -53,8 +71,10 @@ export function ActionButtons({ gameState }: ActionButtonsProps) {
           <button
             onClick={() => handleAction(gameState.check)}
             className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+            aria-label="Check (Keyboard: C)"
+            aria-keyshortcuts="C"
           >
-            Check
+            Check <span className="text-xs opacity-75">(C)</span>
           </button>
         )}
 
@@ -63,8 +83,10 @@ export function ActionButtons({ gameState }: ActionButtonsProps) {
           <button
             onClick={() => handleAction(gameState.call)}
             className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+            aria-label={`Call ${gameState.callAmount} chips (Keyboard: K)`}
+            aria-keyshortcuts="K"
           >
-            Call ${gameState.callAmount}
+            Call ${gameState.callAmount} <span className="text-xs opacity-75">(K)</span>
           </button>
         )}
 
@@ -72,8 +94,11 @@ export function ActionButtons({ gameState }: ActionButtonsProps) {
         <button
           onClick={() => handleAction(gameState.allIn)}
           className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+          aria-label={`Go all in with ${gameState.yourPlayer?.chipStack || 0} chips (Keyboard: A)`}
+          aria-keyshortcuts="A"
         >
-          All In {gameState.yourPlayer && `($${gameState.yourPlayer.chipStack})`}
+          All In {gameState.yourPlayer && `($${gameState.yourPlayer.chipStack})`}{' '}
+          <span className="text-xs opacity-75">(A)</span>
         </button>
       </div>
 

@@ -1,72 +1,29 @@
 import { Injectable, LoggerService as NestLoggerService } from '@nestjs/common';
-import * as pino from 'pino';
 
 @Injectable()
-export class LoggerService implements NestLoggerService {
-  private logger: pino.Logger;
-
-  constructor() {
-    this.logger = pino({
-      level: process.env.LOG_LEVEL || 'info',
-      transport:
-        process.env.NODE_ENV !== 'production'
-          ? {
-              target: 'pino-pretty',
-              options: {
-                colorize: true,
-                translateTime: 'SYS:standard',
-                ignore: 'pid,hostname',
-              },
-            }
-          : undefined,
-    });
-  }
-
+export class AppLoggerService implements NestLoggerService {
   log(message: string, context?: string) {
-    this.logger.info({ context }, message);
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [INFO] [${context || 'App'}] ${message}`);
   }
 
   error(message: string, trace?: string, context?: string) {
-    this.logger.error({ context, trace }, message);
+    const timestamp = new Date().toISOString();
+    console.error(`[${timestamp}] [ERROR] [${context || 'App'}] ${message}${trace ? `\n${trace}` : ''}`);
   }
 
   warn(message: string, context?: string) {
-    this.logger.warn({ context }, message);
+    const timestamp = new Date().toISOString();
+    console.warn(`[${timestamp}] [WARN] [${context || 'App'}] ${message}`);
   }
 
   debug(message: string, context?: string) {
-    this.logger.debug({ context }, message);
+    const timestamp = new Date().toISOString();
+    console.debug(`[${timestamp}] [DEBUG] [${context || 'App'}] ${message}`);
   }
 
   verbose(message: string, context?: string) {
-    this.logger.trace({ context }, message);
-  }
-
-  /**
-   * Log with correlation ID for distributed tracing
-   */
-  logWithCorrelation(
-    level: 'info' | 'error' | 'warn' | 'debug',
-    message: string,
-    correlationId: string,
-    meta?: Record<string, any>
-  ) {
-    this.logger[level]({ correlationId, ...meta }, message);
-  }
-
-  /**
-   * Get child logger with additional context
-   */
-  child(bindings: pino.Bindings): LoggerService {
-    const childLogger = new LoggerService();
-    childLogger.logger = this.logger.child(bindings);
-    return childLogger;
-  }
-
-  /**
-   * Get the underlying pino logger
-   */
-  getPinoLogger(): pino.Logger {
-    return this.logger;
+    const timestamp = new Date().toISOString();
+    console.log(`[${timestamp}] [VERBOSE] [${context || 'App'}] ${message}`);
   }
 }

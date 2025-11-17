@@ -1,24 +1,25 @@
 {
-  "app_name": "PW Gaming",
-  "loading": "Loading...",
-  "error": "Error",
-  "success": "Success",
-  "cancel": "Cancel",
-  "confirm": "Confirm",
-  "close": "Close",
-  "save": "Save",
-  "back": "Back",
-  "next": "Next",
-  "submit": "Submit",
-  "delete": "Delete",
-  "edit": "Edit",
-  "view": "View",
-  "search": "Search",
-  "filter": "Filter",
-  "clear": "Clear",
-  "refresh": "Refresh",
-  "optional": "Optional",
-  "required": "Required",
-  "yes": "Yes",
-  "no": "No"
+  "app": {
+    "name": "PW Gaming Poker",
+    "tagline": "Play Texas Hold'em Online"
+  },
+  "nav": {
+    "home": "Home",
+    "games": "Games",
+    "wallet": "Wallet",
+    "profile": "Profile",
+    "admin": "Admin",
+    "logout": "Logout"
+  },
+  "game": {
+    "join": "Join Game",
+    "leave": "Leave Game",
+    "fold": "Fold",
+    "check": "Check",
+    "call": "Call",
+    "bet": "Bet",
+    "raise": "Raise",
+    "allIn": "All-In",
+    "pot": "Pot"
+  }
 }

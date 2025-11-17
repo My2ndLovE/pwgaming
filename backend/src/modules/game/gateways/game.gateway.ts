@@ -14,6 +14,10 @@ import { GameEngine, HandState } from '../services/game-engine.service';
 import { TimeoutService } from '../services/timeout.service';
 import { ActionType } from '../entities/betting-action.entity';
 import { HandPhase } from '../entities/game-hand.entity';
+import { GameWalletService } from '../../wallet/services/game-wallet.service';
+import { GameStateStore } from '../services/game-state-store.service';
+import { BotDetectionService } from '../services/bot-detection.service';
+import { MultiAccountDetectionService } from '../services/multi-account-detection.service';
 
 interface RoomState {
   roomId: string;
@@ -28,6 +32,22 @@ interface RoomState {
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
   },
+  transports: ['websocket', 'polling'],
+  perMessageDeflate: {
+    threshold: 1024, // Compress messages > 1KB
+    zlibDeflateOptions: {
+      chunkSize: 1024,
+      memLevel: 7,
+      level: 3, // Balanced compression
+    },
+    zlibInflateOptions: {
+      chunkSize: 10 * 1024,
+    },
+    clientNoContextTakeover: true,
+    serverNoContextTakeover: true,
+    serverMaxWindowBits: 10,
+    concurrencyLimit: 10,
+  },
 })
 @UseGuards(WsAuthGuard)
 export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -37,11 +57,45 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private rooms: Map<string, RoomState> = new Map();
   private connectedPlayers: Map<string, { socket: Socket; roomId: string }> = new Map();
   private reconnectionTimers: Map<string, NodeJS.Timeout> = new Map();
+  private actionLocks: Map<string, boolean> = new Map(); // roomId -> isLocked
+  private actionTimestamps: Map<string, number> = new Map(); // userId -> last action prompt timestamp
 
   constructor(
     private readonly gameEngine: GameEngine,
     private readonly timeoutService: TimeoutService,
-  ) {}
+    private readonly gameWalletService: GameWalletService,
+    private readonly gameStateStore: GameStateStore,
+    private readonly botDetection: BotDetectionService,
+    private readonly multiAccountDetection: MultiAccountDetectionService,
+  ) {
+    // Recover active games on startup
+    this.recoverActiveGames();
+  }
+
+  /**
+   * Recover all active games from Redis on server restart
+   */
+  private async recoverActiveGames() {
+    try {
+      const recoveredGames = await this.gameStateStore.recoverAllGames();
+
+      for (const [roomId, handState] of recoveredGames) {
+        this.rooms.set(roomId, {
+          roomId,
+          handState,
+          smallBlind: 50, // TODO: Load from room config
+          bigBlind: 100,
+          actionTimeoutSeconds: 30,
+        });
+
+        console.log(`Recovered game for room ${roomId}`);
+      }
+
+      console.log(`Crash recovery complete: ${recoveredGames.size} games restored`);
+    } catch (error) {
+      console.error('Failed to recover games:', error);
+    }
+  }
 
   handleConnection(client: Socket) {
     const userId = client.data.user?.userId;
@@ -61,19 +115,30 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     const userId = client.data.user?.userId;
-    if (userId) {
-      console.log(`User ${userId} disconnected (socket: ${client.id})`);
+    if (!userId) return;
 
-      const playerInfo = this.connectedPlayers.get(userId);
-      if (playerInfo) {
-        // Start 60-second grace period for reconnection
-        const timer = setTimeout(() => {
-          this.handlePlayerTimeout(userId, playerInfo.roomId);
-        }, 60000);
+    console.log(`User ${userId} disconnected (socket: ${client.id})`);
 
-        this.reconnectionTimers.set(userId, timer);
-      }
-    }
+    const playerInfo = this.connectedPlayers.get(userId);
+    if (!playerInfo) return;
+
+    const { roomId } = playerInfo;
+
+    // Notify other players of disconnection
+    this.server.to(roomId).emit('game:player_disconnected', {
+      userId,
+      message: `Player disconnected (60 second grace period)`,
+      graceTimeRemaining: 60,
+    });
+
+    // Start 60-second grace period for reconnection
+    const timer = setTimeout(() => {
+      this.handlePlayerTimeout(userId, roomId);
+    }, 60000);
+
+    this.reconnectionTimers.set(userId, timer);
+
+    console.log(`Started 60s reconnection timer for user ${userId}`);
   }
 
   @SubscribeMessage('game:join')
@@ -88,8 +153,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const { roomId, buyIn } = data;
 
-    // Join Socket.IO room
-    client.join(roomId);
+    // SECURITY: Multi-account detection
+    const clientIP = client.handshake.address || client.conn.remoteAddress || 'unknown';
+    const isFlagged = this.multiAccountDetection.trackPlayerJoin(userId, roomId, clientIP);
+
+    if (isFlagged) {
+      console.warn(`SECURITY: Multiple accounts detected from IP ${clientIP} in room ${roomId}`);
+      // Continue but log for admin review (don't block, could be same household)
+    }
 
     // Initialize room state if needed
     if (!this.rooms.has(roomId)) {
@@ -103,6 +174,33 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     const room = this.rooms.get(roomId)!;
+
+    // WALLET INTEGRATION: Validate and process buy-in
+    const validation = await this.gameWalletService.validateBuyIn({
+      userId,
+      roomId,
+      buyInAmount: buyIn,
+      bigBlind: room.bigBlind,
+    });
+
+    if (!validation.isValid) {
+      return { success: false, error: validation.error };
+    }
+
+    try {
+      // Process buy-in atomically (deduct from wallet)
+      await this.gameWalletService.processBuyIn({
+        userId,
+        roomId,
+        buyInAmount: buyIn,
+        bigBlind: room.bigBlind,
+      });
+    } catch (error) {
+      return { success: false, error: error.message || 'Buy-in failed' };
+    }
+
+    // Join Socket.IO room
+    client.join(roomId);
 
     // Track connected player
     this.connectedPlayers.set(userId, { socket: client, roomId });
@@ -132,7 +230,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.sendGameState(client, roomId);
     }
 
-    return { success: true };
+    return { success: true, buyIn };
   }
 
   @SubscribeMessage('game:action')
@@ -152,21 +250,56 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return { success: false, error: 'Game not found' };
     }
 
-    // Clear action timer for this player
-    const handId = `${roomId}-hand-${room.handState.state.phase}`;
-    this.timeoutService.clearActionTimer(handId, userId);
-
-    // Process action through GameEngine
-    const result = this.gameEngine.processAction(
-      room.handState,
-      userId,
-      action,
-      amount
-    );
-
-    if (!result.success) {
-      return { success: false, error: result.error };
+    // SECURITY: Action locking to prevent race conditions
+    if (this.actionLocks.get(roomId)) {
+      return { success: false, error: 'Action already being processed' };
     }
+
+    this.actionLocks.set(roomId, true);
+
+    try {
+      // SECURITY: Bot detection - measure response time
+      const promptTimestamp = this.actionTimestamps.get(userId);
+      if (promptTimestamp) {
+        const responseTime = Date.now() - promptTimestamp;
+        this.botDetection.recordAction(userId, responseTime);
+
+        if (this.botDetection.isSuspicious(userId)) {
+          console.warn(`SECURITY: Bot-like behavior detected for user ${userId}`);
+          // Continue but log for admin review
+        }
+      }
+
+      // Clear action timer for this player
+      const handId = `${roomId}-hand-${room.handState.state.phase}`;
+      this.timeoutService.clearActionTimer(handId, userId);
+
+      // SECURITY: Validate action through GameEngine (already validates turn, chips, etc.)
+      const result = this.gameEngine.processAction(
+        room.handState,
+        userId,
+        action,
+        amount
+      );
+
+      if (!result.success) {
+        return { success: false, error: result.error };
+      }
+
+      return await this.processSuccessfulAction(roomId, userId, action, amount, room);
+    } finally {
+      // Always release lock
+      this.actionLocks.set(roomId, false);
+    }
+  }
+
+  private async processSuccessfulAction(
+    roomId: string,
+    userId: string,
+    action: ActionType,
+    amount: number,
+    room: RoomState,
+  ) {
 
     // Broadcast action to all players
     this.server.to(roomId).emit('game:player_action', {
@@ -199,9 +332,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     // Broadcast updated state
-    this.broadcastGameState(roomId);
+    await this.broadcastGameState(roomId);
 
-    return { success: true, state: this.sanitizeState(room.handState, userId) };
+    return { success: true, state: this.sanitizeState(room.handState!, userId) };
   }
 
   @SubscribeMessage('game:leave')
@@ -215,14 +348,82 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     const { roomId } = data;
+    const room = this.rooms.get(roomId);
+
+    // WALLET INTEGRATION: Cash-out player's chips
+    if (room?.handState) {
+      const player = room.handState.players.find(p => p.userId === userId);
+      if (player) {
+        try {
+          await this.gameWalletService.processCashOut({
+            userId,
+            roomId,
+            chipStack: player.chipStack,
+          });
+        } catch (error) {
+          console.error('Cash-out failed:', error);
+          // Continue with leave process even if cash-out fails
+          // Admin can manually correct balance later
+        }
+      }
+    }
 
     client.leave(roomId);
     this.connectedPlayers.delete(userId);
 
-    // TODO: Implement cash-out logic
-    // TODO: Mark player as sitting out if mid-hand
+    // TODO: Remove player from active hand if mid-hand
+    // TODO: Redistribute chips if player was all-in
 
     return { success: true };
+  }
+
+  @SubscribeMessage('game:rebuy')
+  async handleRebuy(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { roomId: string; amount: number },
+  ) {
+    const userId = client.data.user?.userId;
+    if (!userId) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const { roomId, amount } = data;
+    const room = this.rooms.get(roomId);
+
+    if (!room) {
+      return { success: false, error: 'Room not found' };
+    }
+
+    // Validate player is NOT in active hand
+    if (room.handState) {
+      const player = room.handState.players.find(p => p.userId === userId);
+      if (player && room.handState.phase !== HandPhase.COMPLETE) {
+        return { success: false, error: 'Cannot rebuy during active hand' };
+      }
+    }
+
+    // WALLET INTEGRATION: Process rebuy
+    try {
+      await this.gameWalletService.processRebuy({
+        userId,
+        roomId,
+        rebuyAmount: amount,
+        bigBlind: room.bigBlind,
+      });
+
+      // Add chips to player's stack
+      if (room.handState) {
+        const player = room.handState.players.find(p => p.userId === userId);
+        if (player) {
+          player.chipStack += amount;
+          this.broadcastGameState(roomId);
+        }
+      }
+
+      return { success: true, newStack: amount };
+    } catch (error) {
+      return { success: false, error: error.message || 'Rebuy failed' };
+    }
   }
 
   // Private helper methods
@@ -230,6 +431,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private handleReconnection(userId: string, newSocket: Socket) {
     const existing = this.connectedPlayers.get(userId)!;
     const { roomId } = existing;
+    const room = this.rooms.get(roomId);
+
+    console.log(`Reconnecting user ${userId} to room ${roomId}`);
 
     // Clear reconnection timer
     if (this.reconnectionTimers.has(userId)) {
@@ -241,11 +445,46 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.connectedPlayers.set(userId, { socket: newSocket, roomId });
     newSocket.join(roomId);
 
-    // Send current game state
-    this.sendGameState(newSocket, roomId);
+    // FULL STATE RESTORATION
+    if (room && room.handState) {
+      // 1. Send current game state (sanitized for player)
+      const sanitizedState = this.sanitizeState(room.handState, userId);
+      newSocket.emit('game:state', sanitizedState);
 
-    // Notify others
-    this.server.to(roomId).emit('game:player_reconnected', { userId });
+      // 2. Send player's private hole cards
+      const playerHand = room.handState.playerHands.find(h => h.userId === userId);
+      if (playerHand && playerHand.cards) {
+        newSocket.emit('game:your_cards', { cards: playerHand.cards });
+      }
+
+      // 3. Restore action timer if it's player's turn
+      const currentPlayer = room.handState.state.activePlayers.find(
+        p => p.position === room.handState!.state.currentPosition
+      );
+
+      if (currentPlayer && currentPlayer.userId === userId) {
+        const handId = `${roomId}-hand-${room.handState.state.phase}`;
+        const remainingTime = this.timeoutService.getRemainingTime(handId);
+
+        if (remainingTime > 0) {
+          newSocket.emit('game:your_turn', {
+            timeRemaining: remainingTime,
+            validActions: this.getValidActions(room.handState, userId),
+          });
+        }
+      }
+
+      // 4. Send action history (if available)
+      // TODO: Track action history in HandState for full replay
+    }
+
+    // Notify other players of reconnection
+    this.server.to(roomId).emit('game:player_reconnected', {
+      userId,
+      message: `Player reconnected`,
+    });
+
+    console.log(`User ${userId} successfully reconnected to room ${roomId}`);
   }
 
   private handlePlayerTimeout(userId: string, roomId: string) {
@@ -329,6 +568,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       pots,
     });
 
+    // PERSISTENCE: Save completed hand to PostgreSQL
+    try {
+      await this.gameStateStore.saveCompletedHand(
+        roomId,
+        room.handState,
+        room.smallBlind,
+        room.bigBlind,
+      );
+
+      // Delete from Redis (no longer active)
+      await this.gameStateStore.deleteGameState(roomId);
+    } catch (error) {
+      console.error('Failed to save completed hand:', error);
+    }
+
     // Clear all action timers
     const handId = `${roomId}-hand-${room.handState.state.phase}`;
     this.timeoutService.clearAllTimersForHand(handId);
@@ -394,6 +648,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const room = this.rooms.get(roomId);
     if (!room || !room.handState) return;
 
+    // SECURITY: Record timestamp for bot detection
+    this.actionTimestamps.set(userId, Date.now());
+
     const handId = `${roomId}-hand-${room.handState.state.phase}`;
 
     this.timeoutService.startActionTimer(
@@ -423,9 +680,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  private broadcastGameState(roomId: string) {
+  private async broadcastGameState(roomId: string) {
     const room = this.rooms.get(roomId);
     if (!room || !room.handState) return;
+
+    // PERSISTENCE: Save state to Redis after every update
+    try {
+      await this.gameStateStore.saveGameState(
+        roomId,
+        room.handState,
+        room.smallBlind,
+        room.bigBlind,
+      );
+    } catch (error) {
+      console.error('Failed to save game state:', error);
+    }
 
     // Send sanitized state to each player
     this.connectedPlayers.forEach((playerInfo, userId) => {
@@ -458,6 +727,43 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         });
       }
     });
+  }
+
+  /**
+   * Get valid actions for a player
+   */
+  private getValidActions(handState: HandState, userId: string): string[] {
+    const player = handState.state.activePlayers.find(p => p.userId === userId);
+    if (!player) return [];
+
+    const actions: string[] = [];
+    const currentBet = handState.state.currentBet || 0;
+
+    // Can always fold
+    actions.push('fold');
+
+    // Check if can check
+    if (player.currentBet === currentBet) {
+      actions.push('check');
+    } else {
+      // Must call to stay in
+      actions.push('call');
+    }
+
+    // Can raise if has enough chips
+    const callAmount = currentBet - player.currentBet;
+    const minRaise = handState.state.minRaise || handState.state.currentBet;
+
+    if (player.chipStack > callAmount + minRaise) {
+      actions.push('raise');
+    }
+
+    // Can always go all-in
+    if (player.chipStack > 0) {
+      actions.push('all-in');
+    }
+
+    return actions;
   }
 
   private sanitizeState(handState: HandState, viewerUserId: string): any {

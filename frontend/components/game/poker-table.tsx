@@ -1,10 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useGameState } from '../../hooks/use-game-state';
 import { PlayerSeat } from './player-seat';
 import { ActionButtons } from './action-buttons';
 import { CommunityCards } from './community-cards';
+import { DealerButton } from './dealer-button';
+import { ChipStack } from './chip-stack';
+import { ActionHistory, ActionHistoryItem } from './action-history';
+import { ConnectionStatus, ConnectionState } from './connection-status';
 import { HandPhase } from '../../types/game';
 
 interface PokerTableProps {
@@ -66,20 +71,32 @@ export function PokerTable({ roomId, userId, token }: PokerTableProps) {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
             <div className="text-center">
               {/* Phase indicator */}
-              <div className="text-white text-sm font-semibold mb-2 uppercase tracking-wider">
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-white text-sm font-semibold mb-2 uppercase tracking-wider"
+              >
                 {state.phase}
-              </div>
+              </motion.div>
 
               {/* Community cards */}
               <CommunityCards cards={state.communityCards} phase={state.phase as HandPhase} />
 
-              {/* Pot */}
-              <div className="mt-4 bg-amber-800 rounded-lg px-4 py-2 shadow-lg">
-                <div className="text-amber-200 text-xs">POT</div>
-                <div className="text-white text-2xl font-bold">${potTotal}</div>
-              </div>
+              {/* Pot with chip animation */}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="mt-4"
+              >
+                <ChipStack amount={potTotal} size="lg" animated={true} />
+              </motion.div>
             </div>
           </div>
+
+          {/* Dealer button */}
+          {state.dealerPosition !== undefined && (
+            <DealerButton position={state.dealerPosition} totalSeats={state.players.length} />
+          )}
 
           {/* Player seats (positioned around ellipse) */}
           {state.players.map((player, index) => {
@@ -126,47 +143,86 @@ export function PokerTable({ roomId, userId, token }: PokerTableProps) {
         </div>
       )}
 
-      {/* Winners announcement */}
-      {gameState.lastWinners && gameState.lastWinners.length > 0 && (
-        <div className="absolute inset-0 bg-black/70 flex items-center justify-center z-40">
-          <div className="bg-white rounded-xl p-8 shadow-2xl max-w-md">
-            <h3 className="text-2xl font-bold mb-4 text-center">Hand Complete!</h3>
-            {gameState.lastWinners.map((winner, idx) => (
-              <div key={idx} className="mb-4 p-4 bg-amber-50 rounded-lg">
-                <div className="font-bold">{winner.userId}</div>
-                <div className="text-sm text-gray-600">{winner.handName}</div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {winner.handCards.join(' ')}
-                </div>
-              </div>
-            ))}
-            {gameState.lastPots && (
-              <div className="mt-4 pt-4 border-t">
-                {gameState.lastPots.map((pot, idx) => (
-                  <div key={idx} className="text-sm">
-                    Pot {idx + 1}: ${pot.amount}
+      {/* Winners announcement with celebration animation */}
+      <AnimatePresence>
+        {gameState.lastWinners && gameState.lastWinners.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/70 flex items-center justify-center z-40"
+          >
+            <motion.div
+              initial={{ scale: 0.5, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.5, y: -50, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 rounded-xl p-8 shadow-2xl max-w-md border-4 border-yellow-600"
+            >
+              <motion.h3
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring' }}
+                className="text-3xl font-bold mb-4 text-center text-white drop-shadow-lg"
+              >
+                🎉 Winner! 🎉
+              </motion.h3>
+              {gameState.lastWinners.map((winner, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ x: -50, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 + idx * 0.1 }}
+                  className="mb-4 p-4 bg-white/90 backdrop-blur rounded-lg shadow-lg"
+                >
+                  <div className="font-bold text-gray-900 text-lg">{winner.userId}</div>
+                  <div className="text-sm text-gray-700 font-semibold">{winner.handName}</div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {winner.handCards.join(' ')}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Recent actions */}
-      <div className="absolute top-4 right-4 z-30 bg-black/50 rounded-lg p-4 max-w-xs">
-        <h4 className="text-white text-sm font-bold mb-2">Recent Actions</h4>
-        <div className="space-y-1">
-          {gameState.recentActions.slice(-5).map((action, idx) => (
-            <div key={idx} className="text-white text-xs">
-              <span className="font-semibold">{action.userId}</span>{' '}
-              <span className="text-gray-300">{action.action}</span>
-              {action.amount > 0 && (
-                <span className="text-amber-300"> ${action.amount}</span>
+                </motion.div>
+              ))}
+              {gameState.lastPots && (
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="mt-4 pt-4 border-t border-white/30"
+                >
+                  {gameState.lastPots.map((pot, idx) => (
+                    <div key={idx} className="text-sm text-white font-medium">
+                      Pot {idx + 1}: ${pot.amount}
+                    </div>
+                  ))}
+                </motion.div>
               )}
-            </div>
-          ))}
-        </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Action History */}
+      <div className="absolute top-4 right-4 z-30 max-w-xs">
+        <ActionHistory
+          actions={gameState.recentActions.map((action, idx) => ({
+            id: `${action.userId}-${idx}`,
+            timestamp: Date.now(),
+            playerName: action.userId,
+            action: action.action as any,
+            amount: action.amount,
+          }))}
+          maxItems={10}
+          compact={true}
+        />
+      </div>
+
+      {/* Connection Status */}
+      <div className="absolute top-4 left-4 z-30">
+        <ConnectionStatus
+          status={gameState.isConnected ? 'connected' : 'disconnected'}
+          compact={true}
+          showLatency={false}
+        />
       </div>
     </div>
   );

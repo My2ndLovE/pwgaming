@@ -15,15 +15,22 @@ import { TimeoutService } from './services/timeout.service';
 import { BlindService } from './services/blind.service';
 import { RakeService } from './services/rake.service';
 import { ShowdownService } from './services/showdown.service';
+import { GameStateStore } from './services/game-state-store.service';
+import { BotDetectionService } from './services/bot-detection.service';
+import { MultiAccountDetectionService } from './services/multi-account-detection.service';
 import { GameGateway } from './gateways/game.gateway';
 import { AuthModule } from '../auth/auth.module';
 import { RoomModule } from '../room/room.module';
+import { WalletModule } from '../wallet/wallet.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([GameHand, PlayerSeat, BettingAction, RakeHistory, Room]),
     AuthModule,
     RoomModule,
+    WalletModule,
+    ConfigModule,
   ],
   providers: [
     DeckService,
@@ -36,6 +43,9 @@ import { RoomModule } from '../room/room.module';
     BlindService,
     RakeService,
     ShowdownService,
+    GameStateStore,
+    BotDetectionService,
+    MultiAccountDetectionService,
     GameGateway,
   ],
   exports: [
