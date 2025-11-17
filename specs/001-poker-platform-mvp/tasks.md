@@ -607,12 +607,13 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 #### Rake & Platform Commission (T180)
 
-- [ ] T180 [P1] [4h] [US5] **Rake Calculation & Persistence** in backend/src/modules/game/services/rake.service.ts
+- [x] T180 [P1] [4h] [US5] **Rake Calculation & Persistence** in backend/src/modules/game/services/rake.service.ts
   **Sub-tasks:**
-  - T180.1 [1h] Write test for rake calculation (5% up to $3 cap, no rake on pots <$10)
-  - T180.2 [2h] Create RakeService, integrate with pot distribution
-  - T180.3 [1h] Create rake_history table migration, implement persistence
+  - [x] T180.1 [1h] Write test for rake calculation (5% up to $3 cap, no rake on pots <$10)
+  - [x] T180.2 [2h] Create RakeService, integrate with pot distribution
+  - [x] T180.3 [1h] Create rake_history table migration, implement persistence
   **Acceptance**: Rake deducted before pot distribution, logged to database for accounting
+  **Completed**: 17 rake tests passing, RakeService created, RakeHistory entity created
 
 #### Betting Round Completion & Turn Logic (T181)
 

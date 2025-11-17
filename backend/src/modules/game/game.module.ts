@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { GameHand } from './entities/game-hand.entity';
 import { PlayerSeat } from './entities/player-seat.entity';
 import { BettingAction } from './entities/betting-action.entity';
+import { RakeHistory } from './entities/rake-history.entity';
 import { Room } from '../room/entities/room.entity';
 import { DeckService } from './services/deck.service';
 import { HandEvaluatorService } from './services/hand-evaluator.service';
@@ -12,13 +13,14 @@ import { GameStateMachine } from './services/game-state-machine.service';
 import { GameEngine } from './services/game-engine.service';
 import { TimeoutService } from './services/timeout.service';
 import { BlindService } from './services/blind.service';
+import { RakeService } from './services/rake.service';
 import { GameGateway } from './gateways/game.gateway';
 import { AuthModule } from '../auth/auth.module';
 import { RoomModule } from '../room/room.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([GameHand, PlayerSeat, BettingAction, Room]),
+    TypeOrmModule.forFeature([GameHand, PlayerSeat, BettingAction, RakeHistory, Room]),
     AuthModule,
     RoomModule,
   ],
@@ -31,6 +33,7 @@ import { RoomModule } from '../room/room.module';
     GameEngine,
     TimeoutService,
     BlindService,
+    RakeService,
     GameGateway,
   ],
   exports: [
@@ -42,6 +45,7 @@ import { RoomModule } from '../room/room.module';
     GameEngine,
     TimeoutService,
     BlindService,
+    RakeService,
   ],
 })
 export class GameModule {}
