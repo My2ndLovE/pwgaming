@@ -60,4 +60,64 @@ export class PotService {
 
     return winnings;
   }
+
+  /**
+   * Distributes pot with odd chip rule (closest to button clockwise gets extra chip)
+   * @param potAmount - Total pot amount
+   * @param winners - Winners with position information
+   * @param dealerPosition - The dealer button position
+   * @returns Distribution map with odd chip awarded correctly
+   */
+  distributeOddChip(
+    potAmount: number,
+    winners: Array<{ userId: string; position: number }>,
+    dealerPosition: number
+  ): Map<string, number> {
+    const distribution = new Map<string, number>();
+
+    if (winners.length === 0) {
+      return distribution;
+    }
+
+    // Calculate base share for each winner
+    const baseShare = Math.floor(potAmount / winners.length);
+    const oddChips = potAmount % winners.length;
+
+    // Sort winners clockwise from dealer
+    const sortedWinners = this.sortWinnersClockwiseFromDealer(winners, dealerPosition);
+
+    // Distribute base share to all winners
+    sortedWinners.forEach(winner => {
+      distribution.set(winner.userId, baseShare);
+    });
+
+    // Award odd chips to first N winners clockwise from button
+    for (let i = 0; i < oddChips; i++) {
+      const winner = sortedWinners[i];
+      const currentAmount = distribution.get(winner.userId) || 0;
+      distribution.set(winner.userId, currentAmount + 1);
+    }
+
+    return distribution;
+  }
+
+  /**
+   * Sorts winners clockwise from dealer position
+   */
+  private sortWinnersClockwiseFromDealer(
+    winners: Array<{ userId: string; position: number }>,
+    dealerPosition: number
+  ): Array<{ userId: string; position: number }> {
+    const maxPosition = Math.max(...winners.map(w => w.position));
+    const numSeats = maxPosition + 1;
+
+    return winners
+      .map(w => ({
+        ...w,
+        // Calculate distance clockwise from dealer's left
+        relativePosition: (w.position - dealerPosition - 1 + numSeats) % numSeats,
+      }))
+      .sort((a, b) => a.relativePosition - b.relativePosition)
+      .map(w => ({ userId: w.userId, position: w.position }));
+  }
 }

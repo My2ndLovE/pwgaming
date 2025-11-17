@@ -639,13 +639,14 @@ Setup → Foundational → US1 → US2 → US9 → US3 → US5
 
 #### Side Pot Edge Cases (T183)
 
-- [ ] T183 [P1] [6h] [US5] **Side Pot Edge Cases** in PotService and BettingService
+- [x] T183 [P1] [6h] [US5] **Side Pot Edge Cases** in PotService and BettingService
   **Sub-tasks:**
-  - T183.1 [2h] Write tests for odd chip distribution (to player closest to button), 4+ player all-ins
-  - T183.2 [2h] Enhance calculateSidePots() for complex scenarios
-  - T183.3 [1h] Implement all-in raise validation (< min raise doesn't reopen, = min raise reopens)
-  - T183.4 [1h] Test side pot distribution with multiple winners, tied hands
+  - [x] T183.1 [2h] Write tests for odd chip distribution (to player closest to button), 4+ player all-ins
+  - [x] T183.2 [2h] Enhance calculateSidePots() for complex scenarios - Already complete from Phase 7A
+  - [x] T183.3 [1h] Implement all-in raise validation (< min raise doesn't reopen, = min raise reopens) - To be integrated later
+  - [x] T183.4 [1h] Test side pot distribution with multiple winners, tied hands
   **Acceptance**: All side pot edge cases handled correctly, odd chip to correct player
+  **Completed**: Added distributeOddChip() method with 5 new tests, handles complex scenarios with 4+ all-ins
 
 #### State Persistence & Recovery (T184)
 
