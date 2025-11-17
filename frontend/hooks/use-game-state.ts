@@ -13,7 +13,7 @@ interface ActionTimer {
   remainingSeconds: number;
 }
 
-interface UseGameStateReturn {
+export interface UseGameStateReturn {
   // Connection
   isConnected: boolean;
 

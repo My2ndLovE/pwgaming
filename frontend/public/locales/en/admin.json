@@ -1,0 +1,23 @@
+{
+  "admin_panel": "Admin Panel",
+  "withdrawals": "Withdrawals",
+  "pending_withdrawals": "Pending Withdrawals",
+  "approve": "Approve",
+  "reject": "Reject",
+  "approving": "Approving...",
+  "rejecting": "Rejecting...",
+  "user": "User",
+  "status": "Status",
+  "actions": "Actions",
+  "no_pending": "No pending withdrawals",
+  "failed_fetch_withdrawals": "Failed to fetch pending withdrawals",
+  "failed_approve": "Failed to approve withdrawal",
+  "failed_reject": "Failed to reject withdrawal",
+  "not_authenticated": "Not authenticated",
+  "rejection_reason": "Rejection Reason",
+  "enter_reason": "Enter reason for rejection",
+  "confirm_approve": "Are you sure you want to approve this withdrawal?",
+  "confirm_reject": "Are you sure you want to reject this withdrawal?",
+  "requested_at": "Requested At",
+  "processed_at": "Processed At"
+}

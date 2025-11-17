@@ -1,0 +1,62 @@
+{
+  "rooms": "Rooms",
+  "browse_rooms": "Browse Rooms",
+  "join_room": "Join Room",
+  "leave_room": "Leave Room",
+  "room_name": "Room Name",
+  "small_blind": "Small Blind",
+  "big_blind": "Big Blind",
+  "min_buy_in": "Min Buy-in",
+  "max_buy_in": "Max Buy-in",
+  "buy_in": "Buy-in",
+  "players": "Players",
+  "status": "Status",
+  "waiting": "Waiting",
+  "active": "Active",
+  "completed": "Completed",
+  "poker_table": "Poker Table",
+  "your_cards": "Your Cards",
+  "community_cards": "Community Cards",
+  "pot": "Pot",
+  "current_bet": "Current Bet",
+  "your_turn": "Your Turn",
+  "waiting_for_players": "Waiting for players...",
+  "game_in_progress": "Game in progress",
+  "actions": {
+    "fold": "Fold",
+    "check": "Check",
+    "call": "Call",
+    "raise": "Raise",
+    "bet": "Bet",
+    "all_in": "All In"
+  },
+  "positions": {
+    "dealer": "Dealer",
+    "small_blind": "SB",
+    "big_blind": "BB"
+  },
+  "game_phase": {
+    "pre_flop": "Pre-Flop",
+    "flop": "Flop",
+    "turn": "Turn",
+    "river": "River",
+    "showdown": "Showdown"
+  },
+  "hand_rankings": {
+    "royal_flush": "Royal Flush",
+    "straight_flush": "Straight Flush",
+    "four_of_a_kind": "Four of a Kind",
+    "full_house": "Full House",
+    "flush": "Flush",
+    "straight": "Straight",
+    "three_of_a_kind": "Three of a Kind",
+    "two_pair": "Two Pair",
+    "pair": "Pair",
+    "high_card": "High Card"
+  },
+  "no_rooms": "No rooms available",
+  "failed_fetch_rooms": "Failed to fetch rooms",
+  "failed_join_room": "Failed to join room",
+  "enter_buy_in": "Enter buy-in amount",
+  "invalid_buy_in": "Buy-in must be between {{min}} and {{max}}"
+}

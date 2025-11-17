@@ -1,0 +1,23 @@
+{
+  "admin_panel": "Bảng quản trị",
+  "withdrawals": "Rút tiền",
+  "pending_withdrawals": "Yêu cầu rút đang chờ",
+  "approve": "Duyệt",
+  "reject": "Từ chối",
+  "approving": "Đang duyệt...",
+  "rejecting": "Đang từ chối...",
+  "user": "Người dùng",
+  "status": "Trạng thái",
+  "actions": "Hành động",
+  "no_pending": "Không có yêu cầu rút đang chờ",
+  "failed_fetch_withdrawals": "Tải yêu cầu rút thất bại",
+  "failed_approve": "Duyệt yêu cầu rút thất bại",
+  "failed_reject": "Từ chối yêu cầu rút thất bại",
+  "not_authenticated": "Chưa xác thực",
+  "rejection_reason": "Lý do từ chối",
+  "enter_reason": "Nhập lý do từ chối",
+  "confirm_approve": "Bạn có chắc muốn duyệt yêu cầu rút này?",
+  "confirm_reject": "Bạn có chắc muốn từ chối yêu cầu rút này?",
+  "requested_at": "Yêu cầu lúc",
+  "processed_at": "Xử lý lúc"
+}

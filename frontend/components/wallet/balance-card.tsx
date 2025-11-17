@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Wallet, TrendingUp, TrendingDown } from 'lucide-react';
 
@@ -14,6 +15,8 @@ export function BalanceCard({
   pendingDeposits,
   pendingWithdrawals,
 }: BalanceCardProps) {
+  const { t } = useTranslation('wallet');
+  
   const formatAmount = (amount: number): string => {
     return amount.toLocaleString('en-US', {
       minimumFractionDigits: 0,
@@ -24,7 +27,7 @@ export function BalanceCard({
   return (
     <div
       role="region"
-      aria-label="Wallet balance information"
+      aria-label={t('wallet_balance_info')}
       className="space-y-4"
     >
       <Card className="p-6">
@@ -34,7 +37,7 @@ export function BalanceCard({
               <Wallet className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Current Balance</p>
+              <p className="text-sm text-muted-foreground">{t('current_balance')}</p>
               <p className="text-3xl font-bold">{formatAmount(balance)}</p>
             </div>
           </div>
@@ -47,7 +50,7 @@ export function BalanceCard({
                 <TrendingUp className="h-4 w-4 text-green-500" />
                 <div>
                   <p className="text-xs text-muted-foreground">
-                    Pending Deposits
+                    {t('pending_deposits')}
                   </p>
                   <p className="text-lg font-semibold text-green-600">
                     {formatAmount(pendingDeposits)}
@@ -61,7 +64,7 @@ export function BalanceCard({
                 <TrendingDown className="h-4 w-4 text-orange-500" />
                 <div>
                   <p className="text-xs text-muted-foreground">
-                    Pending Withdrawals
+                    {t('pending_withdrawals')}
                   </p>
                   <p className="text-lg font-semibold text-orange-600">
                     {formatAmount(pendingWithdrawals)}

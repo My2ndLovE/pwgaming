@@ -1,0 +1,17 @@
+{
+  "generic": "An error occurred",
+  "network": "Network error. Please try again.",
+  "auth_failed": "Authentication failed",
+  "invalid_amount": "Invalid amount",
+  "api_error": "API error: {{message}}",
+  "not_found": "Not found",
+  "unauthorized": "Unauthorized",
+  "forbidden": "Access forbidden",
+  "server_error": "Server error",
+  "bad_request": "Bad request",
+  "timeout": "Request timeout",
+  "unknown": "Unknown error occurred",
+  "validation_failed": "Validation failed",
+  "please_try_again": "Please try again",
+  "contact_support": "Please contact support if the problem persists"
+}

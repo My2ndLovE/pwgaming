@@ -1,0 +1,23 @@
+{
+  "admin_panel": "แผงควบคุมผู้ดูแล",
+  "withdrawals": "การถอนเงิน",
+  "pending_withdrawals": "คำขอถอนที่รอดำเนินการ",
+  "approve": "อนุมัติ",
+  "reject": "ปฏิเสธ",
+  "approving": "กำลังอนุมัติ...",
+  "rejecting": "กำลังปฏิเสธ...",
+  "user": "ผู้ใช้",
+  "status": "สถานะ",
+  "actions": "การดำเนินการ",
+  "no_pending": "ไม่มีคำขอถอนที่รอดำเนินการ",
+  "failed_fetch_withdrawals": "โหลดคำขอถอนล้มเหลว",
+  "failed_approve": "อนุมัติคำขอถอนล้มเหลว",
+  "failed_reject": "ปฏิเสธคำขอถอนล้มเหลว",
+  "not_authenticated": "ยังไม่ได้เข้าสู่ระบบ",
+  "rejection_reason": "เหตุผลการปฏิเสธ",
+  "enter_reason": "ป้อนเหตุผลการปฏิเสธ",
+  "confirm_approve": "คุณแน่ใจหรือไม่ว่าต้องการอนุมัติการถอนนี้?",
+  "confirm_reject": "คุณแน่ใจหรือไม่ว่าต้องการปฏิเสธการถอนนี้?",
+  "requested_at": "ขอเมื่อ",
+  "processed_at": "ดำเนินการเมื่อ"
+}

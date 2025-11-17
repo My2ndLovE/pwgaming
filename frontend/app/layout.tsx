@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/auth-context";
+import { I18nProvider } from "@/lib/i18n/i18n-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { ErrorBoundary } from "@/components/error/error-boundary";
 
@@ -31,10 +32,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ErrorBoundary>
-          <AuthProvider>
-            <Navbar />
-            {children}
-          </AuthProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <Navbar />
+              {children}
+            </AuthProvider>
+          </I18nProvider>
         </ErrorBoundary>
       </body>
     </html>

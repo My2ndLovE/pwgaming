@@ -1,0 +1,62 @@
+{
+  "rooms": "ห้อง",
+  "browse_rooms": "เรียกดูห้อง",
+  "join_room": "เข้าร่วมห้อง",
+  "leave_room": "ออกจากห้อง",
+  "room_name": "ชื่อห้อง",
+  "small_blind": "บลายด์เล็ก",
+  "big_blind": "บลายด์ใหญ่",
+  "min_buy_in": "ซื้อขั้นต่ำ",
+  "max_buy_in": "ซื้อสูงสุด",
+  "buy_in": "ซื้อเข้า",
+  "players": "ผู้เล่น",
+  "status": "สถานะ",
+  "waiting": "รอ",
+  "active": "กำลังเล่น",
+  "completed": "เสร็จสิ้น",
+  "poker_table": "โต๊ะโป๊กเกอร์",
+  "your_cards": "ไพ่ของคุณ",
+  "community_cards": "ไพ่กลาง",
+  "pot": "พอท",
+  "current_bet": "การเดิมพันปัจจุบัน",
+  "your_turn": "ถึงตาคุณ",
+  "waiting_for_players": "กำลังรอผู้เล่น...",
+  "game_in_progress": "เกมกำลังดำเนินการ",
+  "actions": {
+    "fold": "หมอบ",
+    "check": "เช็ค",
+    "call": "ตาม",
+    "raise": "เพิ่ม",
+    "bet": "เดิมพัน",
+    "all_in": "ออลอิน"
+  },
+  "positions": {
+    "dealer": "เจ้ามือ",
+    "small_blind": "SB",
+    "big_blind": "BB"
+  },
+  "game_phase": {
+    "pre_flop": "ก่อน Flop",
+    "flop": "Flop",
+    "turn": "Turn",
+    "river": "River",
+    "showdown": "เปิดไพ่"
+  },
+  "hand_rankings": {
+    "royal_flush": "รอยัลฟลัช",
+    "straight_flush": "สเตรทฟลัช",
+    "four_of_a_kind": "สี่ใบเหมือน",
+    "full_house": "ฟูลเฮ้าส์",
+    "flush": "ฟลัช",
+    "straight": "สเตรท",
+    "three_of_a_kind": "สามใบเหมือน",
+    "two_pair": "สองคู่",
+    "pair": "คู่",
+    "high_card": "ไพ่สูง"
+  },
+  "no_rooms": "ไม่มีห้อง",
+  "failed_fetch_rooms": "โหลดห้องล้มเหลว",
+  "failed_join_room": "เข้าร่วมห้องล้มเหลว",
+  "enter_buy_in": "ป้อนจำนวนเงินซื้อเข้า",
+  "invalid_buy_in": "เงินซื้อเข้าต้องระหว่าง {{min}} ถึง {{max}}"
+}

@@ -1,0 +1,62 @@
+{
+  "rooms": "Phòng",
+  "browse_rooms": "Duyệt phòng",
+  "join_room": "Tham gia phòng",
+  "leave_room": "Rời phòng",
+  "room_name": "Tên phòng",
+  "small_blind": "Mù nhỏ",
+  "big_blind": "Mù lớn",
+  "min_buy_in": "Mua vào tối thiểu",
+  "max_buy_in": "Mua vào tối đa",
+  "buy_in": "Mua vào",
+  "players": "Người chơi",
+  "status": "Trạng thái",
+  "waiting": "Đang chờ",
+  "active": "Đang chơi",
+  "completed": "Hoàn thành",
+  "poker_table": "Bàn Poker",
+  "your_cards": "Bài của bạn",
+  "community_cards": "Bài chung",
+  "pot": "Pot",
+  "current_bet": "Cược hiện tại",
+  "your_turn": "Lượt của bạn",
+  "waiting_for_players": "Đang chờ người chơi...",
+  "game_in_progress": "Ván đang diễn ra",
+  "actions": {
+    "fold": "Bỏ bài",
+    "check": "Xem",
+    "call": "Theo",
+    "raise": "Tăng",
+    "bet": "Cược",
+    "all_in": "Tất tay"
+  },
+  "positions": {
+    "dealer": "Chia bài",
+    "small_blind": "SB",
+    "big_blind": "BB"
+  },
+  "game_phase": {
+    "pre_flop": "Trước Flop",
+    "flop": "Flop",
+    "turn": "Turn",
+    "river": "River",
+    "showdown": "Lật bài"
+  },
+  "hand_rankings": {
+    "royal_flush": "Thùng phá sảnh Rồng",
+    "straight_flush": "Thùng phá sảnh",
+    "four_of_a_kind": "Tứ quý",
+    "full_house": "Cù lũ",
+    "flush": "Thùng",
+    "straight": "Sảnh",
+    "three_of_a_kind": "Sám",
+    "two_pair": "Hai đôi",
+    "pair": "Một đôi",
+    "high_card": "Bài cao"
+  },
+  "no_rooms": "Không có phòng",
+  "failed_fetch_rooms": "Tải phòng thất bại",
+  "failed_join_room": "Tham gia phòng thất bại",
+  "enter_buy_in": "Nhập số tiền mua vào",
+  "invalid_buy_in": "Tiền mua vào phải từ {{min}} đến {{max}}"
+}

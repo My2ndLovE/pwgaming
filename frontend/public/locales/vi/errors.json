@@ -1,0 +1,17 @@
+{
+  "generic": "Đã xảy ra lỗi",
+  "network": "Lỗi mạng. Vui lòng thử lại.",
+  "auth_failed": "Xác thực thất bại",
+  "invalid_amount": "Số tiền không hợp lệ",
+  "api_error": "Lỗi API: {{message}}",
+  "not_found": "Không tìm thấy",
+  "unauthorized": "Không được phép",
+  "forbidden": "Truy cập bị cấm",
+  "server_error": "Lỗi máy chủ",
+  "bad_request": "Yêu cầu không hợp lệ",
+  "timeout": "Hết thời gian chờ",
+  "unknown": "Lỗi không xác định",
+  "validation_failed": "Xác thực thất bại",
+  "please_try_again": "Vui lòng thử lại",
+  "contact_support": "Vui lòng liên hệ hỗ trợ nếu vấn đề vẫn tiếp diễn"
+}
