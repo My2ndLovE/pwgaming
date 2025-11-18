@@ -1,5 +1,5 @@
 import { plainToInstance } from 'class-transformer';
-import { IsEnum, IsNumber, IsString, validateSync } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, validateSync } from 'class-validator';
 
 enum Environment {
   Development = 'development',
@@ -15,19 +15,21 @@ class EnvironmentVariables {
   PORT: number = 3001;
 
   @IsString()
-  DB_HOST: string = 'localhost';
+  @IsOptional()
+  DB_HOST?: string = 'localhost';
 
   @IsNumber()
-  DB_PORT: number = 5432;
+  @IsOptional()
+  DB_PORT?: number = 5432;
 
   @IsString()
-  DB_USERNAME: string = 'poker_user';
+  DB_USERNAME!: string;
 
   @IsString()
-  DB_PASSWORD: string = 'poker_dev_password';
+  DB_PASSWORD!: string;
 
   @IsString()
-  DB_DATABASE: string = 'poker_platform';
+  DB_DATABASE!: string;
 
   @IsString()
   REDIS_HOST: string = 'localhost';
@@ -40,6 +42,13 @@ class EnvironmentVariables {
 
   @IsString()
   JWT_EXPIRATION: string = '7d';
+
+  @IsString()
+  TELEGRAM_BOT_TOKEN!: string;
+
+  @IsString()
+  @IsOptional()
+  FRONTEND_URL?: string;
 }
 
 export function validate(config: Record<string, unknown>) {

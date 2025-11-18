@@ -2,7 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { User, UserRole, UserStatus } from '../entities/user.entity';
+import { TelegramAuthService } from './telegram-auth.service';
 
 export interface TelegramUser {
   id: number;
@@ -24,15 +26,38 @@ export class AuthService {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly telegramAuthService: TelegramAuthService,
+    private readonly configService: ConfigService,
   ) {}
 
   async validateTelegramAuth(initData: string): Promise<User> {
-    // For MVP: simplified validation
-    // Production: Use @tma.js/init-data-node for proper validation
+    // Get bot token from environment
+    const botToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
+    if (!botToken) {
+      throw new UnauthorizedException('Telegram bot token not configured');
+    }
+
     try {
-      const userData = this.parseTelegramInitData(initData);
+      // Validate signature using TelegramAuthService
+      await this.telegramAuthService.validateInitData(initData, botToken);
+
+      // Parse user data after validation
+      const telegramUserData = await this.telegramAuthService.parseUserData(initData);
+
+      // Convert to internal TelegramUser format
+      const userData: TelegramUser = {
+        id: telegramUserData.id,
+        first_name: telegramUserData.first_name,
+        last_name: telegramUserData.last_name,
+        username: telegramUserData.username,
+        photo_url: telegramUserData.photo_url,
+      };
+
       return await this.findOrCreateUser(userData);
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
       throw new UnauthorizedException('Invalid Telegram authentication');
     }
   }
@@ -72,15 +97,5 @@ export class AuthService {
 
   async findUserById(id: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id } });
-  }
-
-  private parseTelegramInitData(initData: string): TelegramUser {
-    // Simplified parsing for MVP
-    const params = new URLSearchParams(initData);
-    const userJson = params.get('user');
-    if (!userJson) {
-      throw new Error('No user data in initData');
-    }
-    return JSON.parse(userJson);
   }
 }
