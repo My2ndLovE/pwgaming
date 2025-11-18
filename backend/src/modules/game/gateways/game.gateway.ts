@@ -18,6 +18,7 @@ import { GameWalletService } from '../../wallet/services/game-wallet.service';
 import { GameStateStore } from '../services/game-state-store.service';
 import { BotDetectionService } from '../services/bot-detection.service';
 import { MultiAccountDetectionService } from '../services/multi-account-detection.service';
+import { RoomService } from '../../room/services/room.service';
 
 interface RoomState {
   roomId: string;
@@ -55,7 +56,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server!: Server;
 
   private rooms: Map<string, RoomState> = new Map();
-  private connectedPlayers: Map<string, { socket: Socket; roomId: string }> = new Map();
+  private connectedPlayers: Map<string, { socket: Socket; roomId: string; chipStack: number }> = new Map();
   private reconnectionTimers: Map<string, NodeJS.Timeout> = new Map();
   private actionLocks: Map<string, boolean> = new Map(); // roomId -> isLocked
   private actionTimestamps: Map<string, number> = new Map(); // userId -> last action prompt timestamp
@@ -67,6 +68,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly gameStateStore: GameStateStore,
     private readonly botDetection: BotDetectionService,
     private readonly multiAccountDetection: MultiAccountDetectionService,
+    private readonly roomService: RoomService,
   ) {
     // Recover active games on startup
     this.recoverActiveGames();
@@ -80,15 +82,22 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       const recoveredGames = await this.gameStateStore.recoverAllGames();
 
       for (const [roomId, handState] of recoveredGames) {
+        // Load room configuration from database
+        const room = await this.roomService.getRoomById(roomId);
+        if (!room) {
+          console.error(`Room ${roomId} not found during recovery, skipping`);
+          continue;
+        }
+
         this.rooms.set(roomId, {
           roomId,
           handState,
-          smallBlind: 50, // TODO: Load from room config
-          bigBlind: 100,
+          smallBlind: room.smallBlind,
+          bigBlind: room.bigBlind,
           actionTimeoutSeconds: 30,
         });
 
-        console.log(`Recovered game for room ${roomId}`);
+        console.log(`Recovered game for room ${roomId} (${room.smallBlind}/${room.bigBlind})`);
       }
 
       console.log(`Crash recovery complete: ${recoveredGames.size} games restored`);
@@ -196,14 +205,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         bigBlind: room.bigBlind,
       });
     } catch (error) {
-      return { success: false, error: error.message || 'Buy-in failed' };
+      const message = error instanceof Error ? error.message : 'Buy-in failed';
+      return { success: false, error: message };
     }
 
     // Join Socket.IO room
     client.join(roomId);
 
-    // Track connected player
-    this.connectedPlayers.set(userId, { socket: client, roomId });
+    // Track connected player with chip stack
+    this.connectedPlayers.set(userId, { socket: client, roomId, chipStack: buyIn });
 
     // Clear any reconnection timer
     if (this.reconnectionTimers.has(userId)) {
@@ -545,7 +555,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.broadcastGameState(roomId);
   }
 
-  private handleHandComplete(roomId: string) {
+  private async handleHandComplete(roomId: string) {
     const room = this.rooms.get(roomId);
     if (!room || !room.handState) return;
 
@@ -587,6 +597,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const handId = `${roomId}-hand-${room.handState.state.phase}`;
     this.timeoutService.clearAllTimersForHand(handId);
 
+    // Update chip stacks based on hand results
+    this.updateChipStacks(roomId, room.handState, winners, pots);
+
     // Start new hand after 5 seconds
     setTimeout(() => {
       this.startNewHand(roomId);
@@ -601,7 +614,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .filter(p => p.roomId === roomId)
       .map((p, idx) => ({
         userId: p.socket.data.user?.userId,
-        chipStack: 1000, // TODO: Track chip stacks
+        chipStack: p.chipStack, // Use tracked chip stack
         position: idx,
       }));
 
@@ -642,6 +655,58 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (firstPlayer) {
       this.startActionTimer(roomId, firstPlayer.userId);
     }
+  }
+
+  /**
+   * Update chip stacks after a hand completes
+   * Distributes pots to winners and updates player chip stacks
+   */
+  private updateChipStacks(
+    roomId: string,
+    handState: HandState,
+    winners: any[],
+    pots: any[]
+  ) {
+    // Build a map of userId -> net change (winnings - bets)
+    const chipChanges = new Map<string, number>();
+
+    // First, deduct all bets from players
+    handState.state.activePlayers.forEach(player => {
+      const totalBet = player.currentBet || 0;
+      chipChanges.set(player.userId, -totalBet);
+    });
+
+    // Then, add winnings from pots
+    pots.forEach((pot, potIndex) => {
+      const potWinners = winners.filter(winner =>
+        pot.eligiblePlayers.includes(winner.userId)
+      );
+
+      if (potWinners.length > 0) {
+        const sharePerWinner = pot.amount / potWinners.length;
+        potWinners.forEach(winner => {
+          const current = chipChanges.get(winner.userId) || 0;
+          chipChanges.set(winner.userId, current + sharePerWinner);
+        });
+      }
+    });
+
+    // Update connected players' chip stacks
+    chipChanges.forEach((change, userId) => {
+      const player = this.connectedPlayers.get(userId);
+      if (player && player.roomId === roomId) {
+        player.chipStack = Math.max(0, player.chipStack + change);
+
+        // Log for debugging
+        console.log(`Player ${userId} chip stack updated: ${change > 0 ? '+' : ''}${change.toFixed(2)} -> ${player.chipStack.toFixed(2)}`);
+
+        // If player is busted (0 chips), they should be removed or allowed to rebuy
+        if (player.chipStack === 0) {
+          console.log(`Player ${userId} busted in room ${roomId}`);
+          // Note: Player removal/rebuy logic can be added here if needed
+        }
+      }
+    });
   }
 
   private startActionTimer(roomId: string, userId: string) {
