@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useGameSocket } from './use-game-socket';
 import { ActionType, Player, WinnerInfo, Pot } from '../types/game';
+import { SoundManager } from '../lib/sound-manager';
 
 interface UseGameStateOptions {
   roomId: string;
@@ -66,6 +67,21 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   useEffect(() => {
     const unsubActions = socket.onPlayerAction((data) => {
       setRecentActions(prev => [...prev.slice(-9), { ...data, timestamp: new Date() }]);
+
+      // Play sound for actions
+      const actionMap: Record<string, string> = {
+        [ActionType.BET]: 'bet',
+        [ActionType.CALL]: 'call',
+        [ActionType.RAISE]: 'raise',
+        [ActionType.FOLD]: 'fold',
+        [ActionType.CHECK]: 'check',
+        [ActionType.ALL_IN]: 'raise', // Use raise sound for all-in
+      };
+
+      const soundType = actionMap[data.action];
+      if (soundType) {
+        SoundManager.play(soundType as any);
+      }
     });
 
     const unsubTimer = socket.onTimerStarted((data) => {
@@ -83,6 +99,12 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
             clearInterval(interval);
             return null;
           }
+
+          // Play warning sound when 5 seconds or less
+          if (prev.remainingSeconds === 5 && prev.userId === userId) {
+            SoundManager.play('timer-warning');
+          }
+
           return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
         });
       }, 1000);
@@ -100,12 +122,26 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
     const unsubHandComplete = socket.onHandComplete((data) => {
       setLastWinners(data.winners);
       setLastPots(data.pots);
+
+      // Play win/lose sound
+      const youWon = data.winners.some(w => w.userId === userId);
+      if (youWon) {
+        SoundManager.play('win');
+      } else {
+        const youInHand = socket.gameState?.players.some(p => p.userId === userId && !p.folded);
+        if (youInHand) {
+          SoundManager.play('lose');
+        }
+      }
     });
 
     const unsubHandStarted = socket.onHandStarted(() => {
       setLastWinners(null);
       setLastPots(null);
       setRecentActions([]);
+
+      // Play card deal sound
+      SoundManager.play('card-deal');
     });
 
     return () => {

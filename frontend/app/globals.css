@@ -3,19 +3,120 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --card-bg: #ffffff;
+  --card-fg: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #18181b;
+
+  /* Poker table colors */
+  --felt-green: #0f7a3f;
+  --felt-green-dark: #0a5028;
+  --felt-green-light: #14a356;
+  --table-rail: #8b4513;
+  --chip-gold: #ffd700;
+  --chip-silver: #c0c0c0;
+  --card-shadow: rgba(0, 0, 0, 0.25);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card-bg);
+  --color-card-foreground: var(--card-fg);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+/* Dark mode via class (controlled by ThemeProvider) */
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card-bg: #09090b;
+  --card-fg: #fafafa;
+  --popover: #09090b;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #d4d4d8;
+
+  /* Dark poker table colors */
+  --felt-green: #1a472a;
+  --felt-green-dark: #0d2417;
+  --felt-green-light: #1f5933;
+  --table-rail: #6b3410;
+  --chip-gold: #d4af37;
+  --chip-silver: #9a9a9a;
+  --card-shadow: rgba(0, 0, 0, 0.5);
+}
+
+/* Fallback for system preference */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  :root:not(.light) {
+    --background: #09090b;
+    --foreground: #fafafa;
+    --card-bg: #09090b;
+    --card-fg: #fafafa;
+    --popover: #09090b;
+    --popover-foreground: #fafafa;
+    --primary: #fafafa;
+    --primary-foreground: #18181b;
+    --secondary: #27272a;
+    --secondary-foreground: #fafafa;
+    --muted: #27272a;
+    --muted-foreground: #a1a1aa;
+    --accent: #27272a;
+    --accent-foreground: #fafafa;
+    --destructive: #7f1d1d;
+    --destructive-foreground: #fafafa;
+    --border: #27272a;
+    --input: #27272a;
+    --ring: #d4d4d8;
+
+    --felt-green: #1a472a;
+    --felt-green-dark: #0d2417;
+    --felt-green-light: #1f5933;
+    --table-rail: #6b3410;
+    --chip-gold: #d4af37;
+    --chip-silver: #9a9a9a;
+    --card-shadow: rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -23,4 +124,75 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Smooth theme transitions */
+* {
+  transition-property: color, background-color, border-color;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+/* Responsive and Orientation Utilities */
+
+/* Touch-friendly targets on mobile/tablet */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (orientation: landscape) and (max-height: 600px) {
+  .poker-table-container {
+    padding: 0.5rem;
+  }
+
+  .player-seat {
+    transform: scale(0.85);
+  }
+
+  .action-buttons {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+}
+
+/* Tablet portrait (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .poker-table-container {
+    max-width: 90vw;
+    margin: 0 auto;
+  }
+
+  .player-seat {
+    transform: scale(1.1);
+  }
+
+  .action-buttons button {
+    height: 3rem;
+    font-size: 1rem;
+  }
+}
+
+/* Tablet landscape (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .poker-table-container {
+    max-width: 95vw;
+    aspect-ratio: 2.5 / 1;
+  }
+
+  .community-cards {
+    transform: scale(0.95);
+  }
+}
+
+/* Desktop and large tablets */
+@media (min-width: 1024px) {
+  .poker-table-container {
+    max-width: 1400px;
+  }
 }

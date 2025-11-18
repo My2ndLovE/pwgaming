@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/auth-context";
 import { I18nProvider } from "@/lib/i18n/i18n-provider";
+import { ThemeProvider } from "@/contexts/theme-context";
 import { Navbar } from "@/components/layout/navbar";
 import { ErrorBoundary } from "@/components/error/error-boundary";
 
@@ -27,18 +28,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ErrorBoundary>
-          <I18nProvider>
-            <AuthProvider>
-              <Navbar />
-              {children}
-            </AuthProvider>
-          </I18nProvider>
-        </ErrorBoundary>
+        <ThemeProvider defaultTheme="system">
+          <ErrorBoundary>
+            <I18nProvider>
+              <AuthProvider>
+                <Navbar />
+                {children}
+              </AuthProvider>
+            </I18nProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   );

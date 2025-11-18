@@ -1,7 +1,10 @@
 /**
  * Sound Manager for Game Audio
  * Manages sound effects and background music
+ * Falls back to Web Audio API generated sounds if files are missing
  */
+
+import { generateAllSounds } from './generate-sounds';
 
 export type SoundType =
   | 'bet'
@@ -24,16 +27,21 @@ interface SoundSettings {
 
 class SoundManagerClass {
   private sounds: Map<SoundType, HTMLAudioElement> = new Map();
+  private generatedSounds: Map<string, Blob> | null = null;
   private settings: SoundSettings = {
     volume: 0.7,
     enabled: true,
   };
+  private initialized = false;
 
   /**
    * Initialize sound manager
    * Preload sound files for better performance
+   * Falls back to generated sounds if files are missing
    */
   async initialize(soundPaths: Partial<Record<SoundType, string>> = {}) {
+    if (this.initialized) return;
+
     // Default sound paths (can be overridden)
     const defaults: Record<SoundType, string> = {
       bet: '/sounds/bet.mp3',
@@ -51,6 +59,7 @@ class SoundManagerClass {
     };
 
     const paths = { ...defaults, ...soundPaths };
+    let missingCount = 0;
 
     // Preload sounds
     for (const [type, path] of Object.entries(paths)) {
@@ -58,11 +67,46 @@ class SoundManagerClass {
         const audio = new Audio(path);
         audio.volume = this.settings.volume;
         audio.preload = 'auto';
+
+        // Test if sound file loads
+        await new Promise<void>((resolve, reject) => {
+          audio.addEventListener('canplaythrough', () => resolve(), { once: true });
+          audio.addEventListener('error', () => reject(), { once: true });
+
+          // Timeout after 2 seconds
+          setTimeout(() => reject(), 2000);
+        });
+
         this.sounds.set(type as SoundType, audio);
       } catch (error) {
-        console.warn(`Failed to load sound: ${type}`, error);
+        console.warn(`Sound file not found: ${type}, will use generated sound`);
+        missingCount++;
       }
     }
+
+    // If any sounds are missing, generate them
+    if (missingCount > 0) {
+      console.log(`Generating ${missingCount} missing sound(s)...`);
+      try {
+        this.generatedSounds = await generateAllSounds();
+
+        // Create audio elements from generated blobs
+        for (const [type, blob] of this.generatedSounds.entries()) {
+          if (!this.sounds.has(type as SoundType)) {
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.volume = this.settings.volume;
+            this.sounds.set(type as SoundType, audio);
+          }
+        }
+
+        console.log('Generated sounds ready');
+      } catch (error) {
+        console.error('Failed to generate sounds:', error);
+      }
+    }
+
+    this.initialized = true;
   }
 
   /**

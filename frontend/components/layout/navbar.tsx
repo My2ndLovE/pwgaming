@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { UserProfileDropdown } from '@/components/ui/user-profile-dropdown';
 import { LanguageSwitcher } from '@/components/common/language-switcher';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export function Navbar() {
   const { t } = useTranslation(['common', 'auth']);
@@ -37,6 +38,7 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
+            <ThemeToggle variant="cycle" />
             <LanguageSwitcher />
             <UserProfileDropdown />
           </div>
