@@ -39,7 +39,9 @@ describe('Session Persistence (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
+    userRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
   });
 
   afterAll(async () => {
@@ -85,7 +87,9 @@ describe('Session Persistence (e2e)', () => {
         .send({ initData })
         .expect(201);
 
-      const user1 = await userRepository.findOne({ where: { id: response1.body.user.id } });
+      const user1 = await userRepository.findOne({
+        where: { id: response1.body.user.id },
+      });
       const firstLoginTime = user1?.lastLogin;
 
       // Wait a bit
@@ -97,7 +101,9 @@ describe('Session Persistence (e2e)', () => {
         .send({ initData })
         .expect(201);
 
-      const user2 = await userRepository.findOne({ where: { id: response2.body.user.id } });
+      const user2 = await userRepository.findOne({
+        where: { id: response2.body.user.id },
+      });
       const secondLoginTime = user2?.lastLogin;
 
       expect(user1?.id).toBe(user2?.id);
@@ -116,7 +122,9 @@ describe('Session Persistence (e2e)', () => {
         .send({ initData })
         .expect(201);
 
-      const user = await userRepository.findOne({ where: { id: response.body.user.id } });
+      const user = await userRepository.findOne({
+        where: { id: response.body.user.id },
+      });
 
       expect(user).toMatchObject({
         telegramId: 279058397,

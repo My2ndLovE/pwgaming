@@ -11,12 +11,7 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RoomService } from '../services/room.service';
 import { RoomStatus } from '../entities/room.entity';
-import {
-  IsString,
-  IsNumber,
-  Min,
-  Max,
-} from 'class-validator';
+import { IsString, IsNumber, Min, Max } from 'class-validator';
 
 export class CreateRoomDto {
   @IsString()

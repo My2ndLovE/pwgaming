@@ -49,32 +49,36 @@ describe('Reconnection Scenarios E2E', () => {
       socket1.data = { user: { userId } };
 
       socket1.on('connect', () => {
-        socket1.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, (response: any) => {
-          expect(response.success).toBe(true);
+        socket1.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          (response: any) => {
+            expect(response.success).toBe(true);
 
-          // Disconnect
-          socket1.disconnect();
+            // Disconnect
+            socket1.disconnect();
 
-          // Reconnect with same userId
-          setTimeout(() => {
-            const socket2 = io(WS_URL, {
-              transports: ['websocket'],
-              auth: { token: 'mock-token-2' },
-            });
-            socket2.data = { user: { userId } };
+            // Reconnect with same userId
+            setTimeout(() => {
+              const socket2 = io(WS_URL, {
+                transports: ['websocket'],
+                auth: { token: 'mock-token-2' },
+              });
+              socket2.data = { user: { userId } };
 
-            socket2.on('game:player_reconnected', (data: any) => {
-              expect(data.userId).toBe(userId);
-              socket2.disconnect();
-              done();
-            });
+              socket2.on('game:player_reconnected', (data: any) => {
+                expect(data.userId).toBe(userId);
+                socket2.disconnect();
+                done();
+              });
 
-            socket2.on('game:state', (state: any) => {
-              // Should receive current game state
-              expect(state).toBeDefined();
-            });
-          }, 100);
-        });
+              socket2.on('game:state', (state: any) => {
+                // Should receive current game state
+                expect(state).toBeDefined();
+              });
+            }, 100);
+          },
+        );
       });
     }, 10000);
   });
@@ -99,37 +103,48 @@ describe('Reconnection Scenarios E2E', () => {
       let originalCards: string[] = [];
 
       player1Socket.on('connect', () => {
-        player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-            // Wait for hand to start
-            setTimeout(() => {
-              player1Socket.on('game:your_cards', (data: any) => {
-                originalCards = data.cards;
-
-                // Disconnect player 1
-                player1Socket.disconnect();
-
-                // Reconnect after 1 second
+        player1Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            player2Socket.emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => {
+                // Wait for hand to start
                 setTimeout(() => {
-                  player1Socket = io(WS_URL, {
-                    transports: ['websocket'],
-                    auth: { token: 'token-p1-reconnect' },
-                  });
-                  player1Socket.data = { user: { userId: player1Id } };
+                  player1Socket.on('game:your_cards', (data: any) => {
+                    originalCards = data.cards;
 
-                  player1Socket.on('game:your_cards', (reconnectData: any) => {
-                    // Should receive same cards
-                    expect(reconnectData.cards).toEqual(originalCards);
-
+                    // Disconnect player 1
                     player1Socket.disconnect();
-                    player2Socket.disconnect();
-                    done();
+
+                    // Reconnect after 1 second
+                    setTimeout(() => {
+                      player1Socket = io(WS_URL, {
+                        transports: ['websocket'],
+                        auth: { token: 'token-p1-reconnect' },
+                      });
+                      player1Socket.data = { user: { userId: player1Id } };
+
+                      player1Socket.on(
+                        'game:your_cards',
+                        (reconnectData: any) => {
+                          // Should receive same cards
+                          expect(reconnectData.cards).toEqual(originalCards);
+
+                          player1Socket.disconnect();
+                          player2Socket.disconnect();
+                          done();
+                        },
+                      );
+                    }, 1000);
                   });
-                }, 1000);
-              });
-            }, 500);
-          });
-        });
+                }, 500);
+              },
+            );
+          },
+        );
       });
     }, 15000);
   });
@@ -160,16 +175,20 @@ describe('Reconnection Scenarios E2E', () => {
       });
 
       player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          // Wait for hand to start
-          setTimeout(() => {
-            // Player 1 disconnects without acting
-            player1Socket.disconnect();
+        player2Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            // Wait for hand to start
+            setTimeout(() => {
+              // Player 1 disconnects without acting
+              player1Socket.disconnect();
 
-            // Note: In real test, would need to wait 60 seconds or mock timer
-            // For this test, we'll verify the timeout event is emitted
-          }, 500);
-        });
+              // Note: In real test, would need to wait 60 seconds or mock timer
+              // For this test, we'll verify the timeout event is emitted
+            }, 500);
+          },
+        );
       });
     }, 70000); // 70 second timeout
   });
@@ -192,19 +211,19 @@ describe('Reconnection Scenarios E2E', () => {
       };
 
       // Create all sockets
-      players.forEach(player => {
+      players.forEach((player) => {
         player.socket = createSocket(player.id);
       });
 
       let reconnectCount = 0;
 
-      players.forEach(player => {
+      players.forEach((player) => {
         player.socket!.on('game:player_reconnected', (data: any) => {
           reconnectCount++;
 
           if (reconnectCount === 2) {
             // All players reconnected
-            players.forEach(p => p.socket?.disconnect());
+            players.forEach((p) => p.socket?.disconnect());
             done();
           }
         });
@@ -212,11 +231,16 @@ describe('Reconnection Scenarios E2E', () => {
 
       // Join all players
       Promise.all(
-        players.map(player =>
-          new Promise<void>(resolve => {
-            player.socket!.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve());
-          })
-        )
+        players.map(
+          (player) =>
+            new Promise<void>((resolve) => {
+              player.socket!.emit(
+                'game:join',
+                { roomId: ROOM_ID, buyIn: 1000 },
+                () => resolve(),
+              );
+            }),
+        ),
       ).then(() => {
         setTimeout(() => {
           // Disconnect player 1 and 2
@@ -253,42 +277,51 @@ describe('Reconnection Scenarios E2E', () => {
       let itWasPlayer1Turn = false;
 
       player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          player1Socket.on('game:state', (state: any) => {
-            // Check if it's player 1's turn
-            if (state.currentPosition === 0) { // Assuming player1 is at position 0
-              itWasPlayer1Turn = true;
+        player2Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            player1Socket.on('game:state', (state: any) => {
+              // Check if it's player 1's turn
+              if (state.currentPosition === 0) {
+                // Assuming player1 is at position 0
+                itWasPlayer1Turn = true;
 
-              // Disconnect
-              player1Socket.disconnect();
+                // Disconnect
+                player1Socket.disconnect();
 
-              // Reconnect immediately
-              setTimeout(() => {
-                player1Socket = io(WS_URL, {
-                  transports: ['websocket'],
-                  auth: { token: 'token-pending-p1-reconnect' },
-                });
-                player1Socket.data = { user: { userId: player1Id } };
-
-                player1Socket.on('connect', () => {
-                  // Try to act after reconnection
-                  player1Socket.emit('game:action', {
-                    roomId: ROOM_ID,
-                    action: 'call',
-                    amount: 50,
-                  }, (response: any) => {
-                    // Should be allowed to act
-                    expect(response.success).toBe(true);
-
-                    player1Socket.disconnect();
-                    player2Socket.disconnect();
-                    done();
+                // Reconnect immediately
+                setTimeout(() => {
+                  player1Socket = io(WS_URL, {
+                    transports: ['websocket'],
+                    auth: { token: 'token-pending-p1-reconnect' },
                   });
-                });
-              }, 500);
-            }
-          });
-        });
+                  player1Socket.data = { user: { userId: player1Id } };
+
+                  player1Socket.on('connect', () => {
+                    // Try to act after reconnection
+                    player1Socket.emit(
+                      'game:action',
+                      {
+                        roomId: ROOM_ID,
+                        action: 'call',
+                        amount: 50,
+                      },
+                      (response: any) => {
+                        // Should be allowed to act
+                        expect(response.success).toBe(true);
+
+                        player1Socket.disconnect();
+                        player2Socket.disconnect();
+                        done();
+                      },
+                    );
+                  });
+                }, 500);
+              }
+            });
+          },
+        );
       });
     }, 15000);
   });
@@ -298,7 +331,7 @@ describe('Reconnection Scenarios E2E', () => {
       const player1Id = 'stable-p1';
       const player2Id = 'stable-p2';
 
-      let player1Socket = io(WS_URL, {
+      const player1Socket = io(WS_URL, {
         transports: ['websocket'],
         auth: { token: 'token-stable-p1' },
         reconnection: true,
@@ -331,14 +364,18 @@ describe('Reconnection Scenarios E2E', () => {
       });
 
       player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          // Simulate connection drop
-          setTimeout(() => {
-            player1Socket.disconnect();
+        player2Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            // Simulate connection drop
+            setTimeout(() => {
+              player1Socket.disconnect();
 
-            // Socket.IO will auto-reconnect
-          }, 1000);
-        });
+              // Socket.IO will auto-reconnect
+            }, 1000);
+          },
+        );
       });
     }, 15000);
   });

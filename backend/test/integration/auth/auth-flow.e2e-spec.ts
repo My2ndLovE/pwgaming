@@ -37,7 +37,9 @@ describe('Authentication Flow (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
+    userRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
   });
 
   afterAll(async () => {

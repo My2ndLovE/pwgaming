@@ -1,10 +1,11 @@
 import { INestApplication } from '@nestjs/common';
-import * as compression from 'compression';
+import compression from 'compression';
+import type { Request, Response } from 'express';
 
 export function setupCompression(app: INestApplication) {
   app.use(
     compression({
-      filter: (req, res) => {
+      filter: (req: Request, res: Response) => {
         if (req.headers['x-no-compression']) {
           return false;
         }

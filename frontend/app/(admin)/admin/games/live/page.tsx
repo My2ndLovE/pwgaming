@@ -36,7 +36,7 @@ export default function LiveGamesMonitor() {
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="font-semibold">{game.roomId}</h3>
-                <Badge variant={game.status === 'active' ? 'default' : 'secondary'}>
+                <Badge variant={game.status === 'active' ? 'success' : 'default'}>
                   {game.status}
                 </Badge>
               </div>

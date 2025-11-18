@@ -9,7 +9,9 @@ export class AppLoggerService implements NestLoggerService {
 
   error(message: string, trace?: string, context?: string) {
     const timestamp = new Date().toISOString();
-    console.error(`[${timestamp}] [ERROR] [${context || 'App'}] ${message}${trace ? `\n${trace}` : ''}`);
+    console.error(
+      `[${timestamp}] [ERROR] [${context || 'App'}] ${message}${trace ? `\n${trace}` : ''}`,
+    );
   }
 
   warn(message: string, context?: string) {

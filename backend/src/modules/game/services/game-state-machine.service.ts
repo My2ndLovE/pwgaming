@@ -30,8 +30,8 @@ export class GameStateMachine {
   initializeHand(
     players: Array<{ userId: string; chipStack: number; position: number }>,
     dealerPosition: number,
-    smallBlind: number,
-    bigBlind: number
+    _smallBlind: number,
+    bigBlind: number,
   ): GameState {
     const numPlayers = players.length;
     const isHeadsUp = numPlayers === 2;
@@ -52,7 +52,7 @@ export class GameStateMachine {
       firstActor = (bigBlindPosition + 1) % numPlayers; // UTG
     }
 
-    const activePlayers = players.map(p => ({
+    const activePlayers = players.map((p) => ({
       userId: p.userId,
       position: p.position,
       chipStack: p.chipStack,
@@ -95,9 +95,9 @@ export class GameStateMachine {
       currentBet: 0,
       currentPosition: this.getFirstActorPostflop(
         currentState.dealerPosition,
-        currentState.activePlayers
+        currentState.activePlayers,
       ),
-      activePlayers: currentState.activePlayers.map(p => ({
+      activePlayers: currentState.activePlayers.map((p) => ({
         ...p,
         currentBet: 0,
         hasActed: false,
@@ -114,13 +114,13 @@ export class GameStateMachine {
   getNextPosition(currentPosition: number, players: PlayerState[]): number {
     if (players.length === 0) return -1;
 
-    const maxPosition = Math.max(...players.map(p => p.position));
+    const maxPosition = Math.max(...players.map((p) => p.position));
     let nextPosition = (currentPosition + 1) % (maxPosition + 1);
     let attempts = 0;
     const maxAttempts = maxPosition + 1;
 
     while (attempts < maxAttempts) {
-      const player = players.find(p => p.position === nextPosition);
+      const player = players.find((p) => p.position === nextPosition);
 
       if (
         player &&
@@ -144,13 +144,13 @@ export class GameStateMachine {
   isBettingRoundComplete(state: {
     currentBet: number;
     activePlayers: Array<{
-      currentBet: number;
+      currentBet?: number;
       status: SeatStatus;
-      hasActed: boolean;
+      hasActed?: boolean;
     }>;
   }): boolean {
     const actionablePlayers = state.activePlayers.filter(
-      p => p.status === SeatStatus.ACTIVE
+      (p) => p.status === SeatStatus.ACTIVE,
     );
 
     // Only one active player left (others folded/all-in)
@@ -160,7 +160,7 @@ export class GameStateMachine {
 
     // All actionable players have acted and matched the bet
     return actionablePlayers.every(
-      p => p.hasActed && p.currentBet === state.currentBet
+      (p) => (p.hasActed || false) && (p.currentBet || 0) === state.currentBet,
     );
   }
 
@@ -169,7 +169,7 @@ export class GameStateMachine {
    */
   isHandComplete(
     players: Array<{ status: SeatStatus }>,
-    phase: HandPhase
+    phase: HandPhase,
   ): boolean {
     // Hand complete if at showdown
     if (phase === HandPhase.SHOWDOWN) {
@@ -178,7 +178,8 @@ export class GameStateMachine {
 
     // Hand complete if only one player remains (others folded)
     const activePlayers = players.filter(
-      p => p.status !== SeatStatus.FOLDED && p.status !== SeatStatus.SITTING_OUT
+      (p) =>
+        p.status !== SeatStatus.FOLDED && p.status !== SeatStatus.SITTING_OUT,
     );
 
     return activePlayers.length === 1;
@@ -189,9 +190,9 @@ export class GameStateMachine {
    */
   calculateNextDealer(
     currentDealer: number,
-    players: Array<{ position: number }>
+    players: Array<{ position: number }>,
   ): number {
-    const positions = players.map(p => p.position).sort((a, b) => a - b);
+    const positions = players.map((p) => p.position).sort((a, b) => a - b);
     const currentIndex = positions.indexOf(currentDealer);
     const nextIndex = (currentIndex + 1) % positions.length;
     return positions[nextIndex];
@@ -214,17 +215,17 @@ export class GameStateMachine {
    */
   getFirstActorPostflop(
     dealerPosition: number,
-    players: PlayerState[]
+    players: PlayerState[],
   ): number {
     if (players.length === 0) return -1;
 
-    const maxPosition = Math.max(...players.map(p => p.position));
+    const maxPosition = Math.max(...players.map((p) => p.position));
     let position = (dealerPosition + 1) % (maxPosition + 1);
     let attempts = 0;
     const maxAttempts = maxPosition + 1;
 
     while (attempts < maxAttempts) {
-      const player = players.find(p => p.position === position);
+      const player = players.find((p) => p.position === position);
 
       if (
         player &&

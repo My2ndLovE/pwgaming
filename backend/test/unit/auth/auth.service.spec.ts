@@ -3,8 +3,15 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { AuthService, TelegramUser } from '../../../src/modules/auth/services/auth.service';
-import { User, UserRole, UserStatus } from '../../../src/modules/auth/entities/user.entity';
+import {
+  AuthService,
+  TelegramUser,
+} from '../../../src/modules/auth/services/auth.service';
+import {
+  User,
+  UserRole,
+  UserStatus,
+} from '../../../src/modules/auth/entities/user.entity';
 import { TelegramAuthService } from '../../../src/modules/auth/services/telegram-auth.service';
 
 describe('AuthService', () => {

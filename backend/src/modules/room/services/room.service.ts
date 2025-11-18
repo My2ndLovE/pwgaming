@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Room, RoomStatus } from '../entities/room.entity';
@@ -66,14 +70,21 @@ export class RoomService {
     return await this.roomRepository.findOne({ where: { id } });
   }
 
-  async joinRoom(dto: JoinRoomDto): Promise<{ success: boolean; message: string }> {
-    const room = await this.roomRepository.findOne({ where: { id: dto.roomId } });
+  async joinRoom(
+    dto: JoinRoomDto,
+  ): Promise<{ success: boolean; message: string }> {
+    const room = await this.roomRepository.findOne({
+      where: { id: dto.roomId },
+    });
 
     if (!room) {
       throw new NotFoundException('Room not found');
     }
 
-    if (room.status !== RoomStatus.WAITING && room.status !== RoomStatus.ACTIVE) {
+    if (
+      room.status !== RoomStatus.WAITING &&
+      room.status !== RoomStatus.ACTIVE
+    ) {
       throw new BadRequestException('Room is not available');
     }
 

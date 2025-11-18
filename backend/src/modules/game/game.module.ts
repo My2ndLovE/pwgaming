@@ -26,7 +26,13 @@ import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([GameHand, PlayerSeat, BettingAction, RakeHistory, Room]),
+    TypeOrmModule.forFeature([
+      GameHand,
+      PlayerSeat,
+      BettingAction,
+      RakeHistory,
+      Room,
+    ]),
     AuthModule,
     RoomModule,
     WalletModule,

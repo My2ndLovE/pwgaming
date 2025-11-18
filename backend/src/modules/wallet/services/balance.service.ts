@@ -50,7 +50,10 @@ export class BalanceService {
     return newBalance;
   }
 
-  async validateBalance(userId: string, requiredAmount: number): Promise<boolean> {
+  async validateBalance(
+    userId: string,
+    requiredAmount: number,
+  ): Promise<boolean> {
     const balance = await this.getUserBalance(userId);
     return balance >= requiredAmount;
   }

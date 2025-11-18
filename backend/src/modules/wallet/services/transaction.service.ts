@@ -33,7 +33,9 @@ export class TransactionService {
   ) {}
 
   async createDeposit(dto: CreateDepositDto): Promise<Transaction> {
-    const user = await this.userRepository.findOne({ where: { id: dto.userId } });
+    const user = await this.userRepository.findOne({
+      where: { id: dto.userId },
+    });
     if (!user) {
       throw new BadRequestException('User not found');
     }
@@ -54,7 +56,10 @@ export class TransactionService {
 
   async createWithdrawal(dto: CreateWithdrawalDto): Promise<Transaction> {
     // Validate balance before creating withdrawal
-    const hasBalance = await this.balanceService.validateBalance(dto.userId, dto.amount);
+    const hasBalance = await this.balanceService.validateBalance(
+      dto.userId,
+      dto.amount,
+    );
     if (!hasBalance) {
       throw new BadRequestException('Insufficient balance for withdrawal');
     }
@@ -115,12 +120,14 @@ export class TransactionService {
     page = 1,
     limit = 20,
   ): Promise<{ transactions: Transaction[]; total: number }> {
-    const [transactions, total] = await this.transactionRepository.findAndCount({
-      where: { userId },
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    const [transactions, total] = await this.transactionRepository.findAndCount(
+      {
+        where: { userId },
+        order: { createdAt: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
+      },
+    );
 
     return { transactions, total };
   }

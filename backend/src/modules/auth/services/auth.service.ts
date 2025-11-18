@@ -42,7 +42,8 @@ export class AuthService {
       await this.telegramAuthService.validateInitData(initData, botToken);
 
       // Parse user data after validation
-      const telegramUserData = await this.telegramAuthService.parseUserData(initData);
+      const telegramUserData =
+        await this.telegramAuthService.parseUserData(initData);
 
       // Convert to internal TelegramUser format
       const userData: TelegramUser = {

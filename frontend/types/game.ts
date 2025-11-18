@@ -23,12 +23,15 @@ export enum SeatStatus {
   SITTING_OUT = 'sitting_out',
 }
 
+// Type guard to ensure backend values match
+export type SeatStatusValue = 'active' | 'folded' | 'all_in' | 'disconnected' | 'sitting_out';
+
 export interface Player {
   userId: string;
   position: number;
   chipStack: number;
   currentBet: number;
-  status: SeatStatus;
+  status: SeatStatus | SeatStatusValue;
   hasActed: boolean;
   cards: string[];
 }

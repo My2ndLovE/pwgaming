@@ -23,6 +23,7 @@ import { WalletModule } from './modules/wallet/wallet.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { RoomModule } from './modules/room/room.module';
 import { GameModule } from './modules/game/game.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { GameModule } from './modules/game/game.module';
     AdminModule,
     RoomModule,
     GameModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [

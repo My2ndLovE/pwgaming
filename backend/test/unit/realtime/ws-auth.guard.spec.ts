@@ -61,7 +61,7 @@ describe('WsAuthGuard', () => {
 
       // This should throw because JWT_SECRET is not set
       await expect(guard.canActivate(mockContext)).rejects.toThrow(
-        new WsException('JWT_SECRET not configured')
+        new WsException('JWT_SECRET not configured'),
       );
     });
 
@@ -117,7 +117,7 @@ describe('WsAuthGuard', () => {
       } as ExecutionContext;
 
       await expect(guard.canActivate(mockContext)).rejects.toThrow(
-        new WsException('No token provided')
+        new WsException('No token provided'),
       );
     });
 
@@ -195,7 +195,9 @@ describe('WsAuthGuard', () => {
     });
 
     it('should throw WsException for invalid token', async () => {
-      (jwtService.verifyAsync as jest.Mock).mockRejectedValue(new Error('Invalid token'));
+      (jwtService.verifyAsync as jest.Mock).mockRejectedValue(
+        new Error('Invalid token'),
+      );
 
       const mockSocket = {
         handshake: {
@@ -213,7 +215,7 @@ describe('WsAuthGuard', () => {
       } as ExecutionContext;
 
       await expect(guard.canActivate(mockContext)).rejects.toThrow(
-        new WsException('Invalid or expired token')
+        new WsException('Invalid or expired token'),
       );
     });
   });

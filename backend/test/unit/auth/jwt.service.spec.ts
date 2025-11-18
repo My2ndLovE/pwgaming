@@ -50,7 +50,7 @@ describe('JwtService', () => {
     it('should include expiration time in token', () => {
       const payload = { sub: 'user1' };
       const token = service.sign(payload);
-      const decoded = service.decode(token) as any;
+      const decoded = service.decode(token);
 
       expect(decoded.exp).toBeDefined();
       expect(decoded.exp).toBeGreaterThan(Math.floor(Date.now() / 1000));
@@ -145,7 +145,7 @@ describe('JwtService', () => {
 
       const decoded = service.decode(tamperedToken);
       expect(decoded).toBeTruthy();
-      expect((decoded as any).sub).toBe('user1');
+      expect(decoded.sub).toBe('user1');
     });
 
     it('should return null for invalid token format', () => {

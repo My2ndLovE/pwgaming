@@ -4,7 +4,11 @@ import * as request from 'supertest';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from '../../../src/modules/auth/auth.module';
-import { User, UserRole, UserStatus } from '../../../src/modules/auth/entities/user.entity';
+import {
+  User,
+  UserRole,
+  UserStatus,
+} from '../../../src/modules/auth/entities/user.entity';
 import { Repository } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
@@ -39,7 +43,9 @@ describe('Profile Retrieval (e2e)', () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    userRepository = moduleFixture.get<Repository<User>>(getRepositoryToken(User));
+    userRepository = moduleFixture.get<Repository<User>>(
+      getRepositoryToken(User),
+    );
   });
 
   afterAll(async () => {
@@ -60,7 +66,9 @@ describe('Profile Retrieval (e2e)', () => {
       .expect(201);
 
     authToken = response.body.access_token;
-    testUser = await userRepository.findOne({ where: { id: response.body.user.id } }) as User;
+    testUser = (await userRepository.findOne({
+      where: { id: response.body.user.id },
+    })) as User;
   });
 
   describe('GET /auth/me', () => {

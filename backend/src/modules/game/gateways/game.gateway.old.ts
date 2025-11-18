@@ -43,9 +43,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private gameStates: Map<string, GameState> = new Map();
   private connectedPlayers: Map<string, Socket> = new Map();
 
-  constructor(
-    private readonly deckService: DeckService,
-  ) {}
+  constructor(private readonly deckService: DeckService) {}
 
   handleConnection(client: Socket) {
     console.log(`Client connected: ${client.id}`);
@@ -94,7 +92,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // Broadcast updated state
-    this.server.to(roomId).emit('game:state', this.sanitizeGameState(gameState));
+    this.server
+      .to(roomId)
+      .emit('game:state', this.sanitizeGameState(gameState));
 
     // Start game if we have 2+ players
     if (gameState.players.length >= 2 && gameState.handNumber === 0) {
@@ -106,7 +106,12 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('game:action')
   async handlePlayerAction(
-    @MessageBody() data: { roomId: string; action: 'fold' | 'check' | 'call' | 'bet' | 'raise'; amount?: number },
+    @MessageBody()
+    data: {
+      roomId: string;
+      action: 'fold' | 'check' | 'call' | 'bet' | 'raise';
+      amount?: number;
+    },
   ) {
     const { roomId, action, amount } = data;
     const gameState = this.gameStates.get(roomId);
@@ -143,7 +148,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Deal 2 cards to each player
     for (const player of gameState.players) {
-      const { dealt, remaining: newRemaining } = this.deckService.dealCards(remaining, 2);
+      const { dealt, remaining: newRemaining } = this.deckService.dealCards(
+        remaining,
+        2,
+      );
       player.cards = dealt;
       player.status = 'active';
       player.currentBet = 0;
@@ -165,7 +173,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     // Broadcast public state
-    this.server.to(roomId).emit('game:state', this.sanitizeGameState(gameState));
+    this.server
+      .to(roomId)
+      .emit('game:state', this.sanitizeGameState(gameState));
   }
 
   private sanitizeGameState(gameState: GameState): any {

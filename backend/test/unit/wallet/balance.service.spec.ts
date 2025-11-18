@@ -3,7 +3,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, QueryRunner } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { BalanceService } from '../../../src/modules/wallet/services/balance.service';
-import { User, UserRole, UserStatus } from '../../../src/modules/auth/entities/user.entity';
+import {
+  User,
+  UserRole,
+  UserStatus,
+} from '../../../src/modules/auth/entities/user.entity';
 
 describe('BalanceService', () => {
   let service: BalanceService;
@@ -66,18 +70,25 @@ describe('BalanceService', () => {
 
       const result = await service.getUserBalance(mockUser.id);
 
-      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { id: mockUser.id } });
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+      });
       expect(result).toBe(1000);
     });
 
     it('should throw BadRequestException if user not found', async () => {
       userRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.getUserBalance('non-existent')).rejects.toThrow(BadRequestException);
+      await expect(service.getUserBalance('non-existent')).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should return balance as number', async () => {
-      userRepository.findOne.mockResolvedValue({ ...mockUser, balance: '1500.50' as any });
+      userRepository.findOne.mockResolvedValue({
+        ...mockUser,
+        balance: '1500.50' as any,
+      });
 
       const result = await service.getUserBalance(mockUser.id);
 
@@ -130,7 +141,9 @@ describe('BalanceService', () => {
     it('should throw BadRequestException if insufficient balance', async () => {
       userRepository.findOne.mockResolvedValue({ ...mockUser, balance: 100 });
 
-      await expect(service.updateBalance(mockUser.id, -200)).rejects.toThrow(BadRequestException);
+      await expect(service.updateBalance(mockUser.id, -200)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if user not found', async () => {
@@ -176,7 +189,9 @@ describe('BalanceService', () => {
         save: jest.fn().mockResolvedValue(mockUser),
       };
 
-      queryRunner.manager.getRepository.mockReturnValue(mockQRRepository as any);
+      queryRunner.manager.getRepository.mockReturnValue(
+        mockQRRepository as any,
+      );
 
       await service.updateBalance(mockUser.id, 100, queryRunner);
 

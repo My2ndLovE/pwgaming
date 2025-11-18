@@ -28,7 +28,9 @@ export class TelegramAuthService {
       return true;
     } catch (error) {
       if (error instanceof Error) {
-        throw new UnauthorizedException(`Telegram auth validation failed: ${error.message}`);
+        throw new UnauthorizedException(
+          `Telegram auth validation failed: ${error.message}`,
+        );
       }
       throw new UnauthorizedException('Telegram auth validation failed');
     }
@@ -54,7 +56,7 @@ export class TelegramAuthService {
         id: parsed.user.id,
         first_name: parsed.user.firstName as string | undefined,
         last_name: parsed.user.lastName as string | undefined,
-        username: parsed.user.username as string | undefined,
+        username: parsed.user.username,
         language_code: parsed.user.languageCode as string | undefined,
         photo_url: parsed.user.photoUrl as string | undefined,
       };

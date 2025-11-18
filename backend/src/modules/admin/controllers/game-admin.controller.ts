@@ -14,25 +14,25 @@ export class GameAdminController {
   }
 
   @Post(':roomId/pause')
-  async pauseGame(@Param('roomId') roomId: string) {
+  async pauseGame(@Param('roomId') _roomId: string) {
     return { success: true, message: 'Game paused' };
   }
 
   @Post(':roomId/resume')
-  async resumeGame(@Param('roomId') roomId: string) {
+  async resumeGame(@Param('roomId') _roomId: string) {
     return { success: true, message: 'Game resumed' };
   }
 
   @Post(':roomId/cancel')
   async cancelHand(
-    @Param('roomId') roomId: string,
-    @Body() body: { reason: string },
+    @Param('roomId') _roomId: string,
+    @Body() _body: { reason: string },
   ) {
     return { success: true, message: 'Hand cancelled, all bets refunded' };
   }
 
   @Get(':roomId/history')
-  async getHandHistory(@Param('roomId') roomId: string) {
+  async getHandHistory(@Param('roomId') _roomId: string) {
     return { hands: [] };
   }
 

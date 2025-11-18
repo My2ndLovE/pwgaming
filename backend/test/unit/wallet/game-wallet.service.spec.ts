@@ -3,7 +3,11 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { GameWalletService } from '../../../src/modules/wallet/services/game-wallet.service';
-import { Transaction, TransactionType, TransactionStatus } from '../../../src/modules/wallet/entities/transaction.entity';
+import {
+  Transaction,
+  TransactionType,
+  TransactionStatus,
+} from '../../../src/modules/wallet/entities/transaction.entity';
 import { User } from '../../../src/modules/auth/entities/user.entity';
 
 describe('GameWalletService', () => {
@@ -57,7 +61,9 @@ describe('GameWalletService', () => {
     }).compile();
 
     service = module.get<GameWalletService>(GameWalletService);
-    transactionRepository = module.get<Repository<Transaction>>(getRepositoryToken(Transaction));
+    transactionRepository = module.get<Repository<Transaction>>(
+      getRepositoryToken(Transaction),
+    );
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
     dataSource = module.get<DataSource>(DataSource);
   });

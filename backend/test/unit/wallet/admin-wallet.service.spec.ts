@@ -4,7 +4,11 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource, Repository } from 'typeorm';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { AdminWalletService } from '../../../src/modules/wallet/services/admin-wallet.service';
-import { Transaction, TransactionType, TransactionStatus } from '../../../src/modules/wallet/entities/transaction.entity';
+import {
+  Transaction,
+  TransactionType,
+  TransactionStatus,
+} from '../../../src/modules/wallet/entities/transaction.entity';
 import { User } from '../../../src/modules/auth/entities/user.entity';
 
 describe('AdminWalletService', () => {
@@ -65,7 +69,9 @@ describe('AdminWalletService', () => {
     }).compile();
 
     service = module.get<AdminWalletService>(AdminWalletService);
-    transactionRepository = module.get<Repository<Transaction>>(getRepositoryToken(Transaction));
+    transactionRepository = module.get<Repository<Transaction>>(
+      getRepositoryToken(Transaction),
+    );
     userRepository = module.get<Repository<User>>(getRepositoryToken(User));
     configService = module.get<ConfigService>(ConfigService);
   });
@@ -73,10 +79,12 @@ describe('AdminWalletService', () => {
   afterEach(() => {
     jest.clearAllMocks();
     // Reset mock implementation to default
-    jest.spyOn(configService, 'get').mockImplementation((key: string, defaultValue?: string) => {
-      if (key === 'WALLET_MODE') return 'internal';
-      return defaultValue;
-    });
+    jest
+      .spyOn(configService, 'get')
+      .mockImplementation((key: string, defaultValue?: string) => {
+        if (key === 'WALLET_MODE') return 'internal';
+        return defaultValue;
+      });
   });
 
   describe('isInternalMode', () => {
@@ -103,7 +111,8 @@ describe('AdminWalletService', () => {
         processedBy: 'admin1',
       } as Transaction;
 
-      jest.spyOn(userRepository, 'findOne')
+      jest
+        .spyOn(userRepository, 'findOne')
         .mockResolvedValueOnce(admin)
         .mockResolvedValueOnce(user);
       mockQueryRunner.manager.findOne.mockResolvedValue(user);
@@ -183,14 +192,17 @@ describe('AdminWalletService', () => {
           reason: 'Test',
           adminId: 'admin1',
         }),
-      ).rejects.toThrow('Direct credits only available in internal wallet mode');
+      ).rejects.toThrow(
+        'Direct credits only available in internal wallet mode',
+      );
     });
 
     it('should rollback transaction on error', async () => {
       const admin = { id: 'admin1', role: 'admin' } as User;
       const user = { id: 'user1', balance: 1000 } as User;
 
-      jest.spyOn(userRepository, 'findOne')
+      jest
+        .spyOn(userRepository, 'findOne')
         .mockResolvedValueOnce(admin)
         .mockResolvedValueOnce(user);
       mockQueryRunner.manager.findOne.mockResolvedValue(user);
@@ -222,7 +234,8 @@ describe('AdminWalletService', () => {
         balanceAfter: 700,
       } as Transaction;
 
-      jest.spyOn(userRepository, 'findOne')
+      jest
+        .spyOn(userRepository, 'findOne')
         .mockResolvedValueOnce(admin)
         .mockResolvedValueOnce(user);
       mockQueryRunner.manager.findOne.mockResolvedValue(user);
@@ -245,7 +258,8 @@ describe('AdminWalletService', () => {
       const admin = { id: 'admin1', role: 'admin' } as User;
       const user = { id: 'user1', balance: 100 } as User;
 
-      jest.spyOn(userRepository, 'findOne')
+      jest
+        .spyOn(userRepository, 'findOne')
         .mockResolvedValueOnce(admin)
         .mockResolvedValueOnce(user);
       mockQueryRunner.manager.findOne.mockResolvedValue(user);
@@ -278,7 +292,8 @@ describe('AdminWalletService', () => {
       const admin = { id: 'admin1', role: 'admin' } as User;
       const user = { id: 'user1', balance: 1000 } as User;
 
-      jest.spyOn(userRepository, 'findOne')
+      jest
+        .spyOn(userRepository, 'findOne')
         .mockResolvedValueOnce(admin)
         .mockResolvedValueOnce(user);
       mockQueryRunner.manager.findOne.mockResolvedValue(user);

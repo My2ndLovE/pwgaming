@@ -71,7 +71,7 @@ export class PotService {
   distributeOddChip(
     potAmount: number,
     winners: Array<{ userId: string; position: number }>,
-    dealerPosition: number
+    dealerPosition: number,
   ): Map<string, number> {
     const distribution = new Map<string, number>();
 
@@ -84,10 +84,13 @@ export class PotService {
     const oddChips = potAmount % winners.length;
 
     // Sort winners clockwise from dealer
-    const sortedWinners = this.sortWinnersClockwiseFromDealer(winners, dealerPosition);
+    const sortedWinners = this.sortWinnersClockwiseFromDealer(
+      winners,
+      dealerPosition,
+    );
 
     // Distribute base share to all winners
-    sortedWinners.forEach(winner => {
+    sortedWinners.forEach((winner) => {
       distribution.set(winner.userId, baseShare);
     });
 
@@ -106,18 +109,19 @@ export class PotService {
    */
   private sortWinnersClockwiseFromDealer(
     winners: Array<{ userId: string; position: number }>,
-    dealerPosition: number
+    dealerPosition: number,
   ): Array<{ userId: string; position: number }> {
-    const maxPosition = Math.max(...winners.map(w => w.position));
+    const maxPosition = Math.max(...winners.map((w) => w.position));
     const numSeats = maxPosition + 1;
 
     return winners
-      .map(w => ({
+      .map((w) => ({
         ...w,
         // Calculate distance clockwise from dealer's left
-        relativePosition: (w.position - dealerPosition - 1 + numSeats) % numSeats,
+        relativePosition:
+          (w.position - dealerPosition - 1 + numSeats) % numSeats,
       }))
       .sort((a, b) => a.relativePosition - b.relativePosition)
-      .map(w => ({ userId: w.userId, position: w.position }));
+      .map((w) => ({ userId: w.userId, position: w.position }));
   }
 }

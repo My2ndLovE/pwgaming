@@ -5,14 +5,7 @@ import {
   UpdateDateColumn,
   BeforeUpdate,
 } from 'typeorm';
-import {
-  IsDecimal,
-  IsInt,
-  Min,
-  Max,
-  IsBoolean,
-  Length,
-} from 'class-validator';
+import { IsDecimal, IsInt, Min, Max, IsBoolean, Length } from 'class-validator';
 
 @Entity('platform_settings')
 export class PlatformSettings {
@@ -115,10 +108,14 @@ export class PlatformSettings {
       throw new Error('Big blind must be greater than or equal to small blind');
     }
     if (this.maxDepositAmount < this.minDepositAmount) {
-      throw new Error('Max deposit must be greater than or equal to min deposit');
+      throw new Error(
+        'Max deposit must be greater than or equal to min deposit',
+      );
     }
     if (this.maxWithdrawalAmount < this.minWithdrawalAmount) {
-      throw new Error('Max withdrawal must be greater than or equal to min withdrawal');
+      throw new Error(
+        'Max withdrawal must be greater than or equal to min withdrawal',
+      );
     }
   }
 }

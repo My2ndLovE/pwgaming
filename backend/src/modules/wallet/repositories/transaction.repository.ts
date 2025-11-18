@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
-import { Transaction, TransactionType, TransactionStatus } from '../entities/transaction.entity';
+import {
+  Transaction,
+  TransactionType,
+  TransactionStatus,
+} from '../entities/transaction.entity';
 
 @Injectable()
 export class TransactionRepository {
@@ -14,7 +18,10 @@ export class TransactionRepository {
     return this.repository.findOne({ where: { id } });
   }
 
-  async findByUserId(userId: string, options?: { limit?: number; offset?: number }): Promise<Transaction[]> {
+  async findByUserId(
+    userId: string,
+    options?: { limit?: number; offset?: number },
+  ): Promise<Transaction[]> {
     return this.repository.find({
       where: { userId },
       order: { createdAt: 'DESC' },
@@ -62,7 +69,12 @@ export class TransactionRepository {
     return this.repository.count({ where });
   }
 
-  async findAll(options?: FindOptionsWhere<Transaction>): Promise<Transaction[]> {
-    return this.repository.find({ where: options, order: { createdAt: 'DESC' } });
+  async findAll(
+    options?: FindOptionsWhere<Transaction>,
+  ): Promise<Transaction[]> {
+    return this.repository.find({
+      where: options,
+      order: { createdAt: 'DESC' },
+    });
   }
 }

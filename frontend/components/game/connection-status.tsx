@@ -130,7 +130,7 @@ export function ConnectionStatus({
         </div>
         <span className={`text-xs font-medium ${config.color}`}>{config.label}</span>
         {showLatency && latency !== undefined && status === 'connected' && (
-          <Badge variant="outline" className="text-xs">
+          <Badge variant="info" className="text-xs">
             {latency}ms
           </Badge>
         )}

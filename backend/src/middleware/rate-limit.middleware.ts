@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import rateLimit, { RateLimitRequestHandler, Options } from 'express-rate-limit';
-import { Request, Response, NextFunction } from 'express';
+import rateLimit, {
+  RateLimitRequestHandler,
+  Options,
+} from 'express-rate-limit';
+import { Request, Response } from 'express';
 
 export interface WebSocketRateLimitConfig {
   maxMessages: number;
@@ -41,7 +44,7 @@ export class RateLimitMiddleware {
         const user = (req as any).user;
         return user?.userId ? `user:${user.userId}` : `ip:${req.ip}`;
       },
-      handler: (req: Request, res: Response, next: NextFunction) => {
+      handler: (_req: Request, res: Response) => {
         res.status(429).json({
           message: 'Too many requests, please try again later',
           statusCode: 429,

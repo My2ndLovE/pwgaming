@@ -21,7 +21,7 @@ export class TimeoutService {
     handId: string,
     playerId: string,
     timeoutSeconds: number,
-    callback: TimeoutCallback
+    callback: TimeoutCallback,
   ): void {
     const key = this.getTimerKey(handId, playerId);
 
@@ -70,14 +70,14 @@ export class TimeoutService {
       }
     });
 
-    keysToDelete.forEach(key => this.timers.delete(key));
+    keysToDelete.forEach((key) => this.timers.delete(key));
   }
 
   /**
    * Clears all active timers
    */
   clearAllTimers(): void {
-    this.timers.forEach(timerInfo => {
+    this.timers.forEach((timerInfo) => {
       clearTimeout(timerInfo.timeout);
     });
 

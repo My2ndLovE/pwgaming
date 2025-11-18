@@ -27,7 +27,8 @@ export class WithdrawalController {
 
   @Get()
   async getPendingWithdrawals() {
-    const withdrawals = await this.withdrawalManagementService.getPendingWithdrawals();
+    const withdrawals =
+      await this.withdrawalManagementService.getPendingWithdrawals();
     return {
       withdrawals: withdrawals.map((w) => ({
         id: w.id,
@@ -43,11 +44,12 @@ export class WithdrawalController {
 
   @Post(':id/approve')
   async approveWithdrawal(@Param('id') id: string, @Request() req: any) {
-    const transaction = await this.withdrawalManagementService.approveWithdrawal(
-      id,
-      req.user.id,
-      req.ip,
-    );
+    const transaction =
+      await this.withdrawalManagementService.approveWithdrawal(
+        id,
+        req.user.id,
+        req.ip,
+      );
 
     return {
       message: 'Withdrawal approved successfully',

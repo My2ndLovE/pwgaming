@@ -110,7 +110,9 @@ export class Room {
       throw new Error('Big blind must be greater than or equal to small blind');
     }
     if (this.maxBuyIn < this.minBuyIn) {
-      throw new Error('Maximum buy-in must be greater than or equal to minimum buy-in');
+      throw new Error(
+        'Maximum buy-in must be greater than or equal to minimum buy-in',
+      );
     }
     if (this.currentPlayers > this.maxPlayers) {
       throw new Error('Current players cannot exceed maximum players');

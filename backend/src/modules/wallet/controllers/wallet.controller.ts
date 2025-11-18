@@ -67,7 +67,10 @@ export class WalletController {
   }
 
   @Post('withdraw')
-  async createWithdrawal(@Request() req: any, @Body() dto: CreateWithdrawalDto) {
+  async createWithdrawal(
+    @Request() req: any,
+    @Body() dto: CreateWithdrawalDto,
+  ) {
     const transaction = await this.transactionService.createWithdrawal({
       userId: req.user.id,
       amount: dto.amount,

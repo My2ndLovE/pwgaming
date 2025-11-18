@@ -31,7 +31,9 @@ export enum SeatStatus {
 @Entity('player_seats')
 @Index('idx_player_seat_game_hand_id', ['gameHandId'])
 @Index('idx_player_seat_user_id', ['userId'])
-@Index('idx_player_seat_game_position', ['gameHandId', 'position'], { unique: true })
+@Index('idx_player_seat_game_position', ['gameHandId', 'position'], {
+  unique: true,
+})
 export class PlayerSeat {
   @PrimaryGeneratedColumn('uuid')
   id!: string;

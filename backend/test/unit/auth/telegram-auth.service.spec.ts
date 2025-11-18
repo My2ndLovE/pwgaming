@@ -12,8 +12,12 @@ describe('TelegramAuthService', () => {
   const VALID_INIT_DATA =
     'query_id=AAHdF6IQAAAAAN0XohDhrOrc&user=%7B%22id%22%3A279058397%2C%22first_name%22%3A%22John%22%2C%22last_name%22%3A%22Doe%22%2C%22username%22%3A%22john_doe%22%2C%22language_code%22%3A%22en%22%2C%22photo_url%22%3A%22https%3A%2F%2Ft.me%2Fi%2Fuserpic%2F320%2Fjohn_doe.jpg%22%7D&auth_date=1670000000&hash=abc123';
 
-  const mockValidate = telegramApps.validate as jest.MockedFunction<typeof telegramApps.validate>;
-  const mockParse = telegramApps.parse as jest.MockedFunction<typeof telegramApps.parse>;
+  const mockValidate = telegramApps.validate as jest.MockedFunction<
+    typeof telegramApps.validate
+  >;
+  const mockParse = telegramApps.parse as jest.MockedFunction<
+    typeof telegramApps.parse
+  >;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -31,11 +35,18 @@ describe('TelegramAuthService', () => {
         // Valid data - no error thrown
       });
 
-      const result = await service.validateInitData(VALID_INIT_DATA, VALID_BOT_TOKEN);
+      const result = await service.validateInitData(
+        VALID_INIT_DATA,
+        VALID_BOT_TOKEN,
+      );
       expect(result).toBe(true);
-      expect(mockValidate).toHaveBeenCalledWith(VALID_INIT_DATA, VALID_BOT_TOKEN, {
-        expiresIn: 86400,
-      });
+      expect(mockValidate).toHaveBeenCalledWith(
+        VALID_INIT_DATA,
+        VALID_BOT_TOKEN,
+        {
+          expiresIn: 86400,
+        },
+      );
     });
 
     it('should throw UnauthorizedException for invalid initData', async () => {
@@ -44,9 +55,9 @@ describe('TelegramAuthService', () => {
       });
 
       const invalidInitData = 'invalid_data';
-      await expect(service.validateInitData(invalidInitData, VALID_BOT_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.validateInitData(invalidInitData, VALID_BOT_TOKEN),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for tampered initData', async () => {
@@ -55,9 +66,9 @@ describe('TelegramAuthService', () => {
       });
 
       const tamperedData = VALID_INIT_DATA.replace('John', 'Hacker');
-      await expect(service.validateInitData(tamperedData, VALID_BOT_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.validateInitData(tamperedData, VALID_BOT_TOKEN),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for expired initData (> 24 hours old)', async () => {
@@ -66,10 +77,13 @@ describe('TelegramAuthService', () => {
       });
 
       const oldTimestamp = Math.floor(Date.now() / 1000) - 86400 - 1;
-      const expiredData = VALID_INIT_DATA.replace(/auth_date=\d+/, `auth_date=${oldTimestamp}`);
-      await expect(service.validateInitData(expiredData, VALID_BOT_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
+      const expiredData = VALID_INIT_DATA.replace(
+        /auth_date=\d+/,
+        `auth_date=${oldTimestamp}`,
       );
+      await expect(
+        service.validateInitData(expiredData, VALID_BOT_TOKEN),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for missing hash', async () => {
@@ -78,9 +92,9 @@ describe('TelegramAuthService', () => {
       });
 
       const noHashData = VALID_INIT_DATA.replace(/&hash=\w+/, '');
-      await expect(service.validateInitData(noHashData, VALID_BOT_TOKEN)).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.validateInitData(noHashData, VALID_BOT_TOKEN),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -141,7 +155,8 @@ describe('TelegramAuthService', () => {
         throw new Error('Invalid user data format');
       });
 
-      const invalidJsonData = 'user=invalid_json&auth_date=1670000000&hash=abc123';
+      const invalidJsonData =
+        'user=invalid_json&auth_date=1670000000&hash=abc123';
       await expect(service.parseUserData(invalidJsonData)).rejects.toThrow();
     });
   });

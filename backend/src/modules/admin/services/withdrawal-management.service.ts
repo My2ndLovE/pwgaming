@@ -1,9 +1,21 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Transaction, TransactionStatus, TransactionType } from '../../wallet/entities/transaction.entity';
+import {
+  Transaction,
+  TransactionStatus,
+  TransactionType,
+} from '../../wallet/entities/transaction.entity';
 import { User } from '../../auth/entities/user.entity';
-import { AuditLog, EventType, EntityType } from '../../audit/entities/audit-log.entity';
+import {
+  AuditLog,
+  EventType,
+  EntityType,
+} from '../../audit/entities/audit-log.entity';
 
 @Injectable()
 export class WithdrawalManagementService {

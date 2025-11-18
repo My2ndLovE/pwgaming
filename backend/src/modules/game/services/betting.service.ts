@@ -31,7 +31,7 @@ export class BettingService {
     action: ActionType,
     amount: number,
     player: PlayerState,
-    gameState: GameState
+    gameState: GameState,
   ): ValidationResult {
     // Check player status first
     if (player.status === SeatStatus.FOLDED) {
@@ -71,7 +71,11 @@ export class BettingService {
   /**
    * Calculates the minimum raise amount
    */
-  calculateMinimumRaise(currentBet: number, minRaise: number, bigBlind: number): number {
+  calculateMinimumRaise(
+    currentBet: number,
+    minRaise: number,
+    bigBlind: number,
+  ): number {
     if (currentBet === 0) {
       return bigBlind;
     }
@@ -81,7 +85,11 @@ export class BettingService {
   /**
    * Determines if a player must go all-in for a given action
    */
-  isAllInSituation(chipStack: number, currentBet: number, bigBlind: number): boolean {
+  isAllInSituation(
+    chipStack: number,
+    currentBet: number,
+    bigBlind: number,
+  ): boolean {
     if (currentBet > 0 && chipStack < currentBet) {
       return true;
     }
@@ -100,20 +108,31 @@ export class BettingService {
     return { isValid: true };
   }
 
-  private validateCheck(amount: number, player: PlayerState, gameState: GameState): ValidationResult {
+  private validateCheck(
+    amount: number,
+    player: PlayerState,
+    gameState: GameState,
+  ): ValidationResult {
     if (amount !== 0) {
       return { isValid: false, error: 'Check action must have zero amount' };
     }
 
     const amountToCall = gameState.currentBet - player.currentBet;
     if (amountToCall > 0) {
-      return { isValid: false, error: 'Cannot check when there is a bet to call' };
+      return {
+        isValid: false,
+        error: 'Cannot check when there is a bet to call',
+      };
     }
 
     return { isValid: true };
   }
 
-  private validateCall(amount: number, player: PlayerState, gameState: GameState): ValidationResult {
+  private validateCall(
+    amount: number,
+    player: PlayerState,
+    gameState: GameState,
+  ): ValidationResult {
     const amountToCall = gameState.currentBet - player.currentBet;
 
     if (gameState.currentBet === 0) {
@@ -139,7 +158,11 @@ export class BettingService {
     return { isValid: true };
   }
 
-  private validateBet(amount: number, player: PlayerState, gameState: GameState): ValidationResult {
+  private validateBet(
+    amount: number,
+    player: PlayerState,
+    gameState: GameState,
+  ): ValidationResult {
     if (gameState.currentBet > 0) {
       return {
         isValid: false,
@@ -165,7 +188,11 @@ export class BettingService {
     return { isValid: true };
   }
 
-  private validateRaise(amount: number, player: PlayerState, gameState: GameState): ValidationResult {
+  private validateRaise(
+    amount: number,
+    player: PlayerState,
+    gameState: GameState,
+  ): ValidationResult {
     if (gameState.currentBet === 0) {
       return {
         isValid: false,
@@ -177,7 +204,7 @@ export class BettingService {
     const minimumRaise = this.calculateMinimumRaise(
       gameState.currentBet,
       gameState.minRaise,
-      gameState.bigBlind
+      gameState.bigBlind,
     );
 
     if (amount < minimumRaise) {
@@ -197,7 +224,11 @@ export class BettingService {
     return { isValid: true };
   }
 
-  private validateAllIn(amount: number, player: PlayerState, gameState: GameState): ValidationResult {
+  private validateAllIn(
+    amount: number,
+    player: PlayerState,
+    _gameState: GameState,
+  ): ValidationResult {
     if (amount !== player.chipStack) {
       return {
         isValid: false,

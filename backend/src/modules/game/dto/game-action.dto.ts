@@ -1,4 +1,11 @@
-import { IsNotEmpty, IsString, IsNumber, IsEnum, Min, IsOptional } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsEnum,
+  Min,
+  IsOptional,
+} from 'class-validator';
 import { ActionType } from '../entities/betting-action.entity';
 
 export class GameActionDto {

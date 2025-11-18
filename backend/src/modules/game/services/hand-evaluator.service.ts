@@ -31,7 +31,7 @@ export class HandEvaluatorService {
       handType: hand.rank,
       handName: hand.name,
       value: hand.value, // pokersolver: higher value = stronger hand
-      cards: hand.cards.map(c => c.value + c.suit.toLowerCase()),
+      cards: hand.cards.map((c) => c.value + c.suit.toLowerCase()),
     };
   }
 
@@ -58,22 +58,22 @@ export class HandEvaluatorService {
    * @param playerHands - Array of player hands with userId
    * @returns Array of winning user IDs (multiple if tie)
    */
-  findWinners(playerHands: Array<{ userId: string; cards: string[] }>): string[] {
+  findWinners(
+    playerHands: Array<{ userId: string; cards: string[] }>,
+  ): string[] {
     if (playerHands.length === 0) return [];
     if (playerHands.length === 1) return [playerHands[0].userId];
 
-    const hands = playerHands.map(ph => ({
+    const hands = playerHands.map((ph) => ({
       userId: ph.userId,
       hand: Hand.solve(ph.cards),
     }));
 
     // Use pokersolver's winners() method
-    const solvedHands = hands.map(h => h.hand);
+    const solvedHands = hands.map((h) => h.hand);
     const winners = Hand.winners(solvedHands);
 
     // Map back to userIds
-    return hands
-      .filter(h => winners.includes(h.hand))
-      .map(h => h.userId);
+    return hands.filter((h) => winners.includes(h.hand)).map((h) => h.userId);
   }
 }

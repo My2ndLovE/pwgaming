@@ -4,7 +4,11 @@ import { HandEvaluatorService } from './hand-evaluator.service';
 import { PotService } from './pot.service';
 import { BettingService } from './betting.service';
 import { BlindService } from './blind.service';
-import { GameStateMachine, GameState, PlayerState } from './game-state-machine.service';
+import {
+  GameStateMachine,
+  GameState,
+  PlayerState,
+} from './game-state-machine.service';
 import { HandPhase } from '../entities/game-hand.entity';
 import { ActionType } from '../entities/betting-action.entity';
 import { SeatStatus } from '../entities/player-seat.entity';
@@ -45,7 +49,7 @@ export class GameEngine {
     private readonly potService: PotService,
     private readonly bettingService: BettingService,
     private readonly blindService: BlindService,
-    private readonly stateMachine: GameStateMachine
+    private readonly stateMachine: GameStateMachine,
   ) {}
 
   /**
@@ -55,14 +59,14 @@ export class GameEngine {
     players: Array<{ userId: string; chipStack: number; position: number }>,
     dealerPosition: number,
     smallBlind: number,
-    bigBlind: number
+    bigBlind: number,
   ): HandState {
     // Initialize game state
     const state = this.stateMachine.initializeHand(
       players,
       dealerPosition,
       smallBlind,
-      bigBlind
+      bigBlind,
     );
 
     // Create and shuffle deck
@@ -70,13 +74,17 @@ export class GameEngine {
     const shuffledDeck = this.deckService.shuffle(deck);
 
     // Post blinds using BlindService
-    const stateWithBlinds = this.blindService.postBlinds(state, smallBlind, bigBlind);
+    const stateWithBlinds = this.blindService.postBlinds(
+      state,
+      smallBlind,
+      bigBlind,
+    );
 
     // Deal 2 cards to each player
     let remainingDeck = shuffledDeck;
     const playerHands: Array<{ userId: string; cards: string[] }> = [];
 
-    players.forEach(player => {
+    players.forEach((player) => {
       const { dealt, remaining } = this.deckService.dealCards(remainingDeck, 2);
       playerHands.push({
         userId: player.userId,
@@ -100,10 +108,12 @@ export class GameEngine {
     handState: HandState,
     userId: string,
     action: ActionType,
-    amount: number
+    amount: number,
   ): ActionResult {
     // Find player
-    const player = handState.state.activePlayers.find(p => p.userId === userId);
+    const player = handState.state.activePlayers.find(
+      (p) => p.userId === userId,
+    );
     if (!player) {
       return {
         success: false,
@@ -121,12 +131,36 @@ export class GameEngine {
       };
     }
 
-    // Validate action
+    // Ensure player has required fields for validation
+    if (
+      player.chipStack === undefined ||
+      player.currentBet === undefined ||
+      player.hasActed === undefined
+    ) {
+      return {
+        success: false,
+        state: handState.state,
+        error: 'Invalid player state',
+      };
+    }
+
+    // Validate action - need to pass game state with smallBlind and bigBlind
+    // TODO: Store smallBlind and bigBlind in GameState instead of passing separately
     const validation = this.bettingService.validateAction(
       action,
       amount,
-      player,
-      handState.state
+      {
+        chipStack: player.chipStack,
+        currentBet: player.currentBet,
+        status: player.status,
+        hasActed: player.hasActed,
+      },
+      {
+        currentBet: handState.state.currentBet,
+        minRaise: handState.state.minRaise,
+        smallBlind: 10, // TODO: Get from room config
+        bigBlind: 20, // TODO: Get from room config
+      },
     );
 
     if (!validation.isValid) {
@@ -160,7 +194,7 @@ export class GameEngine {
     if (currentPhase === HandPhase.PREFLOP) {
       // Burn 1 card before dealing flop
       const burnResult = this.deckService.burnCard(handState.deck);
-      let remainingDeck = burnResult.remaining;
+      const remainingDeck = burnResult.remaining;
 
       // Deal flop (3 cards)
       const { dealt, remaining } = this.deckService.dealCards(remainingDeck, 3);
@@ -169,7 +203,7 @@ export class GameEngine {
     } else if (currentPhase === HandPhase.FLOP) {
       // Burn 1 card before dealing turn
       const burnResult = this.deckService.burnCard(handState.deck);
-      let remainingDeck = burnResult.remaining;
+      const remainingDeck = burnResult.remaining;
 
       // Deal turn (1 card)
       const { dealt, remaining } = this.deckService.dealCards(remainingDeck, 1);
@@ -178,7 +212,7 @@ export class GameEngine {
     } else if (currentPhase === HandPhase.TURN) {
       // Burn 1 card before dealing river
       const burnResult = this.deckService.burnCard(handState.deck);
-      let remainingDeck = burnResult.remaining;
+      const remainingDeck = burnResult.remaining;
 
       // Deal river (1 card)
       const { dealt, remaining } = this.deckService.dealCards(remainingDeck, 1);
@@ -196,12 +230,19 @@ export class GameEngine {
    * Evaluates all hands and determines winners
    */
   evaluateWinners(
-    playerHands: Array<{ userId: string; cards: string[]; status?: SeatStatus }>,
-    communityCards: string[]
+    playerHands: Array<{
+      userId: string;
+      cards: string[];
+      status?: SeatStatus;
+    }>,
+    communityCards: string[],
   ): WinnerInfo[] {
     // Filter out folded players
     const activePlayers = playerHands.filter(
-      p => !p.status || p.status === SeatStatus.ACTIVE || p.status === SeatStatus.ALL_IN
+      (p) =>
+        !p.status ||
+        p.status === SeatStatus.ACTIVE ||
+        p.status === SeatStatus.ALL_IN,
     );
 
     // If only one player remains, they win
@@ -216,7 +257,7 @@ export class GameEngine {
     }
 
     // Evaluate hands
-    const handsToEvaluate = activePlayers.map(player => ({
+    const handsToEvaluate = activePlayers.map((player) => ({
       userId: player.userId,
       cards: [...player.cards, ...communityCards],
     }));
@@ -224,8 +265,8 @@ export class GameEngine {
     const winnerUserIds = this.handEvaluator.findWinners(handsToEvaluate);
 
     // Get hand details for winners
-    return winnerUserIds.map(userId => {
-      const player = activePlayers.find(p => p.userId === userId);
+    return winnerUserIds.map((userId) => {
+      const player = activePlayers.find((p) => p.userId === userId);
       if (!player) throw new Error('Winner not found');
 
       const evaluation = this.handEvaluator.evaluateHand([
@@ -245,7 +286,7 @@ export class GameEngine {
    * Calculates main pot and side pots
    */
   calculatePots(
-    contributions: Array<{ userId: string; amount: number }>
+    contributions: Array<{ userId: string; amount: number }>,
   ): Pot[] {
     return this.potService.calculatePots(contributions);
   }
@@ -255,7 +296,7 @@ export class GameEngine {
    */
   isHandComplete(
     players: Array<{ status: SeatStatus }>,
-    phase: HandPhase
+    phase: HandPhase,
   ): boolean {
     return this.stateMachine.isHandComplete(players, phase);
   }
@@ -266,9 +307,9 @@ export class GameEngine {
   isBettingRoundComplete(state: {
     currentBet: number;
     activePlayers: Array<{
-      currentBet: number;
+      currentBet?: number;
       status: SeatStatus;
-      hasActed: boolean;
+      hasActed?: boolean;
     }>;
   }): boolean {
     return this.stateMachine.isBettingRoundComplete(state);
@@ -280,11 +321,11 @@ export class GameEngine {
     state: GameState,
     player: PlayerState,
     action: ActionType,
-    amount: number
+    amount: number,
   ): GameState {
     const newState = { ...state };
     const playerIndex = newState.activePlayers.findIndex(
-      p => p.userId === player.userId
+      (p) => p.userId === player.userId,
     );
 
     if (playerIndex === -1) return state;
@@ -340,7 +381,7 @@ export class GameEngine {
     // Advance to next player
     newState.currentPosition = this.stateMachine.getNextPosition(
       player.position,
-      newState.activePlayers
+      newState.activePlayers,
     );
 
     return newState;

@@ -46,7 +46,8 @@ export class BotDetectionService {
 
     // Calculate average
     timing.averageResponseTime =
-      timing.actionTimes.reduce((sum, time) => sum + time, 0) / timing.actionTimes.length;
+      timing.actionTimes.reduce((sum, time) => sum + time, 0) /
+      timing.actionTimes.length;
   }
 
   /**

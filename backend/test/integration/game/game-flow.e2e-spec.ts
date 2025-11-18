@@ -96,7 +96,9 @@ describe('Game Flow E2E', () => {
       player1Socket.on('game:your_cards', () => trackEvent('your_cards'));
       player1Socket.on('game:state', () => trackEvent('state_update'));
       player1Socket.on('game:player_action', () => trackEvent('player_action'));
-      player1Socket.on('game:phase_advanced', () => trackEvent('phase_advanced'));
+      player1Socket.on('game:phase_advanced', () =>
+        trackEvent('phase_advanced'),
+      );
       player1Socket.on('game:hand_complete', (data) => {
         trackEvent('hand_complete');
 
@@ -116,47 +118,59 @@ describe('Game Flow E2E', () => {
       });
 
       // Player 1 joins
-      player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, (response: any) => {
-        expect(response.success).toBe(true);
+      player1Socket.emit(
+        'game:join',
+        { roomId: ROOM_ID, buyIn: 1000 },
+        (response: any) => {
+          expect(response.success).toBe(true);
 
-        // Player 2 joins
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, (response2: any) => {
-          expect(response2.success).toBe(true);
+          // Player 2 joins
+          player2Socket.emit(
+            'game:join',
+            { roomId: ROOM_ID, buyIn: 1000 },
+            (response2: any) => {
+              expect(response2.success).toBe(true);
 
-          // Player 3 joins (hand should start)
-          player3Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, (response3: any) => {
-            expect(response3.success).toBe(true);
+              // Player 3 joins (hand should start)
+              player3Socket.emit(
+                'game:join',
+                { roomId: ROOM_ID, buyIn: 1000 },
+                (response3: any) => {
+                  expect(response3.success).toBe(true);
 
-            // Wait for hand to start, then simulate actions
-            setTimeout(() => {
-              // Player 1 (UTG) calls
-              player1Socket.emit('game:action', {
-                roomId: ROOM_ID,
-                action: 'call',
-                amount: 100,
-              });
+                  // Wait for hand to start, then simulate actions
+                  setTimeout(() => {
+                    // Player 1 (UTG) calls
+                    player1Socket.emit('game:action', {
+                      roomId: ROOM_ID,
+                      action: 'call',
+                      amount: 100,
+                    });
 
-              setTimeout(() => {
-                // Player 2 (dealer/SB) calls
-                player2Socket.emit('game:action', {
-                  roomId: ROOM_ID,
-                  action: 'call',
-                  amount: 50,
-                });
+                    setTimeout(() => {
+                      // Player 2 (dealer/SB) calls
+                      player2Socket.emit('game:action', {
+                        roomId: ROOM_ID,
+                        action: 'call',
+                        amount: 50,
+                      });
 
-                setTimeout(() => {
-                  // Player 3 (BB) checks
-                  player3Socket.emit('game:action', {
-                    roomId: ROOM_ID,
-                    action: 'check',
-                    amount: 0,
-                  });
-                }, 100);
-              }, 100);
-            }, 500);
-          });
-        });
-      });
+                      setTimeout(() => {
+                        // Player 3 (BB) checks
+                        player3Socket.emit('game:action', {
+                          roomId: ROOM_ID,
+                          action: 'check',
+                          amount: 0,
+                        });
+                      }, 100);
+                    }, 100);
+                  }, 500);
+                },
+              );
+            },
+          );
+        },
+      );
     }, 10000);
   });
 
@@ -173,8 +187,12 @@ describe('Game Flow E2E', () => {
           expect(state.players).toHaveLength(2);
 
           // In heads-up: dealer posts SB, other player posts BB
-          const dealer = state.players.find((p: any) => p.position === state.dealerPosition);
-          const nonDealer = state.players.find((p: any) => p.position !== state.dealerPosition);
+          const dealer = state.players.find(
+            (p: any) => p.position === state.dealerPosition,
+          );
+          const nonDealer = state.players.find(
+            (p: any) => p.position !== state.dealerPosition,
+          );
 
           expect(dealer.currentBet).toBe(50); // Small blind
           expect(nonDealer.currentBet).toBe(100); // Big blind
@@ -188,13 +206,21 @@ describe('Game Flow E2E', () => {
       });
 
       // Join 2 players
-      player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, (response: any) => {
-        expect(response.success).toBe(true);
+      player1Socket.emit(
+        'game:join',
+        { roomId: ROOM_ID, buyIn: 1000 },
+        (response: any) => {
+          expect(response.success).toBe(true);
 
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, (response2: any) => {
-          expect(response2.success).toBe(true);
-        });
-      });
+          player2Socket.emit(
+            'game:join',
+            { roomId: ROOM_ID, buyIn: 1000 },
+            (response2: any) => {
+              expect(response2.success).toBe(true);
+            },
+          );
+        },
+      );
     }, 5000);
   });
 
@@ -209,28 +235,36 @@ describe('Game Flow E2E', () => {
       });
 
       player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          player3Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-            // Wait for hand to start
-            setTimeout(() => {
-              // Player 1 folds
-              player1Socket.emit('game:action', {
-                roomId: ROOM_ID,
-                action: 'fold',
-                amount: 0,
-              });
+        player2Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            player3Socket.emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => {
+                // Wait for hand to start
+                setTimeout(() => {
+                  // Player 1 folds
+                  player1Socket.emit('game:action', {
+                    roomId: ROOM_ID,
+                    action: 'fold',
+                    amount: 0,
+                  });
 
-              setTimeout(() => {
-                // Player 2 folds
-                player2Socket.emit('game:action', {
-                  roomId: ROOM_ID,
-                  action: 'fold',
-                  amount: 0,
-                });
-              }, 100);
-            }, 500);
-          });
-        });
+                  setTimeout(() => {
+                    // Player 2 folds
+                    player2Socket.emit('game:action', {
+                      roomId: ROOM_ID,
+                      action: 'fold',
+                      amount: 0,
+                    });
+                  }, 100);
+                }, 500);
+              },
+            );
+          },
+        );
       });
     }, 5000);
   });
@@ -252,36 +286,68 @@ describe('Game Flow E2E', () => {
       });
 
       player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          player3Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-            // Simulate all players checking through all rounds
-            setTimeout(() => {
-              const checkAllPlayers = () => {
-                player1Socket.emit('game:action', { roomId: ROOM_ID, action: 'check', amount: 0 });
+        player2Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            player3Socket.emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => {
+                // Simulate all players checking through all rounds
                 setTimeout(() => {
-                  player2Socket.emit('game:action', { roomId: ROOM_ID, action: 'check', amount: 0 });
+                  const checkAllPlayers = () => {
+                    player1Socket.emit('game:action', {
+                      roomId: ROOM_ID,
+                      action: 'check',
+                      amount: 0,
+                    });
+                    setTimeout(() => {
+                      player2Socket.emit('game:action', {
+                        roomId: ROOM_ID,
+                        action: 'check',
+                        amount: 0,
+                      });
+                      setTimeout(() => {
+                        player3Socket.emit('game:action', {
+                          roomId: ROOM_ID,
+                          action: 'check',
+                          amount: 0,
+                        });
+                      }, 100);
+                    }, 100);
+                  };
+
+                  // Check preflop
+                  player1Socket.emit('game:action', {
+                    roomId: ROOM_ID,
+                    action: 'call',
+                    amount: 100,
+                  });
                   setTimeout(() => {
-                    player3Socket.emit('game:action', { roomId: ROOM_ID, action: 'check', amount: 0 });
+                    player2Socket.emit('game:action', {
+                      roomId: ROOM_ID,
+                      action: 'call',
+                      amount: 50,
+                    });
+                    setTimeout(() => {
+                      player3Socket.emit('game:action', {
+                        roomId: ROOM_ID,
+                        action: 'check',
+                        amount: 0,
+                      });
+
+                      // Check flop, turn, river
+                      setTimeout(checkAllPlayers, 200);
+                      setTimeout(checkAllPlayers, 500);
+                      setTimeout(checkAllPlayers, 800);
+                    }, 100);
                   }, 100);
-                }, 100);
-              };
-
-              // Check preflop
-              player1Socket.emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 100 });
-              setTimeout(() => {
-                player2Socket.emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 50 });
-                setTimeout(() => {
-                  player3Socket.emit('game:action', { roomId: ROOM_ID, action: 'check', amount: 0 });
-
-                  // Check flop, turn, river
-                  setTimeout(checkAllPlayers, 200);
-                  setTimeout(checkAllPlayers, 500);
-                  setTimeout(checkAllPlayers, 800);
-                }, 100);
-              }, 100);
-            }, 500);
-          });
-        });
+                }, 500);
+              },
+            );
+          },
+        );
       });
     }, 10000);
   });
@@ -300,36 +366,44 @@ describe('Game Flow E2E', () => {
       });
 
       player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 500 }, () => {
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          player3Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1500 }, () => {
-            setTimeout(() => {
-              // Player 1 goes all-in (500)
-              player1Socket.emit('game:action', {
-                roomId: ROOM_ID,
-                action: 'all_in',
-                amount: 500,
-              });
-
-              setTimeout(() => {
-                // Player 2 calls
-                player2Socket.emit('game:action', {
-                  roomId: ROOM_ID,
-                  action: 'call',
-                  amount: 500,
-                });
-
+        player2Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            player3Socket.emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1500 },
+              () => {
                 setTimeout(() => {
-                  // Player 3 calls
-                  player3Socket.emit('game:action', {
+                  // Player 1 goes all-in (500)
+                  player1Socket.emit('game:action', {
                     roomId: ROOM_ID,
-                    action: 'call',
-                    amount: 450,
+                    action: 'all_in',
+                    amount: 500,
                   });
-                }, 100);
-              }, 100);
-            }, 500);
-          });
-        });
+
+                  setTimeout(() => {
+                    // Player 2 calls
+                    player2Socket.emit('game:action', {
+                      roomId: ROOM_ID,
+                      action: 'call',
+                      amount: 500,
+                    });
+
+                    setTimeout(() => {
+                      // Player 3 calls
+                      player3Socket.emit('game:action', {
+                        roomId: ROOM_ID,
+                        action: 'call',
+                        amount: 450,
+                      });
+                    }, 100);
+                  }, 100);
+                }, 500);
+              },
+            );
+          },
+        );
       });
     }, 10000);
   });
@@ -337,24 +411,36 @@ describe('Game Flow E2E', () => {
   describe('Turn Management', () => {
     it('should enforce turn order and reject out-of-turn actions', (done) => {
       player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          player3Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-            setTimeout(() => {
-              // Player 2 tries to act out of turn (player 1's turn)
-              player2Socket.emit('game:action', {
-                roomId: ROOM_ID,
-                action: 'call',
-                amount: 100,
-              }, (response: any) => {
-                // Should be rejected
-                expect(response.success).toBe(false);
-                expect(response.error).toContain('turn');
+        player2Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            player3Socket.emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => {
+                setTimeout(() => {
+                  // Player 2 tries to act out of turn (player 1's turn)
+                  player2Socket.emit(
+                    'game:action',
+                    {
+                      roomId: ROOM_ID,
+                      action: 'call',
+                      amount: 100,
+                    },
+                    (response: any) => {
+                      // Should be rejected
+                      expect(response.success).toBe(false);
+                      expect(response.error).toContain('turn');
 
-                done();
-              });
-            }, 500);
-          });
-        });
+                      done();
+                    },
+                  );
+                }, 500);
+              },
+            );
+          },
+        );
       });
     }, 5000);
   });
@@ -362,23 +448,35 @@ describe('Game Flow E2E', () => {
   describe('Minimum Raise Enforcement', () => {
     it('should reject raises below minimum amount', (done) => {
       player1Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-        player2Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-          player3Socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => {
-            setTimeout(() => {
-              // Player 1 tries to raise to 150 (below minimum raise of 200)
-              player1Socket.emit('game:action', {
-                roomId: ROOM_ID,
-                action: 'raise',
-                amount: 150,
-              }, (response: any) => {
-                expect(response.success).toBe(false);
-                expect(response.error).toContain('minimum');
+        player2Socket.emit(
+          'game:join',
+          { roomId: ROOM_ID, buyIn: 1000 },
+          () => {
+            player3Socket.emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => {
+                setTimeout(() => {
+                  // Player 1 tries to raise to 150 (below minimum raise of 200)
+                  player1Socket.emit(
+                    'game:action',
+                    {
+                      roomId: ROOM_ID,
+                      action: 'raise',
+                      amount: 150,
+                    },
+                    (response: any) => {
+                      expect(response.success).toBe(false);
+                      expect(response.error).toContain('minimum');
 
-                done();
-              });
-            }, 500);
-          });
-        });
+                      done();
+                    },
+                  );
+                }, 500);
+              },
+            );
+          },
+        );
       });
     }, 5000);
   });

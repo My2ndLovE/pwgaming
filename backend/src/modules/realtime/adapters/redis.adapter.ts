@@ -10,7 +10,10 @@ export class RedisIoAdapter extends IoAdapter {
   constructor(
     app: INestApplicationContext,
     private readonly redisHost: string = process.env.REDIS_HOST || 'localhost',
-    private readonly redisPort: number = parseInt(process.env.REDIS_PORT || '6379', 10),
+    private readonly redisPort: number = parseInt(
+      process.env.REDIS_PORT || '6379',
+      10,
+    ),
   ) {
     super(app);
   }

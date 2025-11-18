@@ -70,7 +70,7 @@ describe('RateLimitMiddleware', () => {
       expect(mockRes.json).toHaveBeenCalledWith(
         expect.objectContaining({
           message: expect.stringContaining('Too many requests'),
-        })
+        }),
       );
     });
   });

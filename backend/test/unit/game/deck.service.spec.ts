@@ -11,15 +11,15 @@ describe('DeckService', () => {
   describe('createDeck', () => {
     it('should return 52 unique cards', () => {
       const deck = service.createDeck();
-      
+
       expect(deck).toHaveLength(52);
       expect(new Set(deck).size).toBe(52); // All unique
     });
 
     it('should contain all suits (h, d, c, s)', () => {
       const deck = service.createDeck();
-      const suits = deck.map(card => card[1]);
-      
+      const suits = deck.map((card) => card[1]);
+
       expect(suits).toContain('h');
       expect(suits).toContain('d');
       expect(suits).toContain('c');
@@ -28,22 +28,36 @@ describe('DeckService', () => {
 
     it('should contain all ranks (2-9, T, J, Q, K, A)', () => {
       const deck = service.createDeck();
-      const ranks = deck.map(card => card[0]);
-      
-      const expectedRanks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
-      expectedRanks.forEach(rank => {
+      const ranks = deck.map((card) => card[0]);
+
+      const expectedRanks = [
+        '2',
+        '3',
+        '4',
+        '5',
+        '6',
+        '7',
+        '8',
+        '9',
+        'T',
+        'J',
+        'Q',
+        'K',
+        'A',
+      ];
+      expectedRanks.forEach((rank) => {
         expect(ranks).toContain(rank);
       });
     });
 
     it('should have 13 cards per suit', () => {
       const deck = service.createDeck();
-      
-      const hearts = deck.filter(card => card.endsWith('h'));
-      const diamonds = deck.filter(card => card.endsWith('d'));
-      const clubs = deck.filter(card => card.endsWith('c'));
-      const spades = deck.filter(card => card.endsWith('s'));
-      
+
+      const hearts = deck.filter((card) => card.endsWith('h'));
+      const diamonds = deck.filter((card) => card.endsWith('d'));
+      const clubs = deck.filter((card) => card.endsWith('c'));
+      const spades = deck.filter((card) => card.endsWith('s'));
+
       expect(hearts).toHaveLength(13);
       expect(diamonds).toHaveLength(13);
       expect(clubs).toHaveLength(13);
@@ -55,16 +69,16 @@ describe('DeckService', () => {
     it('should return array with same length', () => {
       const deck = service.createDeck();
       const shuffled = service.shuffle(deck);
-      
+
       expect(shuffled).toHaveLength(52);
     });
 
     it('should contain all original cards', () => {
       const deck = service.createDeck();
       const shuffled = service.shuffle(deck);
-      
+
       expect(new Set(shuffled).size).toBe(52);
-      deck.forEach(card => {
+      deck.forEach((card) => {
         expect(shuffled).toContain(card);
       });
     });
@@ -73,7 +87,7 @@ describe('DeckService', () => {
       const deck = service.createDeck();
       const originalOrder = [...deck];
       service.shuffle(deck);
-      
+
       expect(deck).toEqual(originalOrder);
     });
 
@@ -81,7 +95,7 @@ describe('DeckService', () => {
       const deck = service.createDeck();
       const shuffled1 = service.shuffle(deck);
       const shuffled2 = service.shuffle(deck);
-      
+
       // Extremely unlikely to be the same order
       expect(shuffled1).not.toEqual(shuffled2);
     });
@@ -119,7 +133,7 @@ describe('DeckService', () => {
     it('should return correct number of dealt cards', () => {
       const deck = service.createDeck();
       const { dealt, remaining } = service.dealCards(deck, 5);
-      
+
       expect(dealt).toHaveLength(5);
       expect(remaining).toHaveLength(47);
     });
@@ -128,7 +142,7 @@ describe('DeckService', () => {
       const deck = service.createDeck();
       const originalLength = deck.length;
       service.dealCards(deck, 10);
-      
+
       expect(deck).toHaveLength(originalLength);
     });
 
@@ -136,25 +150,25 @@ describe('DeckService', () => {
       const deck = service.createDeck();
       const topCards = deck.slice(0, 3);
       const { dealt } = service.dealCards(deck, 3);
-      
+
       expect(dealt).toEqual(topCards);
     });
 
     it('should return remaining cards without dealt cards', () => {
       const deck = service.createDeck();
       const { dealt, remaining } = service.dealCards(deck, 10);
-      
-      dealt.forEach(card => {
+
+      dealt.forEach((card) => {
         expect(remaining).not.toContain(card);
       });
-      
+
       expect(dealt.length + remaining.length).toBe(52);
     });
 
     it('should handle dealing all cards', () => {
       const deck = service.createDeck();
       const { dealt, remaining } = service.dealCards(deck, 52);
-      
+
       expect(dealt).toHaveLength(52);
       expect(remaining).toHaveLength(0);
     });
@@ -166,21 +180,21 @@ describe('DeckService', () => {
       const counts: Record<number, number> = {};
       const iterations = 10000;
       const range = 10;
-      
+
       // Create a simple array to shuffle
       const simpleArray = Array.from({ length: range }, (_, i) => i);
-      
+
       for (let i = 0; i < iterations; i++) {
         const shuffled = service.shuffle(simpleArray.map(String));
         const firstValue = parseInt(shuffled[0], 10);
         counts[firstValue] = (counts[firstValue] || 0) + 1;
       }
-      
+
       // Each number should appear roughly iterations/range times
       const expectedFrequency = iterations / range;
       const tolerance = expectedFrequency * 0.15; // 15% tolerance
-      
-      Object.values(counts).forEach(count => {
+
+      Object.values(counts).forEach((count) => {
         expect(count).toBeGreaterThan(expectedFrequency - tolerance);
         expect(count).toBeLessThan(expectedFrequency + tolerance);
       });
@@ -222,7 +236,7 @@ describe('DeckService', () => {
       expect(new Set(burnedCards).size).toBe(3); // All unique
 
       // Burned cards should not be in remaining deck
-      burnedCards.forEach(card => {
+      burnedCards.forEach((card) => {
         expect(deck).not.toContain(card);
       });
     });

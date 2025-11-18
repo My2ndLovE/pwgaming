@@ -11,10 +11,7 @@ import { WalletController } from './controllers/wallet.controller';
 import { AdminWalletController } from './controllers/admin-wallet.controller';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Transaction, User]),
-    ConfigModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Transaction, User]), ConfigModule],
   controllers: [WalletController, AdminWalletController],
   providers: [
     TransactionService,

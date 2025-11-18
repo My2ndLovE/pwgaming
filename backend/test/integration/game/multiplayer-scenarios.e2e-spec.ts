@@ -44,7 +44,7 @@ describe('Multi-Player Scenarios E2E', () => {
   });
 
   afterEach(() => {
-    players.forEach(socket => socket.disconnect());
+    players.forEach((socket) => socket.disconnect());
   });
 
   const createPlayer = (playerId: string): Promise<Socket> => {
@@ -78,7 +78,7 @@ describe('Multi-Player Scenarios E2E', () => {
       return new Promise<void>((done) => {
         let handCompleteCount = 0;
 
-        playerSockets.forEach(socket => {
+        playerSockets.forEach((socket) => {
           socket.on('game:hand_complete', (data: any) => {
             handCompleteCount++;
 
@@ -93,17 +93,24 @@ describe('Multi-Player Scenarios E2E', () => {
 
         // All players join
         Promise.all(
-          playerSockets.map((socket, idx) =>
-            new Promise<void>((resolve) => {
-              socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve());
-            })
-          )
+          playerSockets.map(
+            (socket, idx) =>
+              new Promise<void>((resolve) => {
+                socket.emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () =>
+                  resolve(),
+                );
+              }),
+          ),
         ).then(() => {
           // Wait for hand to start, then all players fold except one
           setTimeout(() => {
             playerSockets.slice(0, 5).forEach((socket, idx) => {
               setTimeout(() => {
-                socket.emit('game:action', { roomId: ROOM_ID, action: 'fold', amount: 0 });
+                socket.emit('game:action', {
+                  roomId: ROOM_ID,
+                  action: 'fold',
+                  amount: 0,
+                });
               }, idx * 100);
             });
           }, 500);
@@ -127,7 +134,10 @@ describe('Multi-Player Scenarios E2E', () => {
           expect(data.pots.length).toBeGreaterThan(1);
 
           // Verify pot amounts
-          const totalPot = data.pots.reduce((sum: number, pot: any) => sum + pot.amount, 0);
+          const totalPot = data.pots.reduce(
+            (sum: number, pot: any) => sum + pot.amount,
+            0,
+          );
           expect(totalPot).toBeGreaterThan(0);
 
           // Verify eligible players for each pot
@@ -141,26 +151,66 @@ describe('Multi-Player Scenarios E2E', () => {
 
         // Join with different stack sizes
         Promise.all([
-          new Promise<void>(resolve => playerSockets[0].emit('game:join', { roomId: ROOM_ID, buyIn: 300 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[1].emit('game:join', { roomId: ROOM_ID, buyIn: 700 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[2].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[3].emit('game:join', { roomId: ROOM_ID, buyIn: 1500 }, () => resolve())),
+          new Promise<void>((resolve) =>
+            playerSockets[0].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 300 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[1].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 700 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[2].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[3].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1500 },
+              () => resolve(),
+            ),
+          ),
         ]).then(() => {
           setTimeout(() => {
             // Player 1 all-in (300)
-            playerSockets[0].emit('game:action', { roomId: ROOM_ID, action: 'all_in', amount: 300 });
+            playerSockets[0].emit('game:action', {
+              roomId: ROOM_ID,
+              action: 'all_in',
+              amount: 300,
+            });
 
             setTimeout(() => {
               // Player 2 all-in (700)
-              playerSockets[1].emit('game:action', { roomId: ROOM_ID, action: 'all_in', amount: 700 });
+              playerSockets[1].emit('game:action', {
+                roomId: ROOM_ID,
+                action: 'all_in',
+                amount: 700,
+              });
 
               setTimeout(() => {
                 // Player 3 calls
-                playerSockets[2].emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 650 });
+                playerSockets[2].emit('game:action', {
+                  roomId: ROOM_ID,
+                  action: 'call',
+                  amount: 650,
+                });
 
                 setTimeout(() => {
                   // Player 4 calls
-                  playerSockets[3].emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 600 });
+                  playerSockets[3].emit('game:action', {
+                    roomId: ROOM_ID,
+                    action: 'call',
+                    amount: 600,
+                  });
                 }, 100);
               }, 100);
             }, 100);
@@ -194,21 +244,51 @@ describe('Multi-Player Scenarios E2E', () => {
         });
 
         Promise.all([
-          new Promise<void>(resolve => playerSockets[0].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[1].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[2].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
+          new Promise<void>((resolve) =>
+            playerSockets[0].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[1].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[2].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
         ]).then(() => {
           setTimeout(() => {
             // Player 1 raises
-            playerSockets[0].emit('game:action', { roomId: ROOM_ID, action: 'raise', amount: 200 });
+            playerSockets[0].emit('game:action', {
+              roomId: ROOM_ID,
+              action: 'raise',
+              amount: 200,
+            });
 
             setTimeout(() => {
               // Player 2 calls
-              playerSockets[1].emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 150 });
+              playerSockets[1].emit('game:action', {
+                roomId: ROOM_ID,
+                action: 'call',
+                amount: 150,
+              });
 
               setTimeout(() => {
                 // Player 3 calls
-                playerSockets[2].emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 100 });
+                playerSockets[2].emit('game:action', {
+                  roomId: ROOM_ID,
+                  action: 'call',
+                  amount: 100,
+                });
               }, 100);
             }, 100);
           }, 500);
@@ -234,16 +314,36 @@ describe('Multi-Player Scenarios E2E', () => {
         });
 
         Promise.all([
-          new Promise<void>(resolve => playerSockets[0].emit('game:join', { roomId: ROOM_ID, buyIn: 100 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[1].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
+          new Promise<void>((resolve) =>
+            playerSockets[0].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 100 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[1].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
         ]).then(() => {
           setTimeout(() => {
             // Player 1 all-in with small stack
-            playerSockets[0].emit('game:action', { roomId: ROOM_ID, action: 'all_in', amount: 100 });
+            playerSockets[0].emit('game:action', {
+              roomId: ROOM_ID,
+              action: 'all_in',
+              amount: 100,
+            });
 
             setTimeout(() => {
               // Player 2 calls
-              playerSockets[1].emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 50 });
+              playerSockets[1].emit('game:action', {
+                roomId: ROOM_ID,
+                action: 'call',
+                amount: 50,
+              });
             }, 100);
           }, 500);
         });
@@ -262,7 +362,7 @@ describe('Multi-Player Scenarios E2E', () => {
       return new Promise<void>((done) => {
         let actionsProcessed = 0;
 
-        playerSockets.forEach(socket => {
+        playerSockets.forEach((socket) => {
           socket.on('game:player_action', () => {
             actionsProcessed++;
 
@@ -275,17 +375,47 @@ describe('Multi-Player Scenarios E2E', () => {
         });
 
         Promise.all([
-          new Promise<void>(resolve => playerSockets[0].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[1].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[2].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
+          new Promise<void>((resolve) =>
+            playerSockets[0].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[1].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[2].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
         ]).then(() => {
           setTimeout(() => {
             // Send actions rapidly
-            playerSockets[0].emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 100 });
+            playerSockets[0].emit('game:action', {
+              roomId: ROOM_ID,
+              action: 'call',
+              amount: 100,
+            });
             setTimeout(() => {
-              playerSockets[1].emit('game:action', { roomId: ROOM_ID, action: 'call', amount: 50 });
+              playerSockets[1].emit('game:action', {
+                roomId: ROOM_ID,
+                action: 'call',
+                amount: 50,
+              });
               setTimeout(() => {
-                playerSockets[2].emit('game:action', { roomId: ROOM_ID, action: 'check', amount: 0 });
+                playerSockets[2].emit('game:action', {
+                  roomId: ROOM_ID,
+                  action: 'check',
+                  amount: 0,
+                });
               }, 10);
             }, 10);
           }, 500);
@@ -310,7 +440,7 @@ describe('Multi-Player Scenarios E2E', () => {
             states[idx] = state;
 
             // Check if all players have received state
-            if (states.length === 3 && states.every(s => s !== undefined)) {
+            if (states.length === 3 && states.every((s) => s !== undefined)) {
               // Verify all players see same game state (except their own cards)
               expect(states[0].phase).toBe(states[1].phase);
               expect(states[1].phase).toBe(states[2].phase);
@@ -318,8 +448,12 @@ describe('Multi-Player Scenarios E2E', () => {
               expect(states[0].currentBet).toBe(states[1].currentBet);
               expect(states[1].currentBet).toBe(states[2].currentBet);
 
-              expect(states[0].communityCards).toEqual(states[1].communityCards);
-              expect(states[1].communityCards).toEqual(states[2].communityCards);
+              expect(states[0].communityCards).toEqual(
+                states[1].communityCards,
+              );
+              expect(states[1].communityCards).toEqual(
+                states[2].communityCards,
+              );
 
               done();
             }
@@ -327,9 +461,27 @@ describe('Multi-Player Scenarios E2E', () => {
         });
 
         Promise.all([
-          new Promise<void>(resolve => playerSockets[0].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[1].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
-          new Promise<void>(resolve => playerSockets[2].emit('game:join', { roomId: ROOM_ID, buyIn: 1000 }, () => resolve())),
+          new Promise<void>((resolve) =>
+            playerSockets[0].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[1].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
+          new Promise<void>((resolve) =>
+            playerSockets[2].emit(
+              'game:join',
+              { roomId: ROOM_ID, buyIn: 1000 },
+              () => resolve(),
+            ),
+          ),
         ]);
       });
     }, 10000);

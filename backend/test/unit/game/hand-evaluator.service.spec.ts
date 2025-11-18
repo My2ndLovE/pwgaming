@@ -82,14 +82,18 @@ describe('HandEvaluatorService', () => {
 
     it('should throw error for less than 5 cards', () => {
       const cards = ['As', 'Kh', 'Qd'];
-      
-      expect(() => service.evaluateHand(cards)).toThrow('Need at least 5 cards');
+
+      expect(() => service.evaluateHand(cards)).toThrow(
+        'Need at least 5 cards',
+      );
     });
 
     it('should throw error for more than 7 cards', () => {
       const cards = ['As', 'Kh', 'Qd', 'Jc', 'Th', '9s', '8d', '7h'];
-      
-      expect(() => service.evaluateHand(cards)).toThrow('Cannot evaluate more than 7 cards');
+
+      expect(() => service.evaluateHand(cards)).toThrow(
+        'Cannot evaluate more than 7 cards',
+      );
     });
 
     it('should handle 7-card hand (best 5 cards)', () => {
@@ -105,7 +109,7 @@ describe('HandEvaluatorService', () => {
     it('should return 1 when hand1 wins', () => {
       const hand1 = ['As', 'Ah', 'Ad', 'Ac', 'Kh']; // Four of a kind
       const hand2 = ['Ks', 'Kh', 'Kd', 'Qc', 'Qh']; // Full house
-      
+
       const result = service.compareHands(hand1, hand2);
       expect(result).toBe(1);
     });
@@ -113,7 +117,7 @@ describe('HandEvaluatorService', () => {
     it('should return -1 when hand2 wins', () => {
       const hand1 = ['As', 'Ah', 'Kd', 'Kc', 'Qh']; // Two pair
       const hand2 = ['9h', '8d', '7c', '6s', '5h']; // Straight
-      
+
       const result = service.compareHands(hand1, hand2);
       expect(result).toBe(-1);
     });
@@ -121,7 +125,7 @@ describe('HandEvaluatorService', () => {
     it('should return 0 for tie', () => {
       const hand1 = ['As', 'Kh', 'Qd', 'Jc', 'Th'];
       const hand2 = ['As', 'Kh', 'Qd', 'Jc', 'Th'];
-      
+
       const result = service.compareHands(hand1, hand2);
       expect(result).toBe(0);
     });
@@ -134,9 +138,11 @@ describe('HandEvaluatorService', () => {
     });
 
     it('should return single player for one hand', () => {
-      const hands = [{ userId: 'player1', cards: ['As', 'Kh', 'Qd', 'Jc', 'Th'] }];
+      const hands = [
+        { userId: 'player1', cards: ['As', 'Kh', 'Qd', 'Jc', 'Th'] },
+      ];
       const result = service.findWinners(hands);
-      
+
       expect(result).toEqual(['player1']);
     });
 
@@ -146,7 +152,7 @@ describe('HandEvaluatorService', () => {
         { userId: 'player2', cards: ['Ks', 'Kh', 'Kd', 'Qc', 'Qh'] }, // Full house
         { userId: 'player3', cards: ['9h', '8d', '7c', '6s', '5h'] }, // Straight
       ];
-      
+
       const result = service.findWinners(hands);
       expect(result).toEqual(['player1']);
     });
@@ -157,7 +163,7 @@ describe('HandEvaluatorService', () => {
         { userId: 'player2', cards: ['As', 'Kh', 'Qd', 'Jc', 'Th'] },
         { userId: 'player3', cards: ['9h', '8d', '7c', '6s', '5h'] },
       ];
-      
+
       const result = service.findWinners(hands);
       expect(result).toContain('player1');
       expect(result).toContain('player2');

@@ -19,9 +19,9 @@ describe('PotService', () => {
         { userId: 'player2', amount: 100 },
         { userId: 'player3', amount: 100 },
       ];
-      
+
       const pots = service.calculatePots(contributions);
-      
+
       expect(pots).toHaveLength(1);
       expect(pots[0].amount).toBe(300);
       expect(pots[0].eligiblePlayers).toHaveLength(3);
@@ -33,9 +33,9 @@ describe('PotService', () => {
         { userId: 'player2', amount: 100 },
         { userId: 'player3', amount: 100 },
       ];
-      
+
       const pots = service.calculatePots(contributions);
-      
+
       expect(pots).toHaveLength(2);
       expect(pots[0].amount).toBe(150);
       expect(pots[1].amount).toBe(100);
@@ -48,9 +48,9 @@ describe('PotService', () => {
         { userId: 'player3', amount: 100 },
         { userId: 'player4', amount: 100 },
       ];
-      
+
       const pots = service.calculatePots(contributions);
-      
+
       expect(pots).toHaveLength(3);
       expect(pots[0].amount).toBe(120);
       expect(pots[1].amount).toBe(120);
@@ -91,7 +91,11 @@ describe('PotService', () => {
       ];
       const dealerPosition = 0;
 
-      const distribution = service.distributeOddChip(potAmount, winners, dealerPosition);
+      const distribution = service.distributeOddChip(
+        potAmount,
+        winners,
+        dealerPosition,
+      );
 
       // Each gets 50, odd chip (1) goes to first winner clockwise from button
       expect(distribution.get('p1')).toBe(51); // Closer to button (position 2)
@@ -120,7 +124,11 @@ describe('PotService', () => {
       ];
       const dealerPosition = 0;
 
-      const distribution = service.distributeOddChip(potAmount, winners, dealerPosition);
+      const distribution = service.distributeOddChip(
+        potAmount,
+        winners,
+        dealerPosition,
+      );
 
       // Base: 33 each, 1 extra to first two clockwise from button
       expect(distribution.get('p1')).toBe(34); // First clockwise

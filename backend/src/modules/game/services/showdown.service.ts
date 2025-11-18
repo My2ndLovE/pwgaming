@@ -41,16 +41,19 @@ export class ShowdownService {
       position: number;
       wasLastAggressor?: boolean;
     }>,
-    dealerPosition: number
+    dealerPosition: number,
   ): Array<{ userId: string; position: number }> {
     // Find last aggressor
-    const lastAggressor = players.find(p => p.wasLastAggressor);
+    const lastAggressor = players.find((p) => p.wasLastAggressor);
 
     // Separate last aggressor from others
-    const otherPlayers = players.filter(p => !p.wasLastAggressor);
+    const otherPlayers = players.filter((p) => !p.wasLastAggressor);
 
     // Sort other players clockwise from dealer
-    const sortedOthers = this.sortClockwiseFromDealer(otherPlayers, dealerPosition);
+    const sortedOthers = this.sortClockwiseFromDealer(
+      otherPlayers,
+      dealerPosition,
+    );
 
     // Last aggressor shows first, then others clockwise
     if (lastAggressor) {
@@ -69,10 +72,7 @@ export class ShowdownService {
    * @param player - The player
    * @returns True if player can muck (hide cards)
    */
-  allowsMucking(player: {
-    isWinner?: boolean;
-    status: SeatStatus;
-  }): boolean {
+  allowsMucking(player: { isWinner?: boolean; status: SeatStatus }): boolean {
     // Winners must show
     if (player.isWinner) {
       return false;
@@ -125,11 +125,11 @@ export class ShowdownService {
   processShowdown(
     players: ShowdownPlayer[],
     communityCards: string[],
-    dealerPosition: number
+    dealerPosition: number,
   ): ShowdownResult {
     // Filter only active and all-in players
     const activePlayers = players.filter(
-      p => p.status === SeatStatus.ACTIVE || p.status === SeatStatus.ALL_IN
+      (p) => p.status === SeatStatus.ACTIVE || p.status === SeatStatus.ALL_IN,
     );
 
     // Single player wins by default
@@ -155,7 +155,7 @@ export class ShowdownService {
     }
 
     // Evaluate all hands
-    const handsToEvaluate = activePlayers.map(player => ({
+    const handsToEvaluate = activePlayers.map((player) => ({
       userId: player.userId,
       cards: [...player.cards, ...communityCards],
     }));
@@ -163,14 +163,14 @@ export class ShowdownService {
     const winnerUserIds = this.handEvaluator.findWinners(handsToEvaluate);
 
     // Mark winners
-    const playersWithWinners = activePlayers.map(p => ({
+    const playersWithWinners = activePlayers.map((p) => ({
       ...p,
       isWinner: winnerUserIds.includes(p.userId),
     }));
 
     // Get winner details
-    const winners = winnerUserIds.map(userId => {
-      const player = activePlayers.find(p => p.userId === userId);
+    const winners = winnerUserIds.map((userId) => {
+      const player = activePlayers.find((p) => p.userId === userId);
       if (!player) throw new Error('Winner not found');
 
       const evaluation = this.handEvaluator.evaluateHand([
@@ -186,10 +186,15 @@ export class ShowdownService {
     });
 
     // Determine reveal order
-    const showdownOrder = this.determineShowdownOrder(playersWithWinners, dealerPosition);
+    const showdownOrder = this.determineShowdownOrder(
+      playersWithWinners,
+      dealerPosition,
+    );
 
-    const revealOrder = showdownOrder.map(playerOrder => {
-      const player = playersWithWinners.find(p => p.userId === playerOrder.userId);
+    const revealOrder = showdownOrder.map((playerOrder) => {
+      const player = playersWithWinners.find(
+        (p) => p.userId === playerOrder.userId,
+      );
       if (!player) throw new Error('Player not found in reveal order');
 
       return {
@@ -212,18 +217,19 @@ export class ShowdownService {
    */
   private sortClockwiseFromDealer(
     players: Array<{ position: number; userId: string }>,
-    dealerPosition: number
+    dealerPosition: number,
   ): Array<{ userId: string; position: number }> {
-    const maxPosition = Math.max(...players.map(p => p.position));
+    const maxPosition = Math.max(...players.map((p) => p.position));
     const numSeats = maxPosition + 1;
 
     return players
-      .map(p => ({
+      .map((p) => ({
         ...p,
         // Calculate distance clockwise from dealer's left
-        relativePosition: (p.position - dealerPosition - 1 + numSeats) % numSeats,
+        relativePosition:
+          (p.position - dealerPosition - 1 + numSeats) % numSeats,
       }))
       .sort((a, b) => a.relativePosition - b.relativePosition)
-      .map(p => ({ userId: p.userId, position: p.position }));
+      .map((p) => ({ userId: p.userId, position: p.position }));
   }
 }

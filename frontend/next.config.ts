@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
-const { i18n } = require('./next-i18next.config');
-
+// Note: i18n configuration is not supported in App Router
+// See: https://nextjs.org/docs/app/building-your-application/routing/internationalization
 const nextConfig: NextConfig = {
-  i18n,
+  // i18n is handled differently in App Router
 };
 
 export default nextConfig;

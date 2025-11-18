@@ -19,7 +19,12 @@ import { GameStateStore } from '../services/game-state-store.service';
 import { BotDetectionService } from '../services/bot-detection.service';
 import { MultiAccountDetectionService } from '../services/multi-account-detection.service';
 import { RoomService } from '../../room/services/room.service';
-import { JoinGameDto, GameActionDto, LeaveGameDto, RebuyDto } from '../dto/game-events.dto';
+import {
+  JoinGameDto,
+  GameActionDto,
+  LeaveGameDto,
+  RebuyDto,
+} from '../dto/game-events.dto';
 
 interface RoomState {
   roomId: string;
@@ -57,7 +62,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   server!: Server;
 
   private rooms: Map<string, RoomState> = new Map();
-  private connectedPlayers: Map<string, { socket: Socket; roomId: string; chipStack: number }> = new Map();
+  private connectedPlayers: Map<
+    string,
+    { socket: Socket; roomId: string; chipStack?: number }
+  > = new Map();
   private reconnectionTimers: Map<string, NodeJS.Timeout> = new Map();
   private actionLocks: Map<string, boolean> = new Map(); // roomId -> isLocked
   private actionTimestamps: Map<string, number> = new Map(); // userId -> last action prompt timestamp
@@ -98,10 +106,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           actionTimeoutSeconds: 30,
         });
 
-        console.log(`Recovered game for room ${roomId} (${room.smallBlind}/${room.bigBlind})`);
+        console.log(
+          `Recovered game for room ${roomId} (${room.smallBlind}/${room.bigBlind})`,
+        );
       }
 
-      console.log(`Crash recovery complete: ${recoveredGames.size} games restored`);
+      console.log(
+        `Crash recovery complete: ${recoveredGames.size} games restored`,
+      );
     } catch (error) {
       console.error('Failed to recover games:', error);
     }
@@ -152,7 +164,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:join')
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
   async handleJoinGame(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: JoinGameDto,
@@ -165,11 +183,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { roomId, buyIn } = data;
 
     // SECURITY: Multi-account detection
-    const clientIP = client.handshake.address || client.conn.remoteAddress || 'unknown';
-    const isFlagged = this.multiAccountDetection.trackPlayerJoin(userId, roomId, clientIP);
+    const clientIP =
+      client.handshake.address || client.conn.remoteAddress || 'unknown';
+    const isFlagged = this.multiAccountDetection.trackPlayerJoin(
+      userId,
+      roomId,
+      clientIP,
+    );
 
     if (isFlagged) {
-      console.warn(`SECURITY: Multiple accounts detected from IP ${clientIP} in room ${roomId}`);
+      console.warn(
+        `SECURITY: Multiple accounts detected from IP ${clientIP} in room ${roomId}`,
+      );
       // Continue but log for admin review (don't block, could be same household)
     }
 
@@ -215,11 +240,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     client.join(roomId);
 
     // Track connected player with chip stack
-    this.connectedPlayers.set(userId, { socket: client, roomId, chipStack: buyIn });
+    this.connectedPlayers.set(userId, {
+      socket: client,
+      roomId,
+      chipStack: buyIn,
+    });
 
     // Clear any reconnection timer
     if (this.reconnectionTimers.has(userId)) {
-      clearTimeout(this.reconnectionTimers.get(userId)!);
+      clearTimeout(this.reconnectionTimers.get(userId));
       this.reconnectionTimers.delete(userId);
     }
 
@@ -230,7 +259,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         players,
         0,
         room.smallBlind,
-        room.bigBlind
+        room.bigBlind,
       );
 
       this.broadcastGameState(roomId);
@@ -246,7 +275,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:action')
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
   async handlePlayerAction(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: GameActionDto,
@@ -278,7 +313,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.botDetection.recordAction(userId, responseTime);
 
         if (this.botDetection.isSuspicious(userId)) {
-          console.warn(`SECURITY: Bot-like behavior detected for user ${userId}`);
+          console.warn(
+            `SECURITY: Bot-like behavior detected for user ${userId}`,
+          );
           // Continue but log for admin review
         }
       }
@@ -292,14 +329,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         room.handState,
         userId,
         action,
-        amount
+        amount,
       );
 
       if (!result.success) {
         return { success: false, error: result.error };
       }
 
-      return await this.processSuccessfulAction(roomId, userId, action, amount, room);
+      return await this.processSuccessfulAction(
+        roomId,
+        userId,
+        action,
+        amount,
+        room,
+      );
     } finally {
       // Always release lock
       this.actionLocks.set(roomId, false);
@@ -313,7 +356,6 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     amount: number,
     room: RoomState,
   ) {
-
     // Broadcast action to all players
     this.server.to(roomId).emit('game:player_action', {
       userId,
@@ -323,21 +365,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
 
     // Check if betting round is complete
-    if (this.gameEngine.isBettingRoundComplete(room.handState.state)) {
+    if (
+      room.handState &&
+      this.gameEngine.isBettingRoundComplete(room.handState.state)
+    ) {
       // Check if hand is complete
-      if (this.gameEngine.isHandComplete(
-        room.handState.state.activePlayers,
-        room.handState.state.phase
-      )) {
+      if (
+        this.gameEngine.isHandComplete(
+          room.handState.state.activePlayers,
+          room.handState.state.phase,
+        )
+      ) {
         this.handleHandComplete(roomId);
       } else {
         // Advance to next phase
         this.handleAdvancePhase(roomId);
       }
-    } else {
+    } else if (room.handState) {
       // Start timer for next player
       const currentPlayer = room.handState.state.activePlayers.find(
-        p => p.position === room.handState!.state.currentPosition
+        (p) => p.position === room.handState!.state.currentPosition,
       );
       if (currentPlayer) {
         this.startActionTimer(roomId, currentPlayer.userId);
@@ -347,11 +394,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Broadcast updated state
     await this.broadcastGameState(roomId);
 
-    return { success: true, state: this.sanitizeState(room.handState!, userId) };
+    return {
+      success: true,
+      state: this.sanitizeState(room.handState!, userId),
+    };
   }
 
   @SubscribeMessage('game:leave')
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
   async handleLeaveGame(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: LeaveGameDto,
@@ -366,13 +422,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // WALLET INTEGRATION: Cash-out player's chips
     if (room?.handState) {
-      const player = room.handState.players.find(p => p.userId === userId);
+      const player = room.handState.playerHands.find(
+        (p) => p.userId === userId,
+      );
       if (player) {
         try {
+          const playerState = room.handState.state.activePlayers.find(
+            (p) => p.userId === userId,
+          );
           await this.gameWalletService.processCashOut({
             userId,
             roomId,
-            chipStack: player.chipStack,
+            chipStack: playerState?.chipStack || 0,
           });
         } catch (error) {
           console.error('Cash-out failed:', error);
@@ -392,7 +453,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:rebuy')
-  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
   async handleRebuy(
     @ConnectedSocket() client: Socket,
     @MessageBody() data: RebuyDto,
@@ -411,8 +478,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Validate player is NOT in active hand
     if (room.handState) {
-      const player = room.handState.players.find(p => p.userId === userId);
-      if (player && room.handState.phase !== HandPhase.COMPLETE) {
+      const player = room.handState.playerHands.find(
+        (p) => p.userId === userId,
+      );
+      if (player && room.handState.state.phase !== HandPhase.COMPLETED) {
         return { success: false, error: 'Cannot rebuy during active hand' };
       }
     }
@@ -428,16 +497,20 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
       // Add chips to player's stack
       if (room.handState) {
-        const player = room.handState.players.find(p => p.userId === userId);
-        if (player) {
-          player.chipStack += amount;
+        const playerState = room.handState.state.activePlayers.find(
+          (p) => p.userId === userId,
+        );
+        if (playerState && playerState.chipStack !== undefined) {
+          playerState.chipStack += amount;
           this.broadcastGameState(roomId);
         }
       }
 
       return { success: true, newStack: amount };
     } catch (error) {
-      return { success: false, error: error.message || 'Rebuy failed' };
+      const errorMessage =
+        error instanceof Error ? error.message : 'Rebuy failed';
+      return { success: false, error: errorMessage };
     }
   }
 
@@ -452,7 +525,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Clear reconnection timer
     if (this.reconnectionTimers.has(userId)) {
-      clearTimeout(this.reconnectionTimers.get(userId)!);
+      clearTimeout(this.reconnectionTimers.get(userId));
       this.reconnectionTimers.delete(userId);
     }
 
@@ -467,19 +540,24 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       newSocket.emit('game:state', sanitizedState);
 
       // 2. Send player's private hole cards
-      const playerHand = room.handState.playerHands.find(h => h.userId === userId);
+      const playerHand = room.handState.playerHands.find(
+        (h) => h.userId === userId,
+      );
       if (playerHand && playerHand.cards) {
         newSocket.emit('game:your_cards', { cards: playerHand.cards });
       }
 
       // 3. Restore action timer if it's player's turn
       const currentPlayer = room.handState.state.activePlayers.find(
-        p => p.position === room.handState!.state.currentPosition
+        (p) => p.position === room.handState!.state.currentPosition,
       );
 
       if (currentPlayer && currentPlayer.userId === userId) {
         const handId = `${roomId}-hand-${room.handState.state.phase}`;
-        const remainingTime = this.timeoutService.getRemainingTime(handId);
+        const remainingTime = this.timeoutService.getRemainingTime(
+          handId,
+          userId,
+        );
 
         if (remainingTime > 0) {
           newSocket.emit('game:your_turn', {
@@ -510,24 +588,21 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Auto-fold if it's their turn
     const currentPlayer = room.handState.state.activePlayers.find(
-      p => p.position === room.handState!.state.currentPosition
+      (p) => p.position === room.handState!.state.currentPosition,
     );
 
     if (currentPlayer && currentPlayer.userId === userId) {
-      this.gameEngine.processAction(
-        room.handState,
-        userId,
-        ActionType.FOLD,
-        0
-      );
+      this.gameEngine.processAction(room.handState, userId, ActionType.FOLD, 0);
 
       this.broadcastGameState(roomId);
 
       // Continue game
-      if (this.gameEngine.isHandComplete(
-        room.handState.state.activePlayers,
-        room.handState.state.phase
-      )) {
+      if (
+        this.gameEngine.isHandComplete(
+          room.handState.state.activePlayers,
+          room.handState.state.phase,
+        )
+      ) {
         this.handleHandComplete(roomId);
       }
     }
@@ -551,7 +626,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Start timer for first player in new phase
     const firstPlayer = room.handState.state.activePlayers.find(
-      p => p.position === room.handState!.state.currentPosition
+      (p) => p.position === room.handState!.state.currentPosition,
     );
     if (firstPlayer) {
       this.startActionTimer(roomId, firstPlayer.userId);
@@ -567,11 +642,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // Evaluate winners
     const winners = this.gameEngine.evaluateWinners(
       room.handState.playerHands,
-      room.handState.communityCards
+      room.handState.communityCards,
     );
 
     // Calculate pots
-    const contributions = room.handState.state.activePlayers.map(p => ({
+    const contributions = room.handState.state.activePlayers.map((p) => ({
       userId: p.userId,
       amount: p.currentBet || 0,
     }));
@@ -616,7 +691,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!room) return;
 
     const connectedPlayers = Array.from(this.connectedPlayers.values())
-      .filter(p => p.roomId === roomId)
+      .filter((p) => p.roomId === roomId)
       .map((p, idx) => ({
         userId: p.socket.data.user?.userId,
         chipStack: p.chipStack, // Use tracked chip stack
@@ -631,15 +706,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const dealerPosition = room.handState
       ? this.gameEngine['stateMachine'].calculateNextDealer(
           room.handState.state.dealerPosition,
-          connectedPlayers
+          connectedPlayers,
         )
       : 0;
 
     room.handState = this.gameEngine.startNewHand(
-      connectedPlayers,
+      connectedPlayers.filter((p) => p.chipStack !== undefined) as Array<{
+        userId: string;
+        chipStack: number;
+        position: number;
+      }>,
       dealerPosition,
       room.smallBlind,
-      room.bigBlind
+      room.bigBlind,
     );
 
     // Broadcast hand started
@@ -655,7 +734,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Start action timer for first player
     const firstPlayer = room.handState.state.activePlayers.find(
-      p => p.position === room.handState!.state.currentPosition
+      (p) => p.position === room.handState!.state.currentPosition,
     );
     if (firstPlayer) {
       this.startActionTimer(roomId, firstPlayer.userId);
@@ -670,26 +749,26 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     roomId: string,
     handState: HandState,
     winners: any[],
-    pots: any[]
+    pots: any[],
   ) {
     // Build a map of userId -> net change (winnings - bets)
     const chipChanges = new Map<string, number>();
 
     // First, deduct all bets from players
-    handState.state.activePlayers.forEach(player => {
+    handState.state.activePlayers.forEach((player) => {
       const totalBet = player.currentBet || 0;
       chipChanges.set(player.userId, -totalBet);
     });
 
     // Then, add winnings from pots
-    pots.forEach((pot, potIndex) => {
-      const potWinners = winners.filter(winner =>
-        pot.eligiblePlayers.includes(winner.userId)
+    pots.forEach((pot, _potIndex) => {
+      const potWinners = winners.filter((winner) =>
+        pot.eligiblePlayers.includes(winner.userId),
       );
 
       if (potWinners.length > 0) {
         const sharePerWinner = pot.amount / potWinners.length;
-        potWinners.forEach(winner => {
+        potWinners.forEach((winner) => {
           const current = chipChanges.get(winner.userId) || 0;
           chipChanges.set(winner.userId, current + sharePerWinner);
         });
@@ -700,10 +779,14 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     chipChanges.forEach((change, userId) => {
       const player = this.connectedPlayers.get(userId);
       if (player && player.roomId === roomId) {
-        player.chipStack = Math.max(0, player.chipStack + change);
+        if (player.chipStack !== undefined) {
+          player.chipStack = Math.max(0, player.chipStack + change);
+        }
 
         // Log for debugging
-        console.log(`Player ${userId} chip stack updated: ${change > 0 ? '+' : ''}${change.toFixed(2)} -> ${player.chipStack.toFixed(2)}`);
+        console.log(
+          `Player ${userId} chip stack updated: ${change > 0 ? '+' : ''}${change.toFixed(2)} -> ${(player.chipStack || 0).toFixed(2)}`,
+        );
 
         // If player is busted (0 chips), they should be removed or allowed to rebuy
         if (player.chipStack === 0) {
@@ -734,13 +817,15 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             room.handState,
             playerId,
             ActionType.FOLD,
-            0
+            0,
           );
 
-          this.server.to(roomId).emit('game:player_timeout', { userId: playerId });
+          this.server
+            .to(roomId)
+            .emit('game:player_timeout', { userId: playerId });
           this.broadcastGameState(roomId);
         }
-      }
+      },
     );
 
     // Broadcast timer started
@@ -789,7 +874,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const room = this.rooms.get(roomId);
     if (!room || !room.handState) return;
 
-    room.handState.playerHands.forEach(hand => {
+    room.handState.playerHands.forEach((hand) => {
       const playerInfo = this.connectedPlayers.get(hand.userId);
       if (playerInfo) {
         playerInfo.socket.emit('game:your_cards', {
@@ -803,7 +888,9 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
    * Get valid actions for a player
    */
   private getValidActions(handState: HandState, userId: string): string[] {
-    const player = handState.state.activePlayers.find(p => p.userId === userId);
+    const player = handState.state.activePlayers.find(
+      (p) => p.userId === userId,
+    );
     if (!player) return [];
 
     const actions: string[] = [];
@@ -821,15 +908,18 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
 
     // Can raise if has enough chips
-    const callAmount = currentBet - player.currentBet;
+    const callAmount = currentBet - (player.currentBet || 0);
     const minRaise = handState.state.minRaise || handState.state.currentBet;
 
-    if (player.chipStack > callAmount + minRaise) {
+    if (
+      player.chipStack !== undefined &&
+      player.chipStack > callAmount + minRaise
+    ) {
       actions.push('raise');
     }
 
     // Can always go all-in
-    if (player.chipStack > 0) {
+    if (player.chipStack !== undefined && player.chipStack > 0) {
       actions.push('all-in');
     }
 
@@ -844,7 +934,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       currentBet: handState.state.currentBet,
       minRaise: handState.state.minRaise,
       communityCards: handState.communityCards,
-      players: handState.state.activePlayers.map(p => ({
+      players: handState.state.activePlayers.map((p) => ({
         userId: p.userId,
         position: p.position,
         chipStack: p.chipStack,
@@ -852,7 +942,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         status: p.status,
         hasActed: p.hasActed,
         // Only show cards to the player themselves
-        cards: p.userId === viewerUserId ? handState.playerHands.find(h => h.userId === p.userId)?.cards || [] : [],
+        cards:
+          p.userId === viewerUserId
+            ? handState.playerHands.find((h) => h.userId === p.userId)?.cards ||
+              []
+            : [],
       })),
     };
   }

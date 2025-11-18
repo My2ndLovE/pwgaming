@@ -7,14 +7,7 @@ import {
   Index,
   BeforeInsert,
 } from 'typeorm';
-import {
-  IsInt,
-  IsDecimal,
-  Min,
-  Max,
-  IsArray,
-  IsEnum,
-} from 'class-validator';
+import { IsInt, IsDecimal, Min, Max, IsArray, IsEnum } from 'class-validator';
 import { Room } from '../../room/entities/room.entity';
 
 export enum HandPhase {
@@ -118,6 +111,9 @@ export class GameHand {
   @IsInt()
   @Min(0)
   durationSeconds!: number | null;
+
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  shuffleSeed!: string | null;
 
   // Relationships
   @ManyToOne(() => Room)

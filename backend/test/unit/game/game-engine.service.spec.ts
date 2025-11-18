@@ -32,7 +32,7 @@ describe('GameEngine', () => {
       potService,
       bettingService,
       blindService,
-      stateMachine
+      stateMachine,
     );
   });
 
@@ -62,7 +62,7 @@ describe('GameEngine', () => {
 
       const result = engine.startNewHand(players, 0, 50, 100);
 
-      result.playerHands.forEach(hand => {
+      result.playerHands.forEach((hand) => {
         expect(hand.cards).toHaveLength(2);
       });
     });
@@ -89,11 +89,11 @@ describe('GameEngine', () => {
       const result = engine.startNewHand(players, 0, 50, 100);
 
       // SB at position 1 should have 950 chips
-      const sbPlayer = result.state.activePlayers.find(p => p.position === 1);
+      const sbPlayer = result.state.activePlayers.find((p) => p.position === 1);
       expect(sbPlayer?.chipStack).toBe(950);
 
       // BB at position 2 should have 900 chips
-      const bbPlayer = result.state.activePlayers.find(p => p.position === 2);
+      const bbPlayer = result.state.activePlayers.find((p) => p.position === 2);
       expect(bbPlayer?.chipStack).toBe(900);
     });
   });
@@ -111,15 +111,10 @@ describe('GameEngine', () => {
     });
 
     it('should process a valid fold action', () => {
-      const result = engine.processAction(
-        handState,
-        'p1',
-        ActionType.FOLD,
-        0
-      );
+      const result = engine.processAction(handState, 'p1', ActionType.FOLD, 0);
 
       expect(result.success).toBe(true);
-      const player = result.state.activePlayers.find(p => p.userId === 'p1');
+      const player = result.state.activePlayers.find((p) => p.userId === 'p1');
       expect(player?.status).toBe(SeatStatus.FOLDED);
     });
 
@@ -128,11 +123,11 @@ describe('GameEngine', () => {
         handState,
         'p1',
         ActionType.CALL,
-        100
+        100,
       );
 
       expect(result.success).toBe(true);
-      const player = result.state.activePlayers.find(p => p.userId === 'p1');
+      const player = result.state.activePlayers.find((p) => p.userId === 'p1');
       expect(player?.currentBet).toBe(100);
       expect(player?.chipStack).toBe(900); // 1000 - 100
     });
@@ -142,54 +137,48 @@ describe('GameEngine', () => {
         handState,
         'p1',
         ActionType.RAISE,
-        200
+        200,
       );
 
       expect(result.success).toBe(true);
       expect(result.state.currentBet).toBe(200);
       expect(result.state.minRaise).toBe(100); // raise size
-      const player = result.state.activePlayers.find(p => p.userId === 'p1');
+      const player = result.state.activePlayers.find((p) => p.userId === 'p1');
       expect(player?.chipStack).toBe(800);
     });
 
     it('should process a valid check action', () => {
       // Set up state where check is valid (no current bet)
       handState.state.currentBet = 0;
-      handState.state.activePlayers = handState.state.activePlayers.map(p => ({
-        ...p,
-        currentBet: 0,
-      }));
-
-      const result = engine.processAction(
-        handState,
-        'p1',
-        ActionType.CHECK,
-        0
+      handState.state.activePlayers = handState.state.activePlayers.map(
+        (p) => ({
+          ...p,
+          currentBet: 0,
+        }),
       );
 
+      const result = engine.processAction(handState, 'p1', ActionType.CHECK, 0);
+
       expect(result.success).toBe(true);
-      const player = result.state.activePlayers.find(p => p.userId === 'p1');
+      const player = result.state.activePlayers.find((p) => p.userId === 'p1');
       expect(player?.hasActed).toBe(true);
     });
 
     it('should process a valid bet action', () => {
       // Set up state where bet is valid (no current bet)
       handState.state.currentBet = 0;
-      handState.state.activePlayers = handState.state.activePlayers.map(p => ({
-        ...p,
-        currentBet: 0,
-      }));
-
-      const result = engine.processAction(
-        handState,
-        'p1',
-        ActionType.BET,
-        150
+      handState.state.activePlayers = handState.state.activePlayers.map(
+        (p) => ({
+          ...p,
+          currentBet: 0,
+        }),
       );
+
+      const result = engine.processAction(handState, 'p1', ActionType.BET, 150);
 
       expect(result.success).toBe(true);
       expect(result.state.currentBet).toBe(150);
-      const player = result.state.activePlayers.find(p => p.userId === 'p1');
+      const player = result.state.activePlayers.find((p) => p.userId === 'p1');
       expect(player?.chipStack).toBe(850);
     });
 
@@ -198,11 +187,11 @@ describe('GameEngine', () => {
         handState,
         'p1',
         ActionType.ALL_IN,
-        1000
+        1000,
       );
 
       expect(result.success).toBe(true);
-      const player = result.state.activePlayers.find(p => p.userId === 'p1');
+      const player = result.state.activePlayers.find((p) => p.userId === 'p1');
       expect(player?.status).toBe(SeatStatus.ALL_IN);
       expect(player?.chipStack).toBe(0);
     });
@@ -212,7 +201,7 @@ describe('GameEngine', () => {
         handState,
         'p2', // Not current player
         ActionType.CALL,
-        100
+        100,
       );
 
       expect(result.success).toBe(false);
@@ -224,7 +213,7 @@ describe('GameEngine', () => {
         handState,
         'p1',
         ActionType.CHECK, // Can't check when there's a bet
-        0
+        0,
       );
 
       expect(result.success).toBe(false);
@@ -245,7 +234,7 @@ describe('GameEngine', () => {
         handState,
         'non-existent-player',
         ActionType.CALL,
-        100
+        100,
       );
 
       expect(result.success).toBe(false);
@@ -338,8 +327,8 @@ describe('GameEngine', () => {
       const winners = engine.evaluateWinners(playerHands, communityCards);
 
       expect(winners).toHaveLength(2);
-      expect(winners.map(w => w.userId)).toContain('p1');
-      expect(winners.map(w => w.userId)).toContain('p2');
+      expect(winners.map((w) => w.userId)).toContain('p1');
+      expect(winners.map((w) => w.userId)).toContain('p2');
     });
 
     it('should award entire pot to winner when only one active player', () => {
@@ -372,7 +361,7 @@ describe('GameEngine', () => {
 
     it('should create side pots for all-in situations', () => {
       const contributions = [
-        { userId: 'p1', amount: 50 },  // All-in
+        { userId: 'p1', amount: 50 }, // All-in
         { userId: 'p2', amount: 100 },
         { userId: 'p3', amount: 100 },
       ];

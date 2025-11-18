@@ -1,4 +1,9 @@
-import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from '@nestjs/common';
+import {
+  PipeTransform,
+  Injectable,
+  ArgumentMetadata,
+  BadRequestException,
+} from '@nestjs/common';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 
@@ -13,10 +18,12 @@ export class WsValidationPipe implements PipeTransform<any> {
     const errors = await validate(object);
 
     if (errors.length > 0) {
-      const messages = errors.map(err => {
+      const messages = errors.map((err) => {
         return Object.values(err.constraints || {}).join(', ');
       });
-      throw new BadRequestException(`Validation failed: ${messages.join('; ')}`);
+      throw new BadRequestException(
+        `Validation failed: ${messages.join('; ')}`,
+      );
     }
 
     return object;

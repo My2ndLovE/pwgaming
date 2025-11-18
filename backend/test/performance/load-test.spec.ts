@@ -5,7 +5,7 @@ describe('Performance & Load Testing', () => {
       for (let i = 0; i < 100; i++) {
         const start = Date.now();
         // Simulate action processing
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise((resolve) => setTimeout(resolve, 50));
         times.push(Date.now() - start);
       }
       times.sort((a, b) => a - b);

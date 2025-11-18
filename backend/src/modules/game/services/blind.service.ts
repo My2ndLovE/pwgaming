@@ -16,11 +16,11 @@ export class BlindService {
   postSmallBlind(player: PlayerState, smallBlind: number): PlayerState {
     const updatedPlayer = { ...player };
 
-    if (player.chipStack >= smallBlind) {
+    if (player.chipStack !== undefined && player.chipStack >= smallBlind) {
       // Normal case: enough chips to post full blind
       updatedPlayer.chipStack = player.chipStack - smallBlind;
       updatedPlayer.currentBet = smallBlind;
-    } else {
+    } else if (player.chipStack !== undefined) {
       // All-in case: not enough chips for full blind
       updatedPlayer.currentBet = player.chipStack;
       updatedPlayer.chipStack = 0;
@@ -39,11 +39,11 @@ export class BlindService {
   postBigBlind(player: PlayerState, bigBlind: number): PlayerState {
     const updatedPlayer = { ...player };
 
-    if (player.chipStack >= bigBlind) {
+    if (player.chipStack !== undefined && player.chipStack >= bigBlind) {
       // Normal case: enough chips to post full blind
       updatedPlayer.chipStack = player.chipStack - bigBlind;
       updatedPlayer.currentBet = bigBlind;
-    } else {
+    } else if (player.chipStack !== undefined) {
       // All-in case: not enough chips for full blind
       updatedPlayer.currentBet = player.chipStack;
       updatedPlayer.chipStack = 0;
@@ -60,11 +60,15 @@ export class BlindService {
    * @param bigBlind - Big blind amount
    * @returns Updated game state with blinds posted
    */
-  postBlinds(state: GameState, smallBlind: number, bigBlind: number): GameState {
+  postBlinds(
+    state: GameState,
+    smallBlind: number,
+    bigBlind: number,
+  ): GameState {
     const updatedState = { ...state };
 
     // Update players with posted blinds
-    updatedState.activePlayers = state.activePlayers.map(player => {
+    updatedState.activePlayers = state.activePlayers.map((player) => {
       if (player.position === state.smallBlindPosition) {
         return this.postSmallBlind(player, smallBlind);
       }
@@ -95,7 +99,7 @@ export class BlindService {
 
     // Find the big blind player
     const bbPlayer = state.activePlayers.find(
-      p => p.position === state.bigBlindPosition
+      (p) => p.position === state.bigBlindPosition,
     );
 
     if (!bbPlayer) {
@@ -122,7 +126,11 @@ export class BlindService {
    * @param bigBlind - Big blind amount
    * @returns The blind amount
    */
-  getBlindAmount(blindType: BlindType, smallBlind: number, bigBlind: number): number {
+  getBlindAmount(
+    blindType: BlindType,
+    smallBlind: number,
+    bigBlind: number,
+  ): number {
     if (blindType === 'small') {
       return smallBlind;
     }

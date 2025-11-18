@@ -3,10 +3,29 @@ import * as crypto from 'crypto';
 
 export type Card = string; // e.g., 'Ah', 'Kd', '5c', '9s', '2h'
 
+export interface ShuffleResult {
+  deck: Card[];
+  seed: string;
+}
+
 @Injectable()
 export class DeckService {
   private readonly suits = ['h', 'd', 'c', 's']; // hearts, diamonds, clubs, spades
-  private readonly ranks = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A'];
+  private readonly ranks = [
+    '2',
+    '3',
+    '4',
+    '5',
+    '6',
+    '7',
+    '8',
+    '9',
+    'T',
+    'J',
+    'Q',
+    'K',
+    'A',
+  ];
 
   createDeck(): Card[] {
     const deck: Card[] = [];
@@ -18,6 +37,65 @@ export class DeckService {
     return deck;
   }
 
+  /**
+   * Generate a cryptographically secure random seed
+   */
+  generateSeed(): string {
+    return crypto.randomBytes(32).toString('base64');
+  }
+
+  /**
+   * Shuffle deck with optional seed (for replay)
+   * @param deck - The deck to shuffle
+   * @param seed - Optional seed for deterministic shuffle (replay)
+   * @returns Shuffled deck and the seed used
+   */
+  shuffleWithSeed(deck: Card[], seed?: string): ShuffleResult {
+    const usedSeed = seed || this.generateSeed();
+    const shuffled = this.shuffleWithSeedInternal(deck, usedSeed);
+    return { deck: shuffled, seed: usedSeed };
+  }
+
+  /**
+   * Shuffle deck using Fisher-Yates with seeded RNG
+   */
+  private shuffleWithSeedInternal(deck: Card[], seed: string): Card[] {
+    const shuffled = [...deck];
+    const rng = this.createSeededRNG(seed);
+
+    // Fisher-Yates shuffle with seeded randomness
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    return shuffled;
+  }
+
+  /**
+   * Create a seeded pseudo-random number generator
+   * Uses a simple LCG (Linear Congruential Generator) seeded with hash
+   */
+  private createSeededRNG(seed: string): () => number {
+    // Create hash from seed
+    const hash = crypto.createHash('sha256').update(seed).digest();
+    let state = hash.readUInt32BE(0);
+
+    // LCG parameters (same as used in glibc)
+    const a = 1103515245;
+    const c = 12345;
+    const m = 2 ** 31;
+
+    return function () {
+      state = (a * state + c) % m;
+      return state / m;
+    };
+  }
+
+  /**
+   * Legacy shuffle method (kept for backward compatibility)
+   * Uses cryptographic randomness
+   */
   shuffle(deck: Card[]): Card[] {
     const shuffled = [...deck];
     // Fisher-Yates shuffle with cryptographic randomness

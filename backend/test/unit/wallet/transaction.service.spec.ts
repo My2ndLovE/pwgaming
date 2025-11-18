@@ -9,7 +9,11 @@ import {
   TransactionType,
   TransactionStatus,
 } from '../../../src/modules/wallet/entities/transaction.entity';
-import { User, UserRole, UserStatus } from '../../../src/modules/auth/entities/user.entity';
+import {
+  User,
+  UserRole,
+  UserStatus,
+} from '../../../src/modules/auth/entities/user.entity';
 
 describe('TransactionService', () => {
   let service: TransactionService;
@@ -139,7 +143,9 @@ describe('TransactionService', () => {
         notes: 'Test deposit',
       });
 
-      expect(userRepository.findOne).toHaveBeenCalledWith({ where: { id: mockUser.id } });
+      expect(userRepository.findOne).toHaveBeenCalledWith({
+        where: { id: mockUser.id },
+      });
       expect(transactionRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           userId: mockUser.id,
@@ -196,7 +202,10 @@ describe('TransactionService', () => {
   describe('createWithdrawal', () => {
     it('should create a withdrawal transaction with balance deduction', async () => {
       balanceService.validateBalance.mockResolvedValue(true);
-      queryRunner.manager.findOne.mockResolvedValue({ ...mockUser, balance: 1000 });
+      queryRunner.manager.findOne.mockResolvedValue({
+        ...mockUser,
+        balance: 1000,
+      });
       queryRunner.manager.create.mockReturnValue(mockTransaction as any);
       queryRunner.manager.save
         .mockResolvedValueOnce({ ...mockUser, balance: 900 })
@@ -213,7 +222,10 @@ describe('TransactionService', () => {
         notes: 'Test withdrawal',
       });
 
-      expect(balanceService.validateBalance).toHaveBeenCalledWith(mockUser.id, 100);
+      expect(balanceService.validateBalance).toHaveBeenCalledWith(
+        mockUser.id,
+        100,
+      );
       expect(queryRunner.connect).toHaveBeenCalled();
       expect(queryRunner.startTransaction).toHaveBeenCalled();
       expect(queryRunner.manager.findOne).toHaveBeenCalledWith(
@@ -237,12 +249,17 @@ describe('TransactionService', () => {
         }),
       ).rejects.toThrow(BadRequestException);
 
-      expect(balanceService.validateBalance).toHaveBeenCalledWith(mockUser.id, 2000);
+      expect(balanceService.validateBalance).toHaveBeenCalledWith(
+        mockUser.id,
+        2000,
+      );
     });
 
     it('should rollback transaction on error', async () => {
       balanceService.validateBalance.mockResolvedValue(true);
-      queryRunner.manager.findOne.mockRejectedValue(new Error('Database error'));
+      queryRunner.manager.findOne.mockRejectedValue(
+        new Error('Database error'),
+      );
 
       await expect(
         service.createWithdrawal({
@@ -257,7 +274,10 @@ describe('TransactionService', () => {
 
     it('should use pessimistic locking for balance update', async () => {
       balanceService.validateBalance.mockResolvedValue(true);
-      queryRunner.manager.findOne.mockResolvedValue({ ...mockUser, balance: 1000 });
+      queryRunner.manager.findOne.mockResolvedValue({
+        ...mockUser,
+        balance: 1000,
+      });
       queryRunner.manager.create.mockReturnValue(mockTransaction as any);
       queryRunner.manager.save.mockResolvedValue(mockTransaction);
 
@@ -304,8 +324,14 @@ describe('TransactionService', () => {
 
   describe('getTransactionHistory', () => {
     it('should return paginated transaction history', async () => {
-      const transactions = [mockTransaction, { ...mockTransaction, id: 'txn-456' }];
-      transactionRepository.findAndCount.mockResolvedValue([transactions as any, 2]);
+      const transactions = [
+        mockTransaction,
+        { ...mockTransaction, id: 'txn-456' },
+      ];
+      transactionRepository.findAndCount.mockResolvedValue([
+        transactions as any,
+        2,
+      ]);
 
       const result = await service.getTransactionHistory(mockUser.id, 1, 20);
 
@@ -320,7 +346,10 @@ describe('TransactionService', () => {
     });
 
     it('should handle pagination correctly', async () => {
-      transactionRepository.findAndCount.mockResolvedValue([[mockTransaction] as any, 1]);
+      transactionRepository.findAndCount.mockResolvedValue([
+        [mockTransaction] as any,
+        1,
+      ]);
 
       await service.getTransactionHistory(mockUser.id, 2, 10);
 
@@ -333,7 +362,10 @@ describe('TransactionService', () => {
     });
 
     it('should order transactions by createdAt DESC', async () => {
-      transactionRepository.findAndCount.mockResolvedValue([[mockTransaction] as any, 1]);
+      transactionRepository.findAndCount.mockResolvedValue([
+        [mockTransaction] as any,
+        1,
+      ]);
 
       await service.getTransactionHistory(mockUser.id);
 
@@ -345,7 +377,10 @@ describe('TransactionService', () => {
     });
 
     it('should use default pagination values', async () => {
-      transactionRepository.findAndCount.mockResolvedValue([[mockTransaction] as any, 1]);
+      transactionRepository.findAndCount.mockResolvedValue([
+        [mockTransaction] as any,
+        1,
+      ]);
 
       await service.getTransactionHistory(mockUser.id);
 
@@ -364,7 +399,9 @@ describe('TransactionService', () => {
 
       const result = await service.getTransactionById('txn-123');
 
-      expect(transactionRepository.findOne).toHaveBeenCalledWith({ where: { id: 'txn-123' } });
+      expect(transactionRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'txn-123' },
+      });
       expect(result).toEqual(mockTransaction);
     });
 

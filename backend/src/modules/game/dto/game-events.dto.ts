@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsEnum, IsUUID, Min, Max, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsEnum, IsUUID, Min, Max } from 'class-validator';
 import { ActionType } from '../entities/betting-action.entity';
 
 /**

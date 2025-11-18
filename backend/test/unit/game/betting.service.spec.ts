@@ -30,7 +30,7 @@ describe('BettingService', () => {
           ActionType.FOLD,
           0,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(true);
@@ -38,12 +38,10 @@ describe('BettingService', () => {
       });
 
       it('should allow fold action even with no bet (player wants to fold)', () => {
-        const result = service.validateAction(
-          ActionType.FOLD,
-          0,
-          mockPlayer,
-          { ...mockGameState, currentBet: 0 }
-        );
+        const result = service.validateAction(ActionType.FOLD, 0, mockPlayer, {
+          ...mockGameState,
+          currentBet: 0,
+        });
 
         expect(result.isValid).toBe(true);
       });
@@ -53,7 +51,7 @@ describe('BettingService', () => {
           ActionType.FOLD,
           50,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
@@ -63,12 +61,10 @@ describe('BettingService', () => {
 
     describe('CHECK action', () => {
       it('should allow check when no bet exists', () => {
-        const result = service.validateAction(
-          ActionType.CHECK,
-          0,
-          mockPlayer,
-          { ...mockGameState, currentBet: 0 }
-        );
+        const result = service.validateAction(ActionType.CHECK, 0, mockPlayer, {
+          ...mockGameState,
+          currentBet: 0,
+        });
 
         expect(result.isValid).toBe(true);
       });
@@ -78,7 +74,7 @@ describe('BettingService', () => {
           ActionType.CHECK,
           0,
           { ...mockPlayer, currentBet: 100 },
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(true);
@@ -89,7 +85,7 @@ describe('BettingService', () => {
           ActionType.CHECK,
           0,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
@@ -101,7 +97,7 @@ describe('BettingService', () => {
           ActionType.CHECK,
           50,
           mockPlayer,
-          { ...mockGameState, currentBet: 0 }
+          { ...mockGameState, currentBet: 0 },
         );
 
         expect(result.isValid).toBe(false);
@@ -115,19 +111,17 @@ describe('BettingService', () => {
           ActionType.CALL,
           100,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(true);
       });
 
       it('should reject call when no bet exists', () => {
-        const result = service.validateAction(
-          ActionType.CALL,
-          0,
-          mockPlayer,
-          { ...mockGameState, currentBet: 0 }
-        );
+        const result = service.validateAction(ActionType.CALL, 0, mockPlayer, {
+          ...mockGameState,
+          currentBet: 0,
+        });
 
         expect(result.isValid).toBe(false);
         expect(result.error).toBe('Cannot call when there is no bet');
@@ -138,11 +132,13 @@ describe('BettingService', () => {
           ActionType.CALL,
           50,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
-        expect(result.error).toBe('Call amount must match the current bet (100)');
+        expect(result.error).toBe(
+          'Call amount must match the current bet (100)',
+        );
       });
 
       it('should handle call when player has insufficient chips (auto all-in)', () => {
@@ -150,7 +146,7 @@ describe('BettingService', () => {
           ActionType.CALL,
           50,
           { ...mockPlayer, chipStack: 50 },
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
@@ -160,12 +156,10 @@ describe('BettingService', () => {
 
     describe('BET action', () => {
       it('should allow bet when no current bet exists', () => {
-        const result = service.validateAction(
-          ActionType.BET,
-          200,
-          mockPlayer,
-          { ...mockGameState, currentBet: 0 }
-        );
+        const result = service.validateAction(ActionType.BET, 200, mockPlayer, {
+          ...mockGameState,
+          currentBet: 0,
+        });
 
         expect(result.isValid).toBe(true);
       });
@@ -175,21 +169,21 @@ describe('BettingService', () => {
           ActionType.BET,
           200,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
-        expect(result.error).toBe('Cannot bet when there is already a bet (use raise)');
+        expect(result.error).toBe(
+          'Cannot bet when there is already a bet (use raise)',
+        );
         expect(result.suggestedAction).toBe(ActionType.RAISE);
       });
 
       it('should enforce minimum bet of big blind', () => {
-        const result = service.validateAction(
-          ActionType.BET,
-          50,
-          mockPlayer,
-          { ...mockGameState, currentBet: 0 }
-        );
+        const result = service.validateAction(ActionType.BET, 50, mockPlayer, {
+          ...mockGameState,
+          currentBet: 0,
+        });
 
         expect(result.isValid).toBe(false);
         expect(result.error).toBe('Bet must be at least the big blind (100)');
@@ -200,7 +194,7 @@ describe('BettingService', () => {
           ActionType.BET,
           2000,
           mockPlayer,
-          { ...mockGameState, currentBet: 0 }
+          { ...mockGameState, currentBet: 0 },
         );
 
         expect(result.isValid).toBe(false);
@@ -214,7 +208,7 @@ describe('BettingService', () => {
           ActionType.RAISE,
           200,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(true);
@@ -225,11 +219,13 @@ describe('BettingService', () => {
           ActionType.RAISE,
           200,
           mockPlayer,
-          { ...mockGameState, currentBet: 0 }
+          { ...mockGameState, currentBet: 0 },
         );
 
         expect(result.isValid).toBe(false);
-        expect(result.error).toBe('Cannot raise when there is no bet (use bet)');
+        expect(result.error).toBe(
+          'Cannot raise when there is no bet (use bet)',
+        );
         expect(result.suggestedAction).toBe(ActionType.BET);
       });
 
@@ -238,11 +234,13 @@ describe('BettingService', () => {
           ActionType.RAISE,
           150,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
-        expect(result.error).toBe('Raise must be at least 200 (current bet + minimum raise)');
+        expect(result.error).toBe(
+          'Raise must be at least 200 (current bet + minimum raise)',
+        );
       });
 
       it('should reject raise exceeding chip stack', () => {
@@ -250,7 +248,7 @@ describe('BettingService', () => {
           ActionType.RAISE,
           2000,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
@@ -268,11 +266,13 @@ describe('BettingService', () => {
           ActionType.RAISE,
           450,
           mockPlayer,
-          gameStateWithRaise
+          gameStateWithRaise,
         );
 
         expect(result.isValid).toBe(false);
-        expect(result.error).toBe('Raise must be at least 500 (current bet + minimum raise)');
+        expect(result.error).toBe(
+          'Raise must be at least 500 (current bet + minimum raise)',
+        );
       });
     });
 
@@ -282,7 +282,7 @@ describe('BettingService', () => {
           ActionType.ALL_IN,
           1000,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(true);
@@ -293,11 +293,13 @@ describe('BettingService', () => {
           ActionType.ALL_IN,
           500,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
-        expect(result.error).toBe('All-in amount must equal entire chip stack (1000)');
+        expect(result.error).toBe(
+          'All-in amount must equal entire chip stack (1000)',
+        );
       });
 
       it('should reject all-in with amount greater than chip stack', () => {
@@ -305,11 +307,13 @@ describe('BettingService', () => {
           ActionType.ALL_IN,
           1500,
           mockPlayer,
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
-        expect(result.error).toBe('All-in amount must equal entire chip stack (1000)');
+        expect(result.error).toBe(
+          'All-in amount must equal entire chip stack (1000)',
+        );
       });
 
       it('should allow all-in even when less than minimum raise', () => {
@@ -317,7 +321,7 @@ describe('BettingService', () => {
           ActionType.ALL_IN,
           50,
           { ...mockPlayer, chipStack: 50 },
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(true);
@@ -330,7 +334,7 @@ describe('BettingService', () => {
           ActionType.CALL,
           100,
           { ...mockPlayer, status: SeatStatus.FOLDED },
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
@@ -342,7 +346,7 @@ describe('BettingService', () => {
           ActionType.CALL,
           100,
           { ...mockPlayer, status: SeatStatus.ALL_IN },
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);
@@ -354,7 +358,7 @@ describe('BettingService', () => {
           ActionType.CALL,
           100,
           { ...mockPlayer, status: SeatStatus.SITTING_OUT },
-          mockGameState
+          mockGameState,
         );
 
         expect(result.isValid).toBe(false);

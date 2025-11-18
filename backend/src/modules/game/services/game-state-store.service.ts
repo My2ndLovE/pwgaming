@@ -7,7 +7,6 @@ import { GameHand, HandPhase } from '../entities/game-hand.entity';
 import { PlayerSeat } from '../entities/player-seat.entity';
 import { BettingAction } from '../entities/betting-action.entity';
 import { HandState } from './game-engine.service';
-import { GameState } from './game-state-machine.service';
 
 export interface PersistedGameState {
   roomId: string;
@@ -36,7 +35,8 @@ export class GameStateStore {
     @InjectRepository(PlayerSeat)
     private readonly playerSeatRepository: Repository<PlayerSeat>,
     @InjectRepository(BettingAction)
-    private readonly bettingActionRepository: Repository<BettingAction>,
+    // @ts-expect-error - Reserved for future use
+    private readonly _bettingActionRepository: Repository<BettingAction>,
     private readonly configService: ConfigService,
   ) {
     const redisUrl = this.configService.get<string>('REDIS_URL');
@@ -105,33 +105,40 @@ export class GameStateStore {
     // Create GameHand record
     const gameHand = this.gameHandRepository.create({
       roomId,
-      handNumber: gameState.handNumber,
+      handNumber: 1, // TODO: Track actual hand number
       dealerPosition: gameState.dealerPosition,
       smallBlind,
       bigBlind,
-      communityCards: JSON.stringify(handState.communityCards),
-      totalPot: gameState.pot,
-      phase: HandPhase.COMPLETE,
+      communityCards: handState.communityCards,
+      potAmount: gameState.activePlayers.reduce(
+        (sum, p) => sum + (p.currentBet || 0),
+        0,
+      ),
+      players: gameState.activePlayers.map((p) => ({
+        userId: p.userId,
+        position: p.position,
+        chipStack: p.chipStack || 0,
+        isActive: p.status === 'active',
+      })),
+      currentPhase: HandPhase.COMPLETED,
       startedAt: new Date(Date.now() - 60000), // Approximate (should track actual start)
       completedAt: new Date(),
     });
 
-    const savedHand = await this.gameHandRepository.save(gameHand);
+    const savedHand: GameHand = await this.gameHandRepository.save(gameHand);
 
     // Save player seats
     for (const player of gameState.activePlayers) {
-      const playerHand = handState.playerHands.find(ph => ph.userId === player.userId);
+      // playerHand unused for now as we don't save encrypted hole cards here
 
       const playerSeat = this.playerSeatRepository.create({
         gameHandId: savedHand.id,
         userId: player.userId,
         position: player.position,
-        initialStack: player.chipStack, // TODO: Track initial stack properly
-        finalStack: player.chipStack,
-        holeCards: JSON.stringify(playerHand?.cards || []),
-        isFolded: false, // TODO: Track folded status
-        isAllIn: player.chipStack === 0,
-        totalBet: player.currentBet,
+        chipStack: player.chipStack || 0,
+        currentBet: player.currentBet || 0,
+        status: player.status,
+        hasActed: player.hasActed || false,
       });
 
       await this.playerSeatRepository.save(playerSeat);
@@ -146,12 +153,15 @@ export class GameStateStore {
    * Validate state consistency
    * Ensures pot = sum of bets, no duplicate cards, stacks >= 0
    */
-  validateStateConsistency(handState: HandState): { valid: boolean; errors: string[] } {
+  validateStateConsistency(handState: HandState): {
+    valid: boolean;
+    errors: string[];
+  } {
     const errors: string[] = [];
 
     // Check for negative stacks
     for (const player of handState.state.activePlayers) {
-      if (player.chipStack < 0) {
+      if (player.chipStack !== undefined && player.chipStack < 0) {
         errors.push(`Negative stack for ${player.userId}: ${player.chipStack}`);
       }
     }
@@ -217,7 +227,7 @@ export class GameStateStore {
   async getActiveRooms(): Promise<string[]> {
     const pattern = this.getRedisKey('*');
     const keys = await this.redis.keys(pattern);
-    return keys.map(key => key.replace('game:state:', ''));
+    return keys.map((key) => key.replace('game:state:', ''));
   }
 
   /**

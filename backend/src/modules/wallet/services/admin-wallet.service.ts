@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -50,7 +54,8 @@ export interface AdminDebitDto {
 export class AdminWalletService {
   constructor(
     @InjectRepository(Transaction)
-    private readonly transactionRepository: Repository<Transaction>,
+    // @ts-expect-error - Reserved for future use
+    private readonly _transactionRepository: Repository<Transaction>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly dataSource: DataSource,
@@ -61,7 +66,10 @@ export class AdminWalletService {
    * Check if internal wallet mode is enabled
    */
   isInternalMode(): boolean {
-    const walletMode = this.configService.get<string>('WALLET_MODE', 'internal');
+    const walletMode = this.configService.get<string>(
+      'WALLET_MODE',
+      'internal',
+    );
     return walletMode === 'internal';
   }
 
@@ -85,7 +93,9 @@ export class AdminWalletService {
    */
   async creditUser(dto: AdminCreditDto): Promise<Transaction> {
     if (!this.isInternalMode()) {
-      throw new ForbiddenException('Direct credits only available in internal wallet mode');
+      throw new ForbiddenException(
+        'Direct credits only available in internal wallet mode',
+      );
     }
 
     await this.verifyAdminPermission(dto.adminId);
@@ -145,7 +155,9 @@ export class AdminWalletService {
    */
   async debitUser(dto: AdminDebitDto): Promise<Transaction> {
     if (!this.isInternalMode()) {
-      throw new ForbiddenException('Direct debits only available in internal wallet mode');
+      throw new ForbiddenException(
+        'Direct debits only available in internal wallet mode',
+      );
     }
 
     await this.verifyAdminPermission(dto.adminId);

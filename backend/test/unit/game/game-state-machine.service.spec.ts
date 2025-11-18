@@ -162,7 +162,7 @@ describe('GameStateMachine', () => {
     });
 
     it('should return -1 when no active players remain', () => {
-      const allFolded = activePlayers.map(p => ({
+      const allFolded = activePlayers.map((p) => ({
         ...p,
         status: SeatStatus.FOLDED,
       }));
@@ -176,9 +176,27 @@ describe('GameStateMachine', () => {
     const mockState = {
       currentBet: 100,
       activePlayers: [
-        { userId: 'p1', position: 0, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
-        { userId: 'p2', position: 1, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
-        { userId: 'p3', position: 2, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
+        {
+          userId: 'p1',
+          position: 0,
+          currentBet: 100,
+          status: SeatStatus.ACTIVE,
+          hasActed: true,
+        },
+        {
+          userId: 'p2',
+          position: 1,
+          currentBet: 100,
+          status: SeatStatus.ACTIVE,
+          hasActed: true,
+        },
+        {
+          userId: 'p3',
+          position: 2,
+          currentBet: 100,
+          status: SeatStatus.ACTIVE,
+          hasActed: true,
+        },
       ],
     };
 
@@ -191,9 +209,27 @@ describe('GameStateMachine', () => {
       const state = {
         ...mockState,
         activePlayers: [
-          { userId: 'p1', position: 0, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
-          { userId: 'p2', position: 1, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: false },
-          { userId: 'p3', position: 2, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
+          {
+            userId: 'p1',
+            position: 0,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
+          {
+            userId: 'p2',
+            position: 1,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: false,
+          },
+          {
+            userId: 'p3',
+            position: 2,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
         ],
       };
 
@@ -205,9 +241,27 @@ describe('GameStateMachine', () => {
       const state = {
         ...mockState,
         activePlayers: [
-          { userId: 'p1', position: 0, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
-          { userId: 'p2', position: 1, currentBet: 50, status: SeatStatus.ACTIVE, hasActed: true },
-          { userId: 'p3', position: 2, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
+          {
+            userId: 'p1',
+            position: 0,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
+          {
+            userId: 'p2',
+            position: 1,
+            currentBet: 50,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
+          {
+            userId: 'p3',
+            position: 2,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
         ],
       };
 
@@ -219,9 +273,27 @@ describe('GameStateMachine', () => {
       const state = {
         ...mockState,
         activePlayers: [
-          { userId: 'p1', position: 0, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
-          { userId: 'p2', position: 1, currentBet: 0, status: SeatStatus.FOLDED, hasActed: true },
-          { userId: 'p3', position: 2, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
+          {
+            userId: 'p1',
+            position: 0,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
+          {
+            userId: 'p2',
+            position: 1,
+            currentBet: 0,
+            status: SeatStatus.FOLDED,
+            hasActed: true,
+          },
+          {
+            userId: 'p3',
+            position: 2,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
         ],
       };
 
@@ -233,9 +305,27 @@ describe('GameStateMachine', () => {
       const state = {
         ...mockState,
         activePlayers: [
-          { userId: 'p1', position: 0, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
-          { userId: 'p2', position: 1, currentBet: 50, status: SeatStatus.ALL_IN, hasActed: true },
-          { userId: 'p3', position: 2, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
+          {
+            userId: 'p1',
+            position: 0,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
+          {
+            userId: 'p2',
+            position: 1,
+            currentBet: 50,
+            status: SeatStatus.ALL_IN,
+            hasActed: true,
+          },
+          {
+            userId: 'p3',
+            position: 2,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
         ],
       };
 
@@ -247,9 +337,27 @@ describe('GameStateMachine', () => {
       const state = {
         ...mockState,
         activePlayers: [
-          { userId: 'p1', position: 0, currentBet: 100, status: SeatStatus.ACTIVE, hasActed: true },
-          { userId: 'p2', position: 1, currentBet: 0, status: SeatStatus.FOLDED, hasActed: true },
-          { userId: 'p3', position: 2, currentBet: 0, status: SeatStatus.FOLDED, hasActed: true },
+          {
+            userId: 'p1',
+            position: 0,
+            currentBet: 100,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
+          {
+            userId: 'p2',
+            position: 1,
+            currentBet: 0,
+            status: SeatStatus.FOLDED,
+            hasActed: true,
+          },
+          {
+            userId: 'p3',
+            position: 2,
+            currentBet: 0,
+            status: SeatStatus.FOLDED,
+            hasActed: true,
+          },
         ],
       };
 
@@ -261,9 +369,27 @@ describe('GameStateMachine', () => {
       const state = {
         currentBet: 200,
         activePlayers: [
-          { userId: 'p1', position: 0, currentBet: 200, status: SeatStatus.ACTIVE, hasActed: true },
-          { userId: 'p2', position: 1, currentBet: 200, status: SeatStatus.ACTIVE, hasActed: true },
-          { userId: 'p3', position: 2, currentBet: 200, status: SeatStatus.ACTIVE, hasActed: true },
+          {
+            userId: 'p1',
+            position: 0,
+            currentBet: 200,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
+          {
+            userId: 'p2',
+            position: 1,
+            currentBet: 200,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
+          {
+            userId: 'p3',
+            position: 2,
+            currentBet: 200,
+            status: SeatStatus.ACTIVE,
+            hasActed: true,
+          },
         ],
       };
 
@@ -275,9 +401,27 @@ describe('GameStateMachine', () => {
       const state = {
         currentBet: 500,
         activePlayers: [
-          { userId: 'p1', position: 0, currentBet: 500, status: SeatStatus.ALL_IN, hasActed: true },
-          { userId: 'p2', position: 1, currentBet: 300, status: SeatStatus.ALL_IN, hasActed: true },
-          { userId: 'p3', position: 2, currentBet: 200, status: SeatStatus.ALL_IN, hasActed: true },
+          {
+            userId: 'p1',
+            position: 0,
+            currentBet: 500,
+            status: SeatStatus.ALL_IN,
+            hasActed: true,
+          },
+          {
+            userId: 'p2',
+            position: 1,
+            currentBet: 300,
+            status: SeatStatus.ALL_IN,
+            hasActed: true,
+          },
+          {
+            userId: 'p3',
+            position: 2,
+            currentBet: 200,
+            status: SeatStatus.ALL_IN,
+            hasActed: true,
+          },
         ],
       };
 
@@ -305,7 +449,10 @@ describe('GameStateMachine', () => {
     });
 
     it('should return true when phase is SHOWDOWN', () => {
-      const isComplete = service.isHandComplete(activePlayers, HandPhase.SHOWDOWN);
+      const isComplete = service.isHandComplete(
+        activePlayers,
+        HandPhase.SHOWDOWN,
+      );
       expect(isComplete).toBe(true);
     });
 

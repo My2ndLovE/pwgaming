@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BlindService } from '../../../src/modules/game/services/blind.service';
-import { GameState, PlayerState } from '../../../src/modules/game/services/game-state-machine.service';
+import {
+  GameState,
+  PlayerState,
+} from '../../../src/modules/game/services/game-state-machine.service';
 import { SeatStatus } from '../../../src/modules/game/entities/player-seat.entity';
 import { HandPhase } from '../../../src/modules/game/entities/game-hand.entity';
 
@@ -139,12 +142,12 @@ describe('BlindService', () => {
       const result = service.postBlinds(state, 50, 100);
 
       // Small blind player
-      const sbPlayer = result.activePlayers.find(p => p.position === 1);
+      const sbPlayer = result.activePlayers.find((p) => p.position === 1);
       expect(sbPlayer.chipStack).toBe(950);
       expect(sbPlayer.currentBet).toBe(50);
 
       // Big blind player
-      const bbPlayer = result.activePlayers.find(p => p.position === 2);
+      const bbPlayer = result.activePlayers.find((p) => p.position === 2);
       expect(bbPlayer.chipStack).toBe(900);
       expect(bbPlayer.currentBet).toBe(100);
 
@@ -186,12 +189,12 @@ describe('BlindService', () => {
       const result = service.postBlinds(state, 50, 100);
 
       // In heads-up, dealer (position 0) posts small blind
-      const sbPlayer = result.activePlayers.find(p => p.position === 0);
+      const sbPlayer = result.activePlayers.find((p) => p.position === 0);
       expect(sbPlayer.chipStack).toBe(950);
       expect(sbPlayer.currentBet).toBe(50);
 
       // Other player posts big blind
-      const bbPlayer = result.activePlayers.find(p => p.position === 1);
+      const bbPlayer = result.activePlayers.find((p) => p.position === 1);
       expect(bbPlayer.chipStack).toBe(900);
       expect(bbPlayer.currentBet).toBe(100);
     });
@@ -245,13 +248,13 @@ describe('BlindService', () => {
       const result = service.postBlinds(state, 50, 100);
 
       // Small blind all-in
-      const sbPlayer = result.activePlayers.find(p => p.position === 1);
+      const sbPlayer = result.activePlayers.find((p) => p.position === 1);
       expect(sbPlayer.chipStack).toBe(0);
       expect(sbPlayer.currentBet).toBe(30);
       expect(sbPlayer.status).toBe(SeatStatus.ALL_IN);
 
       // Big blind all-in
-      const bbPlayer = result.activePlayers.find(p => p.position === 2);
+      const bbPlayer = result.activePlayers.find((p) => p.position === 2);
       expect(bbPlayer.chipStack).toBe(0);
       expect(bbPlayer.currentBet).toBe(60);
       expect(bbPlayer.status).toBe(SeatStatus.ALL_IN);
