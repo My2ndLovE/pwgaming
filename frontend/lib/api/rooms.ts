@@ -21,9 +21,26 @@ export interface RoomResponse {
   room: Room;
 }
 
+export interface GameState {
+  phase: 'preflop' | 'flop' | 'turn' | 'river' | 'showdown';
+  dealerPosition: number;
+  currentPosition: number;
+  currentBet: number;
+  minRaise: number;
+  communityCards: string[];
+  players: Array<{
+    userId: string;
+    position: number;
+    chipStack: number;
+    currentBet: number;
+    status: 'active' | 'folded' | 'all_in' | 'sitting_out';
+    hasActed: boolean;
+  }>;
+}
+
 export interface JoinRoomResponse {
   message: string;
-  gameState: any;
+  gameState: GameState;
 }
 
 class RoomsApiService {

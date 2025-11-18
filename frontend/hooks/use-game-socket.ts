@@ -31,6 +31,42 @@ interface Pot {
   eligiblePlayers: string[];
 }
 
+interface SocketResponse {
+  success: boolean;
+  error?: string;
+}
+
+interface PlayerActionData {
+  userId: string;
+  action: string;
+  amount: number;
+}
+
+interface PhaseAdvancedData {
+  phase: string;
+  communityCards: string[];
+}
+
+interface HandStartedData {
+  dealerPosition: number;
+}
+
+interface HandCompleteData {
+  winners: WinnerInfo[];
+  pots: Pot[];
+}
+
+interface TimerStartedData {
+  userId: string;
+  seconds: number;
+}
+
+interface PlayerEventData {
+  userId: string;
+}
+
+type EventCallback<T = unknown> = (data: T) => void;
+
 interface UseGameSocketOptions {
   url?: string;
   token?: string;
@@ -49,13 +85,13 @@ interface UseGameSocketReturn {
   leaveGame: (roomId: string) => Promise<void>;
 
   // Event listeners
-  onPlayerAction: (callback: (data: { userId: string; action: string; amount: number }) => void) => () => void;
-  onPhaseAdvanced: (callback: (data: { phase: string; communityCards: string[] }) => void) => () => void;
-  onHandStarted: (callback: (data: { dealerPosition: number }) => void) => () => void;
-  onHandComplete: (callback: (data: { winners: WinnerInfo[]; pots: Pot[] }) => void) => () => void;
-  onTimerStarted: (callback: (data: { userId: string; seconds: number }) => void) => () => void;
-  onPlayerTimeout: (callback: (data: { userId: string }) => void) => () => void;
-  onPlayerReconnected: (callback: (data: { userId: string }) => void) => () => void;
+  onPlayerAction: (callback: EventCallback<PlayerActionData>) => () => void;
+  onPhaseAdvanced: (callback: EventCallback<PhaseAdvancedData>) => () => void;
+  onHandStarted: (callback: EventCallback<HandStartedData>) => () => void;
+  onHandComplete: (callback: EventCallback<HandCompleteData>) => () => void;
+  onTimerStarted: (callback: EventCallback<TimerStartedData>) => () => void;
+  onPlayerTimeout: (callback: EventCallback<PlayerEventData>) => () => void;
+  onPlayerReconnected: (callback: EventCallback<PlayerEventData>) => () => void;
 }
 
 export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocketReturn {
@@ -69,7 +105,7 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
   const [isConnected, setIsConnected] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [yourCards, setYourCards] = useState<string[]>([]);
-  const listenersRef = useRef<Map<string, Set<Function>>>(new Map());
+  const listenersRef = useRef<Map<string, Set<EventCallback>>>(new Map());
 
   // Initialize socket
   useEffect(() => {
@@ -141,7 +177,7 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
   }, [url, token, autoConnect]);
 
   // Helper to emit events to listeners
-  const emit = useCallback((event: string, data: any) => {
+  const emit = useCallback(<T = unknown>(event: string, data: T) => {
     const listeners = listenersRef.current.get(event);
     if (listeners) {
       listeners.forEach(callback => callback(data));
@@ -149,14 +185,14 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
   }, []);
 
   // Helper to register listeners
-  const on = useCallback((event: string, callback: Function) => {
+  const on = useCallback(<T = unknown>(event: string, callback: EventCallback<T>) => {
     if (!listenersRef.current.has(event)) {
       listenersRef.current.set(event, new Set());
     }
-    listenersRef.current.get(event)!.add(callback);
+    listenersRef.current.get(event)!.add(callback as EventCallback);
 
     return () => {
-      listenersRef.current.get(event)?.delete(callback);
+      listenersRef.current.get(event)?.delete(callback as EventCallback);
     };
   }, []);
 
@@ -165,7 +201,7 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
     if (!socket) throw new Error('Socket not connected');
 
     return new Promise<void>((resolve, reject) => {
-      socket.emit('game:join', { roomId, buyIn }, (response: any) => {
+      socket.emit('game:join', { roomId, buyIn }, (response: SocketResponse) => {
         if (response.success) {
           resolve();
         } else {
@@ -179,7 +215,7 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
     if (!socket) throw new Error('Socket not connected');
 
     return new Promise<void>((resolve, reject) => {
-      socket.emit('game:action', { roomId, action, amount }, (response: any) => {
+      socket.emit('game:action', { roomId, action, amount }, (response: SocketResponse) => {
         if (response.success) {
           resolve();
         } else {
@@ -193,7 +229,7 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
     if (!socket) throw new Error('Socket not connected');
 
     return new Promise<void>((resolve, reject) => {
-      socket.emit('game:leave', { roomId }, (response: any) => {
+      socket.emit('game:leave', { roomId }, (response: SocketResponse) => {
         if (response.success) {
           resolve();
         } else {
@@ -204,26 +240,26 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
   }, [socket]);
 
   // Event listener registrations
-  const onPlayerAction = useCallback((callback: (data: any) => void) =>
-    on('game:player_action', callback), [on]);
+  const onPlayerAction = useCallback((callback: EventCallback<PlayerActionData>) =>
+    on<PlayerActionData>('game:player_action', callback), [on]);
 
-  const onPhaseAdvanced = useCallback((callback: (data: any) => void) =>
-    on('game:phase_advanced', callback), [on]);
+  const onPhaseAdvanced = useCallback((callback: EventCallback<PhaseAdvancedData>) =>
+    on<PhaseAdvancedData>('game:phase_advanced', callback), [on]);
 
-  const onHandStarted = useCallback((callback: (data: any) => void) =>
-    on('game:hand_started', callback), [on]);
+  const onHandStarted = useCallback((callback: EventCallback<HandStartedData>) =>
+    on<HandStartedData>('game:hand_started', callback), [on]);
 
-  const onHandComplete = useCallback((callback: (data: any) => void) =>
-    on('game:hand_complete', callback), [on]);
+  const onHandComplete = useCallback((callback: EventCallback<HandCompleteData>) =>
+    on<HandCompleteData>('game:hand_complete', callback), [on]);
 
-  const onTimerStarted = useCallback((callback: (data: any) => void) =>
-    on('game:timer_started', callback), [on]);
+  const onTimerStarted = useCallback((callback: EventCallback<TimerStartedData>) =>
+    on<TimerStartedData>('game:timer_started', callback), [on]);
 
-  const onPlayerTimeout = useCallback((callback: (data: any) => void) =>
-    on('game:player_timeout', callback), [on]);
+  const onPlayerTimeout = useCallback((callback: EventCallback<PlayerEventData>) =>
+    on<PlayerEventData>('game:player_timeout', callback), [on]);
 
-  const onPlayerReconnected = useCallback((callback: (data: any) => void) =>
-    on('game:player_reconnected', callback), [on]);
+  const onPlayerReconnected = useCallback((callback: EventCallback<PlayerEventData>) =>
+    on<PlayerEventData>('game:player_reconnected', callback), [on]);
 
   return {
     socket,

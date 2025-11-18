@@ -4,7 +4,11 @@ export function useTranslation(ns: string = 'common') {
   return useTranslationNext(ns);
 }
 
-export function t(key: string, options?: any): string {
+interface TranslationOptions {
+  [key: string]: string | number | boolean;
+}
+
+export function t(key: string, options?: TranslationOptions): string {
   // Fallback for non-hook contexts
   return key;
 }
