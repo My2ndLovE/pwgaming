@@ -8,7 +8,7 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { WsAuthGuard } from '../../realtime/guards/ws-auth.guard';
 import { GameEngine, HandState } from '../services/game-engine.service';
 import { TimeoutService } from '../services/timeout.service';
@@ -19,6 +19,7 @@ import { GameStateStore } from '../services/game-state-store.service';
 import { BotDetectionService } from '../services/bot-detection.service';
 import { MultiAccountDetectionService } from '../services/multi-account-detection.service';
 import { RoomService } from '../../room/services/room.service';
+import { JoinGameDto, GameActionDto, LeaveGameDto, RebuyDto } from '../dto/game-events.dto';
 
 interface RoomState {
   roomId: string;
@@ -151,9 +152,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:join')
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
   async handleJoinGame(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; buyIn: number },
+    @MessageBody() data: JoinGameDto,
   ) {
     const userId = client.data.user?.userId;
     if (!userId) {
@@ -244,9 +246,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:action')
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
   async handlePlayerAction(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; action: ActionType; amount: number },
+    @MessageBody() data: GameActionDto,
   ) {
     const userId = client.data.user?.userId;
     if (!userId) {
@@ -348,9 +351,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:leave')
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
   async handleLeaveGame(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string },
+    @MessageBody() data: LeaveGameDto,
   ) {
     const userId = client.data.user?.userId;
     if (!userId) {
@@ -388,9 +392,10 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('game:rebuy')
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }))
   async handleRebuy(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { roomId: string; amount: number },
+    @MessageBody() data: RebuyDto,
   ) {
     const userId = client.data.user?.userId;
     if (!userId) {
