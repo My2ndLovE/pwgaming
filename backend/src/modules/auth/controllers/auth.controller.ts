@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, UseGuards, Request } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from '../services/auth.service';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
@@ -11,6 +12,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('telegram')
+  @Throttle({ auth: { ttl: 60000, limit: 5 } }) // 5 attempts per minute
   async authenticateTelegram(@Body() dto: TelegramAuthDto) {
     const user = await this.authService.validateTelegramAuth(dto.initData);
     const token = await this.authService.generateToken(user);
