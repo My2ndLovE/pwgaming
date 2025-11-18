@@ -120,7 +120,7 @@ describe('AuthClient', () => {
       const accessToken = 'mock-access-token';
       const result = await authClient.getProfile(accessToken);
 
-      expect(mockFetch).toHaveBeenCalledWith(`${API_URL}/auth/profile`, {
+      expect(mockFetch).toHaveBeenCalledWith(`${API_URL}/auth/me`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

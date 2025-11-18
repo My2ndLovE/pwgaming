@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 import { AuthService, TelegramUser } from '../../../src/modules/auth/services/auth.service';
 import { User, UserRole, UserStatus } from '../../../src/modules/auth/entities/user.entity';
+import { TelegramAuthService } from '../../../src/modules/auth/services/telegram-auth.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -39,6 +41,14 @@ describe('AuthService', () => {
       verify: jest.fn(),
     };
 
+    const mockTelegramAuthService = {
+      validateAuthData: jest.fn(),
+    };
+
+    const mockConfigService = {
+      get: jest.fn().mockReturnValue('test-secret'),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
@@ -49,6 +59,14 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: TelegramAuthService,
+          useValue: mockTelegramAuthService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();

@@ -1,23 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { GameEngineService } from '../../../src/modules/game/services/game-engine.service';
+import { GameEngine } from '../../../src/modules/game/services/game-engine.service';
 import { DeckService } from '../../../src/modules/game/services/deck.service';
 import { HandEvaluatorService } from '../../../src/modules/game/services/hand-evaluator.service';
 import { PotService } from '../../../src/modules/game/services/pot.service';
+import { BettingService } from '../../../src/modules/game/services/betting.service';
+import { BlindService } from '../../../src/modules/game/services/blind.service';
+import { GameStateMachine } from '../../../src/modules/game/services/game-state-machine.service';
 
 describe('Complete Game Flow Integration', () => {
-  let gameEngine: GameEngineService;
+  let gameEngine: GameEngine;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        GameEngineService,
+        GameEngine,
         DeckService,
         HandEvaluatorService,
         PotService,
+        BettingService,
+        BlindService,
+        GameStateMachine,
       ],
     }).compile();
 
-    gameEngine = module.get<GameEngineService>(GameEngineService);
+    gameEngine = module.get<GameEngine>(GameEngine);
   });
 
   describe('6-Player Complete Hand', () => {
