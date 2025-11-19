@@ -46,6 +46,9 @@ export enum TransactionStatus {
 @Index('idx_transaction_created_at', ['createdAt'])
 @Index('idx_transaction_user_created', ['userId', 'createdAt'])
 @Index('idx_transaction_reference_id', ['referenceId'])
+// T064: Composite indexes for optimized transaction queries
+@Index('IDX_transaction_user_type_created', ['userId', 'type', 'createdAt'])
+@Index('IDX_transaction_reference_created', ['referenceId', 'createdAt'])
 export class Transaction {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
