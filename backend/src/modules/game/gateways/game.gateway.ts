@@ -6,10 +6,12 @@ import {
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseGuards, UsePipes, ValidationPipe, Logger, OnModuleInit } from '@nestjs/common';
+import { UseGuards, UsePipes, ValidationPipe, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { Mutex } from 'async-mutex'; // T028: Import async-mutex
 import { WsAuthGuard } from '../../realtime/guards/ws-auth.guard';
 import { GameEngine, HandState } from '../services/game-engine.service';
 import { TimeoutService } from '../services/timeout.service';
@@ -38,7 +40,33 @@ interface RoomState {
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // T023: WebSocket origin validation matching HTTP CORS policy
+      const nodeEnv = process.env.NODE_ENV;
+      const frontendUrl = process.env.FRONTEND_URL;
+
+      if (nodeEnv === 'production') {
+        // Production: Only allow configured frontend URL
+        if (!origin || origin === frontendUrl) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+        }
+      } else {
+        // Development: Allow frontend URL + localhost variants
+        const allowedOrigins = [
+          frontendUrl,
+          'http://localhost:4120',
+          'http://localhost:3000',
+        ].filter(Boolean);
+
+        if (!origin || allowedOrigins.includes(origin)) {
+          callback(null, true);
+        } else {
+          callback(new Error(`Origin ${origin} not allowed by CORS`), false);
+        }
+      }
+    },
     credentials: true,
   },
   transports: ['websocket', 'polling'],
@@ -59,7 +87,7 @@ interface RoomState {
   },
 })
 @UseGuards(WsAuthGuard)
-export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
+export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit, OnModuleDestroy {
   @WebSocketServer()
   server!: Server;
 
@@ -72,6 +100,8 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
   private reconnectionTimers: Map<string, NodeJS.Timeout> = new Map();
   private actionLocks: Map<string, boolean> = new Map(); // roomId -> isLocked
   private actionTimestamps: Map<string, number> = new Map(); // userId -> last action prompt timestamp
+  // T029: Add chipUpdateLocks for atomic chip stack updates
+  private chipUpdateLocks: Map<string, Mutex> = new Map(); // roomId -> Mutex
 
   constructor(
     private readonly gameEngine: GameEngine,
@@ -989,5 +1019,51 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, On
             : [],
       })),
     };
+  }
+
+  /**
+   * T030: Atomic chip stack update with mutex locking
+   * Prevents race conditions during concurrent chip modifications
+   */
+  private async updateChipStacksAtomically(
+    roomId: string,
+    updateFn: () => Promise<void> | void,
+  ): Promise<void> {
+    // Get or create room-specific lock
+    if (!this.chipUpdateLocks.has(roomId)) {
+      this.chipUpdateLocks.set(roomId, new Mutex());
+    }
+
+    const lock = this.chipUpdateLocks.get(roomId)!;
+
+    // Execute update atomically
+    await lock.runExclusive(async () => {
+      await updateFn();
+
+      // T031: Validate no negative chip stacks after update
+      const room = this.rooms.get(roomId);
+      if (room?.handState) {
+        for (const player of room.handState.state.activePlayers) {
+          if (player.chipStack < 0) {
+            this.logger.error(
+              `Invalid chip stack detected: Player ${player.userId} has ${player.chipStack} chips`,
+            );
+            throw new Error(`Invalid chip stack: cannot be negative`);
+          }
+        }
+      }
+
+      // T032: Audit logging
+      this.logger.log(`Chip stacks updated atomically for room ${roomId}`);
+    });
+  }
+
+  /**
+   * T033: Cleanup on module destruction
+   * Clear all chip update locks to prevent memory leaks
+   */
+  onModuleDestroy() {
+    this.logger.log('Cleaning up chip update locks on module destruction');
+    this.chipUpdateLocks.clear();
   }
 }

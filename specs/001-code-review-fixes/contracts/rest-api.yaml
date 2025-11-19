@@ -1,0 +1,391 @@
+openapi: 3.0.3
+info:
+  title: PWGaming Poker Platform - Code Review Fixes API
+  description: |
+    API contract for code review critical fixes and improvements.
+    Includes pagination support, enhanced error responses, and security improvements.
+  version: 1.1.0
+  contact:
+    name: PWGaming Development Team
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.pwgaming.com/api/v1
+    description: Production server
+
+tags:
+  - name: Wallet
+    description: Transaction and balance operations (with pagination)
+  - name: Health
+    description: Health check and system status
+
+paths:
+  /wallet/transactions:
+    get:
+      tags:
+        - Wallet
+      summary: Get user transaction history (paginated)
+      description: |
+        Retrieves paginated transaction history for the authenticated user.
+        Supports filtering by transaction type.
+
+        **Changes in v1.1.0**: Added pagination support
+      operationId: getTransactions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-based)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Number of results per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+            example: 20
+        - name: type
+          in: query
+          description: Filter by transaction type
+          required: false
+          schema:
+            $ref: '#/components/schemas/TransactionType'
+      responses:
+        '200':
+          description: Paginated transaction list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTransactionResponse'
+              examples:
+                firstPage:
+                  summary: First page of results
+                  value:
+                    data:
+                      - id: "123e4567-e89b-12d3-a456-426614174000"
+                        userId: "user-123"
+                        type: "GAME_BUYIN"
+                        amount: 100.00
+                        referenceId: "room-456"
+                        createdAt: "2025-01-19T10:30:00Z"
+                        status: "COMPLETED"
+                      - id: "223e4567-e89b-12d3-a456-426614174001"
+                        userId: "user-123"
+                        type: "GAME_CASHOUT"
+                        amount: 250.00
+                        referenceId: "room-456"
+                        createdAt: "2025-01-19T11:15:00Z"
+                        status: "COMPLETED"
+                    pagination:
+                      page: 1
+                      limit: 20
+                      total: 150
+                      totalPages: 8
+                      hasNextPage: true
+                      hasPrevPage: false
+        '400':
+          description: Invalid pagination parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 400
+                message: "Validation failed"
+                errors:
+                  - field: "page"
+                    message: "page must be a positive integer"
+        '401':
+          description: Unauthorized - missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 401
+                message: "Unauthorized"
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                statusCode: 429
+                message: "Too many requests"
+                retryAfter: 60
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Check overall system health
+      description: |
+        Validates system health including database and Redis connectivity.
+        Used by load balancers and monitoring systems.
+      operationId: getHealth
+      responses:
+        '200':
+          description: System healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                timestamp: "2025-01-19T12:00:00Z"
+                uptime: 86400
+                database: "connected"
+                redis: "connected"
+        '503':
+          description: System unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "unhealthy"
+                timestamp: "2025-01-19T12:00:00Z"
+                uptime: 86400
+                database: "connected"
+                redis: "disconnected"
+                errors:
+                  - "Redis connection failed"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT access token obtained from /auth/login
+
+  schemas:
+    Transaction:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - amount
+        - createdAt
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique transaction identifier
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        userId:
+          type: string
+          format: uuid
+          description: User who owns this transaction
+          example: "user-123"
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        amount:
+          type: number
+          format: decimal
+          description: Transaction amount in USD
+          example: 100.00
+        referenceId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Reference to game room or external system
+          example: "room-456"
+        notes:
+          type: string
+          nullable: true
+          description: Optional transaction notes
+          maxLength: 500
+        createdAt:
+          type: string
+          format: date-time
+          description: Transaction creation timestamp
+          example: "2025-01-19T10:30:00Z"
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+
+    TransactionType:
+      type: string
+      enum:
+        - DEPOSIT
+        - WITHDRAWAL
+        - GAME_BUYIN
+        - GAME_CASHOUT
+        - RAKE
+        - ADMIN_CREDIT
+        - ADMIN_DEBIT
+      description: Type of financial transaction
+
+    TransactionStatus:
+      type: string
+      enum:
+        - PENDING
+        - COMPLETED
+        - FAILED
+        - CANCELLED
+      description: Current status of transaction
+
+    PaginatedTransactionResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+
+    PaginationMetadata:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+        - hasNextPage
+        - hasPrevPage
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Results per page
+          example: 20
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of results
+          example: 150
+        totalPages:
+          type: integer
+          minimum: 0
+          description: Total number of pages
+          example: 8
+        hasNextPage:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        hasPrevPage:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+
+    ErrorResponse:
+      type: object
+      required:
+        - statusCode
+        - message
+      properties:
+        statusCode:
+          type: integer
+          description: HTTP status code
+          example: 400
+        message:
+          type: string
+          description: Error message
+          example: "Validation failed"
+        errors:
+          type: array
+          description: Detailed validation errors (optional)
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                description: Field that failed validation
+              message:
+                type: string
+                description: Validation error message
+        retryAfter:
+          type: integer
+          description: Seconds until retry allowed (for rate limiting)
+          example: 60
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - uptime
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+          description: Overall system health status
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+        uptime:
+          type: integer
+          description: Server uptime in seconds
+        database:
+          type: string
+          enum: [connected, disconnected]
+          description: Database connection status
+        redis:
+          type: string
+          enum: [connected, disconnected]
+          description: Redis connection status
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of error messages (if unhealthy)
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    RateLimitError:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

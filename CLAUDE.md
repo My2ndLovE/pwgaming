@@ -3,6 +3,7 @@
 Auto-generated from all feature plans. Last updated: 2025-11-14
 
 ## Active Technologies
+- TypeScript 5.x with Node.js 18+ LTS (backend), TypeScript 5.x with React 19 / Next.js 16 (frontend) (001-code-review-fixes)
 
 - TypeScript 5.x with Node.js 18+ LTS (backend), TypeScript 5.x with React 18 (frontend) (001-poker-platform-mvp)
 
@@ -23,6 +24,7 @@ npm test; npm run lint
 TypeScript 5.x with Node.js 18+ LTS (backend), TypeScript 5.x with React 18 (frontend): Follow standard conventions
 
 ## Recent Changes
+- 001-code-review-fixes: Added TypeScript 5.x with Node.js 18+ LTS (backend), TypeScript 5.x with React 19 / Next.js 16 (frontend)
 
 - 001-poker-platform-mvp: Added TypeScript 5.x with Node.js 18+ LTS (backend), TypeScript 5.x with React 18 (frontend)
 
