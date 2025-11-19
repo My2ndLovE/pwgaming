@@ -109,8 +109,8 @@ export class RoomService {
       throw new BadRequestException('Insufficient balance for buy-in');
     }
 
-    // TODO: Create PlayerSeat record and deduct balance in Phase 7
-    // For now, just increment current players
+    // PlayerSeat creation is now handled by GameGateway when player actually joins
+    // This method just validates the join is possible
     room.currentPlayers += 1;
 
     if (room.currentPlayers >= 2 && room.status === RoomStatus.WAITING) {
@@ -123,5 +123,20 @@ export class RoomService {
       success: true,
       message: 'Successfully joined room',
     };
+  }
+
+  /**
+   * Increment hand count for a room
+   * Called when a new hand starts
+   */
+  async incrementHandCount(roomId: string): Promise<void> {
+    const room = await this.roomRepository.findOne({ where: { id: roomId } });
+
+    if (!room) {
+      throw new NotFoundException(`Room ${roomId} not found`);
+    }
+
+    room.handCount = (room.handCount || 0) + 1;
+    await this.roomRepository.save(room);
   }
 }

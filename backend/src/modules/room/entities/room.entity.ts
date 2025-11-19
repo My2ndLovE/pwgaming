@@ -76,6 +76,11 @@ export class Room {
   @Max(9)
   currentPlayers!: number;
 
+  @Column({ type: 'int', default: 0 })
+  @IsInt()
+  @Min(0)
+  handCount!: number;
+
   @Column({
     type: 'enum',
     enum: RoomStatus,

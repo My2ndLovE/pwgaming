@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { GameHand } from '../../game/entities/game-hand.entity';
@@ -50,6 +50,8 @@ export interface HandReplayData {
 
 @Injectable()
 export class HandReplayService {
+  private readonly logger = new Logger(HandReplayService.name);
+
   constructor(
     @InjectRepository(GameHand)
     private readonly gameHandRepository: Repository<GameHand>,
@@ -346,7 +348,7 @@ export class HandReplayService {
 
       return true;
     } catch (error) {
-      console.error('Error verifying replay accuracy:', error);
+      this.logger.error('Error verifying replay accuracy:', error);
       return false;
     }
   }

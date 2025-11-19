@@ -16,13 +16,17 @@ export function ActionButtons({
   const [betAmount, setBetAmount] = useState(0);
   const [raiseAmount, setRaiseAmount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleAction = async (action: () => Promise<void>) => {
     try {
       setError(null);
+      setIsLoading(true);
       await action();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Action failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,10 +63,12 @@ export function ActionButtons({
         {/* Fold */}
         <button
           onClick={() => handleAction(gameState.fold)}
-          className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+          disabled={isLoading}
+          className="bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg relative"
           aria-label="Fold your hand (Keyboard: F)"
           aria-keyshortcuts="F"
         >
+          {isLoading && <span className="absolute left-2">⏳</span>}
           Fold <span className="text-xs opacity-75">(F)</span>
         </button>
 
@@ -70,10 +76,12 @@ export function ActionButtons({
         {gameState.canCheck && (
           <button
             onClick={() => handleAction(gameState.check)}
-            className="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+            disabled={isLoading}
+            className="bg-gray-600 hover:bg-gray-700 disabled:bg-gray-800 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg relative"
             aria-label="Check (Keyboard: C)"
             aria-keyshortcuts="C"
           >
+            {isLoading && <span className="absolute left-2">⏳</span>}
             Check <span className="text-xs opacity-75">(C)</span>
           </button>
         )}
@@ -82,10 +90,12 @@ export function ActionButtons({
         {gameState.canCall && (
           <button
             onClick={() => handleAction(gameState.call)}
-            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+            disabled={isLoading}
+            className="bg-green-600 hover:bg-green-700 disabled:bg-green-800 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg relative"
             aria-label={`Call ${gameState.callAmount} chips (Keyboard: K)`}
             aria-keyshortcuts="K"
           >
+            {isLoading && <span className="absolute left-2">⏳</span>}
             Call ${gameState.callAmount} <span className="text-xs opacity-75">(K)</span>
           </button>
         )}
@@ -93,10 +103,12 @@ export function ActionButtons({
         {/* All In */}
         <button
           onClick={() => handleAction(gameState.allIn)}
-          className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg"
+          disabled={isLoading}
+          className="bg-purple-600 hover:bg-purple-700 disabled:bg-purple-800 disabled:opacity-50 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-lg relative"
           aria-label={`Go all in with ${gameState.yourPlayer?.chipStack || 0} chips (Keyboard: A)`}
           aria-keyshortcuts="A"
         >
+          {isLoading && <span className="absolute left-2">⏳</span>}
           All In {gameState.yourPlayer && `($${gameState.yourPlayer.chipStack})`}{' '}
           <span className="text-xs opacity-75">(A)</span>
         </button>
@@ -120,9 +132,10 @@ export function ActionButtons({
             />
             <button
               onClick={() => handleAction(() => gameState.bet(betAmount))}
-              disabled={betAmount < gameState.minBetAmount}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors"
+              disabled={betAmount < gameState.minBetAmount || isLoading}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 disabled:opacity-50 text-white font-bold py-2 px-6 rounded-lg transition-colors relative"
             >
+              {isLoading && <span className="absolute left-2">⏳</span>}
               Bet
             </button>
           </div>
@@ -178,9 +191,10 @@ export function ActionButtons({
             />
             <button
               onClick={() => handleAction(() => gameState.raise(raiseAmount))}
-              disabled={raiseAmount < gameState.minRaiseAmount}
-              className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-500 text-white font-bold py-2 px-6 rounded-lg transition-colors"
+              disabled={raiseAmount < gameState.minRaiseAmount || isLoading}
+              className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-500 disabled:opacity-50 text-white font-bold py-2 px-6 rounded-lg transition-colors relative"
             >
+              {isLoading && <span className="absolute left-2">⏳</span>}
               Raise
             </button>
           </div>

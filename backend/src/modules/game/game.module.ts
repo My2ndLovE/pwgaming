@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GameHand } from './entities/game-hand.entity';
 import { PlayerSeat } from './entities/player-seat.entity';
@@ -22,6 +22,7 @@ import { GameGateway } from './gateways/game.gateway';
 import { AuthModule } from '../auth/auth.module';
 import { RoomModule } from '../room/room.module';
 import { WalletModule } from '../wallet/wallet.module';
+import { AdminModule } from '../admin/admin.module';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
@@ -36,6 +37,7 @@ import { ConfigModule } from '@nestjs/config';
     AuthModule,
     RoomModule,
     WalletModule,
+    forwardRef(() => AdminModule),
     ConfigModule,
   ],
   providers: [
@@ -65,6 +67,7 @@ import { ConfigModule } from '@nestjs/config';
     BlindService,
     RakeService,
     ShowdownService,
+    GameGateway,
   ],
 })
 export class GameModule {}

@@ -16,6 +16,8 @@ export interface GameState {
   dealerPosition: number;
   smallBlindPosition: number;
   bigBlindPosition: number;
+  smallBlind: number;
+  bigBlind: number;
   currentBet: number;
   minRaise: number;
   currentPosition: number;
@@ -30,7 +32,7 @@ export class GameStateMachine {
   initializeHand(
     players: Array<{ userId: string; chipStack: number; position: number }>,
     dealerPosition: number,
-    _smallBlind: number,
+    smallBlind: number,
     bigBlind: number,
   ): GameState {
     const numPlayers = players.length;
@@ -66,6 +68,8 @@ export class GameStateMachine {
       dealerPosition,
       smallBlindPosition,
       bigBlindPosition,
+      smallBlind,
+      bigBlind,
       currentBet: bigBlind,
       minRaise: bigBlind,
       currentPosition: firstActor,

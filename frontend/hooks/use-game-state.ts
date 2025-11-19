@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useGameSocket } from './use-game-socket';
 import { ActionType, Player, WinnerInfo, Pot } from '../types/game';
 import { SoundManager } from '../lib/sound-manager';
@@ -58,7 +58,7 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
   const socket = useGameSocket({ token });
 
   const [actionTimer, setActionTimer] = useState<ActionTimer | null>(null);
-  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(null);
+  const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [recentActions, setRecentActions] = useState<Array<{ userId: string; action: string; amount: number; timestamp: Date }>>([]);
   const [lastWinners, setLastWinners] = useState<WinnerInfo[] | null>(null);
   const [lastPots, setLastPots] = useState<Pot[] | null>(null);
@@ -88,8 +88,8 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
       setActionTimer({ userId: data.userId, remainingSeconds: data.seconds });
 
       // Clear existing interval
-      if (timerInterval) {
-        clearInterval(timerInterval);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
       }
 
       // Start countdown
@@ -109,13 +109,13 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
         });
       }, 1000);
 
-      setTimerInterval(interval);
+      timerIntervalRef.current = interval;
     });
 
     const unsubTimeout = socket.onPlayerTimeout(() => {
       setActionTimer(null);
-      if (timerInterval) {
-        clearInterval(timerInterval);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
       }
     });
 
@@ -150,11 +150,11 @@ export function useGameState(options: UseGameStateOptions): UseGameStateReturn {
       unsubTimeout();
       unsubHandComplete();
       unsubHandStarted();
-      if (timerInterval) {
-        clearInterval(timerInterval);
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
       }
     };
-  }, [socket, timerInterval]);
+  }, [socket, userId]);
 
   // Computed state
   const yourPlayer = useMemo(() => {

@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/contexts/auth-context";
 import { I18nProvider } from "@/lib/i18n/i18n-provider";
 import { ThemeProvider } from "@/contexts/theme-context";
+import { ToastProvider } from "@/providers/toast-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { ErrorBoundary } from "@/components/error/error-boundary";
 
@@ -36,6 +37,7 @@ export default function RootLayout({
           <ErrorBoundary>
             <I18nProvider>
               <AuthProvider>
+                <ToastProvider />
                 <Navbar />
                 {children}
               </AuthProvider>

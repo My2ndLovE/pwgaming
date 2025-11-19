@@ -8,7 +8,8 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { UseGuards, UsePipes, ValidationPipe, Logger, OnModuleInit } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { WsAuthGuard } from '../../realtime/guards/ws-auth.guard';
 import { GameEngine, HandState } from '../services/game-engine.service';
 import { TimeoutService } from '../services/timeout.service';
@@ -32,6 +33,7 @@ interface RoomState {
   smallBlind: number;
   bigBlind: number;
   actionTimeoutSeconds: number;
+  handNumber: number;
 }
 
 @WebSocketGateway({
@@ -57,11 +59,12 @@ interface RoomState {
   },
 })
 @UseGuards(WsAuthGuard)
-export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
   @WebSocketServer()
   server!: Server;
 
-  private rooms: Map<string, RoomState> = new Map();
+  private readonly logger = new Logger(GameGateway.name);
+  public rooms: Map<string, RoomState> = new Map();
   private connectedPlayers: Map<
     string,
     { socket: Socket; roomId: string; chipStack?: number }
@@ -75,12 +78,30 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly timeoutService: TimeoutService,
     private readonly gameWalletService: GameWalletService,
     private readonly gameStateStore: GameStateStore,
-    private readonly botDetection: BotDetectionService,
-    private readonly multiAccountDetection: MultiAccountDetectionService,
+    public readonly botDetection: BotDetectionService,
+    public readonly multiAccountDetection: MultiAccountDetectionService,
     private readonly roomService: RoomService,
+    private readonly moduleRef: ModuleRef,
   ) {
     // Recover active games on startup
     this.recoverActiveGames();
+  }
+
+  /**
+   * Called after module initialization
+   * Sets up admin monitoring if GameAdminService is available
+   */
+  async onModuleInit() {
+    try {
+      const GameAdminService = (await import('../../admin/services/game-admin.service')).GameAdminService;
+      const gameAdminService = this.moduleRef.get(GameAdminService, { strict: false });
+      if (gameAdminService) {
+        gameAdminService.setGameGatewayReference(this);
+        this.logger.log('Admin monitoring enabled for GameGateway');
+      }
+    } catch (error) {
+      this.logger.warn('GameAdminService not available, admin monitoring disabled');
+    }
   }
 
   /**
@@ -94,7 +115,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         // Load room configuration from database
         const room = await this.roomService.getRoomById(roomId);
         if (!room) {
-          console.error(`Room ${roomId} not found during recovery, skipping`);
+          this.logger.error(`Room ${roomId} not found during recovery, skipping`);
           continue;
         }
 
@@ -104,31 +125,32 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
           smallBlind: room.smallBlind,
           bigBlind: room.bigBlind,
           actionTimeoutSeconds: 30,
+          handNumber: room.handCount || 0,
         });
 
-        console.log(
+        this.logger.log(
           `Recovered game for room ${roomId} (${room.smallBlind}/${room.bigBlind})`,
         );
       }
 
-      console.log(
+      this.logger.log(
         `Crash recovery complete: ${recoveredGames.size} games restored`,
       );
     } catch (error) {
-      console.error('Failed to recover games:', error);
+      this.logger.error('Failed to recover games:', error);
     }
   }
 
   handleConnection(client: Socket) {
     const userId = client.data.user?.userId;
     if (userId) {
-      console.log(`User ${userId} connected (socket: ${client.id})`);
+      this.logger.log(`User ${userId} connected (socket: ${client.id})`);
 
       // Handle reconnection
       if (this.connectedPlayers.has(userId)) {
         const existing = this.connectedPlayers.get(userId)!;
         if (existing.socket.id !== client.id) {
-          console.log(`User ${userId} reconnected from different socket`);
+          this.logger.log(`User ${userId} reconnected from different socket`);
           this.handleReconnection(userId, client);
         }
       }
@@ -139,7 +161,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const userId = client.data.user?.userId;
     if (!userId) return;
 
-    console.log(`User ${userId} disconnected (socket: ${client.id})`);
+    this.logger.log(`User ${userId} disconnected (socket: ${client.id})`);
 
     const playerInfo = this.connectedPlayers.get(userId);
     if (!playerInfo) return;
@@ -160,7 +182,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.reconnectionTimers.set(userId, timer);
 
-    console.log(`Started 60s reconnection timer for user ${userId}`);
+    this.logger.log(`Started 60s reconnection timer for user ${userId}`);
   }
 
   @SubscribeMessage('game:join')
@@ -192,7 +214,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
 
     if (isFlagged) {
-      console.warn(
+      this.logger.warn(
         `SECURITY: Multiple accounts detected from IP ${clientIP} in room ${roomId}`,
       );
       // Continue but log for admin review (don't block, could be same household)
@@ -200,12 +222,19 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     // Initialize room state if needed
     if (!this.rooms.has(roomId)) {
+      // Load room configuration from database
+      const room = await this.roomService.getRoomById(roomId);
+      if (!room) {
+        return { success: false, error: 'Room not found' };
+      }
+
       this.rooms.set(roomId, {
         roomId,
         handState: null,
-        smallBlind: 50,
-        bigBlind: 100,
+        smallBlind: room.smallBlind,
+        bigBlind: room.bigBlind,
         actionTimeoutSeconds: 30,
+        handNumber: room.handCount || 0,
       });
     }
 
@@ -313,7 +342,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         this.botDetection.recordAction(userId, responseTime);
 
         if (this.botDetection.isSuspicious(userId)) {
-          console.warn(
+          this.logger.warn(
             `SECURITY: Bot-like behavior detected for user ${userId}`,
           );
           // Continue but log for admin review
@@ -436,7 +465,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
             chipStack: playerState?.chipStack || 0,
           });
         } catch (error) {
-          console.error('Cash-out failed:', error);
+          this.logger.error('Cash-out failed:', error);
           // Continue with leave process even if cash-out fails
           // Admin can manually correct balance later
         }
@@ -521,7 +550,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const { roomId } = existing;
     const room = this.rooms.get(roomId);
 
-    console.log(`Reconnecting user ${userId} to room ${roomId}`);
+    this.logger.log(`Reconnecting user ${userId} to room ${roomId}`);
 
     // Clear reconnection timer
     if (this.reconnectionTimers.has(userId)) {
@@ -577,11 +606,11 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
       message: `Player reconnected`,
     });
 
-    console.log(`User ${userId} successfully reconnected to room ${roomId}`);
+    this.logger.log(`User ${userId} successfully reconnected to room ${roomId}`);
   }
 
   private handlePlayerTimeout(userId: string, roomId: string) {
-    console.log(`Player ${userId} timed out in room ${roomId}`);
+    this.logger.log(`Player ${userId} timed out in room ${roomId}`);
 
     const room = this.rooms.get(roomId);
     if (!room || !room.handState) return;
@@ -665,12 +694,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         room.handState,
         room.smallBlind,
         room.bigBlind,
+        room.handNumber,
       );
 
       // Delete from Redis (no longer active)
       await this.gameStateStore.deleteGameState(roomId);
     } catch (error) {
-      console.error('Failed to save completed hand:', error);
+      this.logger.error('Failed to save completed hand:', error);
     }
 
     // Clear all action timers
@@ -686,7 +716,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }, 5000);
   }
 
-  private startNewHand(roomId: string) {
+  private async startNewHand(roomId: string) {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
@@ -700,6 +730,16 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     if (connectedPlayers.length < 2) {
       return; // Need at least 2 players
+    }
+
+    // Increment hand number
+    room.handNumber++;
+
+    // Update hand count in database
+    try {
+      await this.roomService.incrementHandCount(roomId);
+    } catch (error) {
+      this.logger.error(`Failed to increment hand count for room ${roomId}:`, error);
     }
 
     // Start new hand
@@ -784,13 +824,13 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
 
         // Log for debugging
-        console.log(
+        this.logger.log(
           `Player ${userId} chip stack updated: ${change > 0 ? '+' : ''}${change.toFixed(2)} -> ${(player.chipStack || 0).toFixed(2)}`,
         );
 
         // If player is busted (0 chips), they should be removed or allowed to rebuy
         if (player.chipStack === 0) {
-          console.log(`Player ${userId} busted in room ${roomId}`);
+          this.logger.log(`Player ${userId} busted in room ${roomId}`);
           // Note: Player removal/rebuy logic can be added here if needed
         }
       }
@@ -848,7 +888,7 @@ export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
         room.bigBlind,
       );
     } catch (error) {
-      console.error('Failed to save game state:', error);
+      this.logger.error('Failed to save game state:', error);
     }
 
     // Send sanitized state to each player

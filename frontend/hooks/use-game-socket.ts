@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { ActionType } from '../types/game';
+import { showToast } from '../lib/toast';
 
 interface GameState {
   phase: 'preflop' | 'flop' | 'turn' | 'river' | 'showdown';
@@ -124,12 +125,16 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
 
     socketInstance.on('connect', () => {
       setIsConnected(true);
-      console.log('WebSocket connected');
+      showToast.connectionStatus(true);
     });
 
     socketInstance.on('disconnect', () => {
       setIsConnected(false);
-      console.log('WebSocket disconnected');
+      showToast.connectionStatus(false);
+    });
+
+    socketInstance.on('connect_error', (error) => {
+      showToast.error(`Connection error: ${error.message}`);
     });
 
     socketInstance.on('game:state', (state: GameState) => {
@@ -203,9 +208,12 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
     return new Promise<void>((resolve, reject) => {
       socket.emit('game:join', { roomId, buyIn }, (response: SocketResponse) => {
         if (response.success) {
+          showToast.success(`Joined game with ${buyIn} chips`);
           resolve();
         } else {
-          reject(new Error(response.error || 'Failed to join game'));
+          const errorMsg = response.error || 'Failed to join game';
+          showToast.error(errorMsg);
+          reject(new Error(errorMsg));
         }
       });
     });
@@ -231,9 +239,12 @@ export function useGameSocket(options: UseGameSocketOptions = {}): UseGameSocket
     return new Promise<void>((resolve, reject) => {
       socket.emit('game:leave', { roomId }, (response: SocketResponse) => {
         if (response.success) {
+          showToast.success('Left game successfully');
           resolve();
         } else {
-          reject(new Error(response.error || 'Failed to leave game'));
+          const errorMsg = response.error || 'Failed to leave game';
+          showToast.error(errorMsg);
+          reject(new Error(errorMsg));
         }
       });
     });

@@ -13,6 +13,14 @@ import { HandPhase } from '../entities/game-hand.entity';
 import { ActionType } from '../entities/betting-action.entity';
 import { SeatStatus } from '../entities/player-seat.entity';
 
+export interface BettingActionRecord {
+  userId: string;
+  actionType: ActionType;
+  amount: number;
+  phase: HandPhase;
+  timestamp: Date;
+}
+
 export interface HandState {
   state: GameState;
   deck: string[];
@@ -22,6 +30,7 @@ export interface HandState {
     cards: string[];
     status?: SeatStatus;
   }>;
+  actionHistory: BettingActionRecord[];
 }
 
 export interface ActionResult {
@@ -98,6 +107,7 @@ export class GameEngine {
       deck: remainingDeck,
       communityCards: [],
       playerHands,
+      actionHistory: [],
     };
   }
 
@@ -158,8 +168,8 @@ export class GameEngine {
       {
         currentBet: handState.state.currentBet,
         minRaise: handState.state.minRaise,
-        smallBlind: 10, // TODO: Get from room config
-        bigBlind: 20, // TODO: Get from room config
+        smallBlind: handState.state.smallBlind,
+        bigBlind: handState.state.bigBlind,
       },
     );
 
@@ -176,6 +186,15 @@ export class GameEngine {
 
     // Update hand state
     handState.state = newState;
+
+    // Record action in history
+    handState.actionHistory.push({
+      userId,
+      actionType: action,
+      amount,
+      phase: handState.state.phase,
+      timestamp: new Date(),
+    });
 
     return {
       success: true,

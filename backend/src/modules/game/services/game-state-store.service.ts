@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -26,6 +26,7 @@ export interface PersistedGameState {
  */
 @Injectable()
 export class GameStateStore {
+  private readonly logger = new Logger(GameStateStore.name);
   private redis: Redis;
   private readonly STATE_TTL = 86400; // 24 hours in seconds
 
@@ -35,8 +36,7 @@ export class GameStateStore {
     @InjectRepository(PlayerSeat)
     private readonly playerSeatRepository: Repository<PlayerSeat>,
     @InjectRepository(BettingAction)
-    // @ts-expect-error - Reserved for future use
-    private readonly _bettingActionRepository: Repository<BettingAction>,
+    private readonly bettingActionRepository: Repository<BettingAction>,
     private readonly configService: ConfigService,
   ) {
     const redisUrl = this.configService.get<string>('REDIS_URL');
@@ -99,13 +99,14 @@ export class GameStateStore {
     handState: HandState,
     smallBlind: number,
     bigBlind: number,
+    handNumber: number,
   ): Promise<GameHand> {
     const gameState = handState.state;
 
     // Create GameHand record
     const gameHand = this.gameHandRepository.create({
       roomId,
-      handNumber: 1, // TODO: Track actual hand number
+      handNumber,
       dealerPosition: gameState.dealerPosition,
       smallBlind,
       bigBlind,
@@ -144,7 +145,20 @@ export class GameStateStore {
       await this.playerSeatRepository.save(playerSeat);
     }
 
-    // TODO: Save betting actions (requires action history tracking)
+    // Save betting actions from action history
+    if (handState.actionHistory && handState.actionHistory.length > 0) {
+      for (const action of handState.actionHistory) {
+        const bettingAction = this.bettingActionRepository.create({
+          gameHandId: savedHand.id,
+          userId: action.userId,
+          actionType: action.actionType,
+          amount: action.amount,
+          timestamp: action.timestamp,
+        });
+
+        await this.bettingActionRepository.save(bettingAction);
+      }
+    }
 
     return savedHand;
   }
@@ -212,7 +226,7 @@ export class GameStateStore {
         if (validation.valid) {
           games.set(roomId, state);
         } else {
-          console.error(`Invalid state for room ${roomId}:`, validation.errors);
+          this.logger.error(`Invalid state for room ${roomId}: ${validation.errors.join(', ')}`);
           // Log to monitoring system
         }
       }
