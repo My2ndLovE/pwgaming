@@ -32,6 +32,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     // Log error to console in development
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+
+    // T069: Send to Sentry with context
+    if (typeof window !== 'undefined' && (window as any).Sentry) {
+      (window as any).Sentry.withScope((scope: any) => {
+        scope.setTag('errorBoundary', 'app');
+        scope.setContext('errorInfo', {
+          componentStack: errorInfo.componentStack,
+        });
+        (window as any).Sentry.captureException(error);
+      });
+    }
   }
 
   resetError = () => {

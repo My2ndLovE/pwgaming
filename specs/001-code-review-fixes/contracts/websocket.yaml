@@ -1,0 +1,313 @@
+asyncapi: 2.6.0
+info:
+  title: PWGaming Poker Platform - WebSocket Events (Code Review Fixes)
+  version: 1.1.0
+  description: |
+    WebSocket event specifications for code review security fixes.
+    Includes rate limiting and enhanced error handling.
+  contact:
+    name: PWGaming Development Team
+
+servers:
+  development:
+    url: ws://localhost:3000
+    protocol: ws
+    description: Development WebSocket server
+  production:
+    url: wss://api.pwgaming.com
+    protocol: wss
+    description: Production WebSocket server (TLS)
+
+channels:
+  /game:
+    description: Game room WebSocket connection
+    subscribe:
+      summary: Server-to-client events
+      message:
+        oneOf:
+          - $ref: '#/components/messages/RateLimitError'
+          - $ref: '#/components/messages/ConnectionRejected'
+          - $ref: '#/components/messages/ChipStackUpdate'
+    publish:
+      summary: Client-to-server events
+      message:
+        oneOf:
+          - $ref: '#/components/messages/PlayerAction'
+          - $ref: '#/components/messages/JoinRoom'
+
+components:
+  messages:
+    RateLimitError:
+      name: error:rate_limit
+      title: Rate Limit Exceeded
+      summary: Sent when client exceeds connection rate limit
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/RateLimitErrorPayload'
+      examples:
+        - name: rateLimitExample
+          summary: Connection flooding detected
+          payload:
+            type: 'error:rate_limit'
+            message: 'Too many connection attempts. Try again in 45 seconds.'
+            retryAfter: 45
+            attemptCount: 11
+            maxAllowed: 10
+            windowSeconds: 60
+
+    ConnectionRejected:
+      name: error:connection_rejected
+      title: Connection Rejected
+      summary: Sent when connection is rejected (invalid origin, auth failure, etc.)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ConnectionRejectedPayload'
+      examples:
+        - name: corsRejection
+          summary: Origin not allowed
+          payload:
+            type: 'error:connection_rejected'
+            reason: 'ORIGIN_NOT_ALLOWED'
+            message: 'Origin http://malicious.com not allowed by CORS'
+        - name: authFailure
+          summary: Authentication failed
+          payload:
+            type: 'error:connection_rejected'
+            reason: 'AUTH_FAILED'
+            message: 'Invalid or expired token'
+
+    ChipStackUpdate:
+      name: game:chip_stack_update
+      title: Chip Stack Update
+      summary: Sent when player chip stacks change (atomic update)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/ChipStackUpdatePayload'
+      examples:
+        - name: handComplete
+          summary: Chip stacks after hand completion
+          payload:
+            type: 'game:chip_stack_update'
+            roomId: 'room-123'
+            updates:
+              - userId: 'player-1'
+                chipStack: 1500
+                change: +200
+              - userId: 'player-2'
+                chipStack: 800
+                change: -200
+            reason: 'HAND_COMPLETE'
+            timestamp: '2025-01-19T12:00:00Z'
+
+    PlayerAction:
+      name: game:player_action
+      title: Player Action
+      summary: Client sends game action (bet, fold, etc.)
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/PlayerActionPayload'
+      examples:
+        - name: raiseAction
+          summary: Player raises bet
+          payload:
+            type: 'game:player_action'
+            roomId: 'room-123'
+            action: 'RAISE'
+            amount: 100
+
+    JoinRoom:
+      name: game:join_room
+      title: Join Room
+      summary: Client requests to join game room
+      contentType: application/json
+      payload:
+        $ref: '#/components/schemas/JoinRoomPayload'
+      examples:
+        - name: joinWithBuyIn
+          summary: Join room with buy-in
+          payload:
+            type: 'game:join_room'
+            roomId: 'room-123'
+            buyIn: 500
+
+  schemas:
+    RateLimitErrorPayload:
+      type: object
+      required:
+        - type
+        - message
+        - retryAfter
+      properties:
+        type:
+          type: string
+          const: 'error:rate_limit'
+          description: Event type identifier
+        message:
+          type: string
+          description: Human-readable error message
+          example: 'Too many connection attempts. Try again in 45 seconds.'
+        retryAfter:
+          type: integer
+          description: Seconds until client can retry connection
+          minimum: 0
+          example: 45
+        attemptCount:
+          type: integer
+          description: Number of connection attempts in current window
+          minimum: 0
+          example: 11
+        maxAllowed:
+          type: integer
+          description: Maximum connections allowed per window
+          minimum: 1
+          example: 10
+        windowSeconds:
+          type: integer
+          description: Rate limit window duration in seconds
+          minimum: 1
+          example: 60
+
+    ConnectionRejectedPayload:
+      type: object
+      required:
+        - type
+        - reason
+        - message
+      properties:
+        type:
+          type: string
+          const: 'error:connection_rejected'
+          description: Event type identifier
+        reason:
+          type: string
+          enum:
+            - ORIGIN_NOT_ALLOWED
+            - AUTH_FAILED
+            - INVALID_TOKEN
+            - ROOM_FULL
+            - SERVER_ERROR
+          description: Machine-readable rejection reason
+        message:
+          type: string
+          description: Human-readable explanation
+          example: 'Origin http://malicious.com not allowed by CORS'
+        details:
+          type: object
+          description: Additional context (optional)
+          additionalProperties: true
+
+    ChipStackUpdatePayload:
+      type: object
+      required:
+        - type
+        - roomId
+        - updates
+        - reason
+        - timestamp
+      properties:
+        type:
+          type: string
+          const: 'game:chip_stack_update'
+          description: Event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Game room identifier
+        updates:
+          type: array
+          description: Atomic chip stack changes for all affected players
+          minItems: 1
+          items:
+            type: object
+            required:
+              - userId
+              - chipStack
+              - change
+            properties:
+              userId:
+                type: string
+                format: uuid
+                description: Player identifier
+              chipStack:
+                type: number
+                description: New chip stack value after update
+                minimum: 0
+                example: 1500
+              change:
+                type: number
+                description: Change amount (positive or negative)
+                example: 200
+        reason:
+          type: string
+          enum:
+            - HAND_COMPLETE
+            - BUY_IN
+            - CASH_OUT
+            - ADMIN_ADJUSTMENT
+          description: Reason for chip stack update
+        timestamp:
+          type: string
+          format: date-time
+          description: Update timestamp
+
+    PlayerActionPayload:
+      type: object
+      required:
+        - type
+        - roomId
+        - action
+      properties:
+        type:
+          type: string
+          const: 'game:player_action'
+          description: Event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Game room identifier
+        action:
+          type: string
+          enum:
+            - FOLD
+            - CHECK
+            - CALL
+            - RAISE
+            - ALL_IN
+          description: Player action type
+        amount:
+          type: number
+          description: Bet amount (required for RAISE, CALL)
+          minimum: 0
+
+    JoinRoomPayload:
+      type: object
+      required:
+        - type
+        - roomId
+        - buyIn
+      properties:
+        type:
+          type: string
+          const: 'game:join_room'
+          description: Event type identifier
+        roomId:
+          type: string
+          format: uuid
+          description: Game room to join
+        buyIn:
+          type: number
+          description: Initial chip buy-in amount
+          minimum: 20
+          maximum: 10000
+
+  securitySchemes:
+    jwtAuth:
+      type: httpApiKey
+      name: Authorization
+      in: header
+      description: |
+        JWT token passed in Authorization header during WebSocket handshake.
+        Format: "Bearer <token>"
+
+security:
+  - jwtAuth: []

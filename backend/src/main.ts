@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { initializeSentry, Sentry } from './config/sentry.config';
 import { SentryExceptionFilter } from './common/filters/sentry-exception.filter';
+import { validateCorsConfig, getCorsOptions } from './config/cors.config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -13,6 +14,9 @@ async function bootstrap() {
 
   // Get ConfigService
   const configService = app.get(ConfigService);
+
+  // Validate CORS configuration (T019-T021: CRITICAL - fails fast in production)
+  validateCorsConfig(configService);
 
   // Initialize Sentry (must be first)
   initializeSentry(configService);
@@ -36,13 +40,8 @@ async function bootstrap() {
     }),
   );
 
-  // CORS configuration
-  app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:4120',
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-lang'],
-  });
+  // CORS configuration (T022: Apply validated CORS options)
+  app.enableCors(getCorsOptions(configService));
 
   // Compression
   app.use(compression());
